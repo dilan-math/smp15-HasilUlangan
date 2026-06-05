@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hasil PAS Matematika Kelas VIII</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background: linear-gradient(135deg,#0f172a,#1e3a8a);
+    min-height:100vh;
+    padding:30px;
+}
+
+.container{
+    max-width:1100px;
+    margin:auto;
+}
+
+.header{
+    text-align:center;
+    color:white;
+    margin-bottom:25px;
+}
+
+.header h1{
+    font-size:2.3rem;
+    margin-bottom:8px;
+}
+
+.header p{
+    opacity:0.9;
+}
+
+.info{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    flex-wrap:wrap;
+    margin-bottom:25px;
+}
+
+.info-card{
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(10px);
+    color:white;
+    padding:12px 25px;
+    border-radius:15px;
+    text-align:center;
+}
+
+.table-card{
+    background:white;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 15px 35px rgba(0,0,0,0.25);
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+thead{
+    background:linear-gradient(90deg,#2563eb,#3b82f6);
+    color:white;
+}
+
+th,td{
+    padding:14px 16px;
+    text-align:center;
+}
+
+tbody tr:nth-child(even){
+    background:#f8fafc;
+}
+
+tbody tr:hover{
+    background:#dbeafe;
+    transition:0.3s;
+}
+
+.rank{
+    font-weight:700;
+    color:#2563eb;
+}
+
+.nilai{
+    font-weight:700;
+}
+
+.gold{
+    color:#d97706;
+}
+
+.silver{
+    color:#64748b;
+}
+
+.bronze{
+    color:#b45309;
+}
+
+.footer{
+    text-align:center;
+    color:white;
+    margin-top:20px;
+    opacity:0.8;
+}
+
+@media(max-width:768px){
+    table{
+        font-size:13px;
+    }
+    
+    .header h1{
+        font-size:1.6rem;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🏆 HASIL PAS MATEMATIKA</h1>
+        <p>Kelas VIII SMPN 15 Banjarbaru</p>
+    </div>
+
+    <div class="info">
+        <div class="info-card">
+            <h3>20</h3>
+            <small>Siswa Lulus Kriteria</small>
+        </div>
+
+        <div class="info-card">
+            <h3>92,5</h3>
+            <small>Nilai Tertinggi</small>
+        </div>
+
+        <div class="info-card">
+            <h3>70</h3>
+            <small>Nilai Terendah Ditampilkan</small>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Nama</th>
+                    <th>Kelas</th>
+                    <th>Nilai</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td class="rank gold">🥇 1</td>
+                    <td>SAFIRA NOVIANKA</td>
+                    <td>8A</td>
+                    <td class="nilai">92,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank silver">🥈 2</td>
+                    <td>AMIRA NAZMI</td>
+                    <td>8A</td>
+                    <td class="nilai">87,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank bronze">🥉 3</td>
+                    <td>MEYSHA ANGGRAENI GUSTINIA</td>
+                    <td>8C</td>
+                    <td class="nilai">85</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">4</td>
+                    <td>MUHAMMAD AZMI</td>
+                    <td>8D</td>
+                    <td class="nilai">80</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">5</td>
+                    <td>SINTA FERONIKA INDRA</td>
+                    <td>8A</td>
+                    <td class="nilai">77,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">6</td>
+                    <td>MEGA NUR YASMIN</td>
+                    <td>8B</td>
+                    <td class="nilai">77,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">7</td>
+                    <td>KIANA EZKA ALEXANDRIA</td>
+                    <td>8C</td>
+                    <td class="nilai">77,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">8</td>
+                    <td>ANDINI MAULIDA</td>
+                    <td>8C</td>
+                    <td class="nilai">75</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">9</td>
+                    <td>PUTRI SINTYA DARMAWAN</td>
+                    <td>8E</td>
+                    <td class="nilai">75</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">10</td>
+                    <td>PUTRI NUR AULIYA</td>
+                    <td>8B</td>
+                    <td class="nilai">75</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">11</td>
+                    <td>NAURA ALIYA HAFIDZA</td>
+                    <td>8C</td>
+                    <td class="nilai">75</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">12</td>
+                    <td>MUHAMMAD IVANDER ARKANA</td>
+                    <td>8D</td>
+                    <td class="nilai">72,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">13</td>
+                    <td>NUR ALYA ARIFA</td>
+                    <td>8C</td>
+                    <td class="nilai">72,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">14</td>
+                    <td>SHERENE ADZRA RAMADHANI</td>
+                    <td>8D</td>
+                    <td class="nilai">72,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">15</td>
+                    <td>AULIA NUR SALSABILA</td>
+                    <td>8D</td>
+                    <td class="nilai">72,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">16</td>
+                    <td>AISYAH NADHIRA HUMAIRA</td>
+                    <td>8D</td>
+                    <td class="nilai">72,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">17</td>
+                    <td>SITI NUR KHOLIFAH</td>
+                    <td>8D</td>
+                    <td class="nilai">72,5</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">18</td>
+                    <td>AQILA DINING AZZAHRA</td>
+                    <td>8A</td>
+                    <td class="nilai">70</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">19</td>
+                    <td>DELISYA FIRSTLY DAMIA</td>
+                    <td>8B</td>
+                    <td class="nilai">70</td>
+                </tr>
+
+                <tr>
+                    <td class="rank">20</td>
+                    <td>HILYATUN NISA RAMADANI</td>
+                    <td>8B</td>
+                    <td class="nilai">70</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        PAS Matematika Kelas VIII • Tahun Pelajaran 2025/2026
+    </div>
+
+</div>
+
+</body>
+</html>
