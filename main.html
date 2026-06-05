@@ -16,7 +16,7 @@
 }
 
 body{
-    background: linear-gradient(135deg,#0f172a,#1e3a8a);
+    background:linear-gradient(135deg,#0f172a,#1e3a8a);
     min-height:100vh;
     padding:30px;
 }
@@ -34,28 +34,12 @@ body{
 
 .header h1{
     font-size:2.3rem;
-    margin-bottom:8px;
+    margin-bottom:10px;
 }
 
 .header p{
     opacity:0.9;
-}
-
-.info{
-    display:flex;
-    justify-content:center;
-    gap:15px;
-    flex-wrap:wrap;
-    margin-bottom:25px;
-}
-
-.info-card{
-    background:rgba(255,255,255,0.15);
-    backdrop-filter:blur(10px);
-    color:white;
-    padding:12px 25px;
-    border-radius:15px;
-    text-align:center;
+    font-size:1rem;
 }
 
 .table-card{
@@ -75,8 +59,14 @@ thead{
     color:white;
 }
 
-th,td{
-    padding:14px 16px;
+th{
+    padding:15px;
+    font-size:15px;
+    letter-spacing:0.5px;
+}
+
+td{
+    padding:14px 15px;
     text-align:center;
 }
 
@@ -114,20 +104,31 @@ tbody tr:hover{
     text-align:center;
     color:white;
     margin-top:20px;
-    opacity:0.8;
+    opacity:0.85;
+    font-size:14px;
 }
 
 @media(max-width:768px){
+
+    body{
+        padding:15px;
+    }
+
+    .header h1{
+        font-size:1.6rem;
+    }
+
     table{
         font-size:13px;
     }
-    
-    .header h1{
-        font-size:1.6rem;
+
+    th,td{
+        padding:10px 8px;
     }
 }
 </style>
 </head>
+
 <body>
 
 <div class="container">
@@ -137,25 +138,9 @@ tbody tr:hover{
         <p>Kelas VIII SMPN 15 Banjarbaru</p>
     </div>
 
-    <div class="info">
-        <div class="info-card">
-            <h3>20</h3>
-            <small>Siswa Lulus Kriteria</small>
-        </div>
-
-        <div class="info-card">
-            <h3>92,5</h3>
-            <small>Nilai Tertinggi</small>
-        </div>
-
-        <div class="info-card">
-            <h3>70</h3>
-            <small>Nilai Terendah Ditampilkan</small>
-        </div>
-    </div>
-
     <div class="table-card">
         <table>
+
             <thead>
                 <tr>
                     <th>Rank</th>
@@ -166,6 +151,7 @@ tbody tr:hover{
             </thead>
 
             <tbody>
+
                 <tr>
                     <td class="rank gold">🥇 1</td>
                     <td>SAFIRA NOVIANKA</td>
@@ -305,7 +291,9 @@ tbody tr:hover{
                     <td>8B</td>
                     <td class="nilai">70</td>
                 </tr>
+
             </tbody>
+
         </table>
     </div>
 
