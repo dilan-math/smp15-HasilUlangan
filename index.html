@@ -3,829 +3,911 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Launching Official Website & Perpustakaan Digital - SMPN 15 Banjarbaru</title>
-    <!-- Tailwind CSS CDN -->
+    <title>CBT Ujian Sekolah - SMP 15</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Canvas Confetti -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800;900&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        tech: ['Orbitron', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            cyan: '#00f2fe',
-                            blue: '#4facfe',
-                            purple: '#7928CA',
-                            magenta: '#FF0080',
-                            gold: '#f6d365',
-                            dark: '#050714',
-                            card: '#0d1326',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        html, body {
-            width: 100vw;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #050714;
-            color: #ffffff;
+        body {
             font-family: 'Inter', sans-serif;
-            user-select: none;
+            user-select: none; /* Mencegah seleksi teks pada antarmuka CBT */
             -webkit-user-select: none;
-            touch-action: none; /* Prevents touch gestures like swipe and double tap zoom */
+            overflow: hidden;
         }
-
-        /* Tech Background Grid */
-        .tech-grid {
-            background-size: 36px 36px;
-            background-image: 
-                linear-gradient(to right, rgba(0, 242, 254, 0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0, 242, 254, 0.05) 1px, transparent 1px);
+        /* Animasi denyut untuk indikator pelanggaran */
+        @keyframes pulse-fast {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
         }
-
-        /* Ambient Glow Background */
-        .ambient-glow {
-            position: absolute;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(121, 40, 202, 0.22) 0%, rgba(0, 242, 254, 0.12) 40%, rgba(5, 7, 20, 0) 70%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 0;
-            pointer-events: none;
-            border-radius: 50%;
-            transition: all 0.8s ease-out;
+        .animate-pulse-fast {
+            animation: pulse-fast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
-
-        /* SVG Circle Progress Ring Styling */
-        .progress-ring__circle {
-            transition: stroke-dashoffset 0.05s linear;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
-            filter: drop-shadow(0px 0px 12px #00f2fe) drop-shadow(0px 0px 24px #7928CA);
+        /* Scrollbar halus untuk riwayat log */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
-
-        /* Pulse Ring Glow Animation */
-        @keyframes pulseGlow {
-            0%, 100% {
-                box-shadow: 0 0 20px rgba(0, 242, 254, 0.3), inset 0 0 15px rgba(121, 40, 202, 0.2);
-            }
-            50% {
-                box-shadow: 0 0 45px rgba(0, 242, 254, 0.7), inset 0 0 30px rgba(121, 40, 202, 0.45);
-            }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
         }
-
-        .pulse-scanner {
-            animation: pulseGlow 2.2s infinite ease-in-out;
-        }
-
-        /* Laser Scan Line */
-        @keyframes laserMove {
-            0% { top: 12%; opacity: 0; }
-            50% { opacity: 1; }
-            100% { top: 88%; opacity: 0; }
-        }
-
-        .scan-line {
-            position: absolute;
-            left: 10%;
-            right: 10%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, #00f2fe, #f6d365, #00f2fe, transparent);
-            box-shadow: 0 0 14px #00f2fe, 0 0 8px #f6d365;
-            border-radius: 50%;
-            animation: laserMove 2s infinite ease-in-out;
-            pointer-events: none;
-        }
-
-        /* Countdown Pulse Zoom Effect */
-        @keyframes countZoom {
-            0% {
-                transform: scale(0.4);
-                opacity: 0;
-                filter: blur(12px);
-            }
-            30% {
-                transform: scale(1.18);
-                opacity: 1;
-                filter: blur(0px);
-            }
-            75% {
-                transform: scale(1);
-                opacity: 1;
-                filter: blur(0px);
-            }
-            100% {
-                transform: scale(1.45);
-                opacity: 0;
-                filter: blur(8px);
-            }
-        }
-
-        .animate-count {
-            animation: countZoom 0.95s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        /* Background Particle Canvas */
-        #bgCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        /* Card Fade In Animation */
-        .fade-in-up {
-            animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(25px) scale(0.96);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
         }
     </style>
 </head>
-<body class="w-screen h-screen flex flex-col justify-between items-center relative p-3 sm:p-5 tech-grid">
+<body class="bg-slate-100 text-slate-800 h-screen w-screen flex flex-col">
 
-    <!-- Background Particle Canvas -->
-    <canvas id="bgCanvas"></canvas>
-    
-    <!-- Ambient Glow Effect -->
-    <div class="ambient-glow" id="ambientGlow"></div>
+    <!-- =====================================================================
+         1. LAYAR AWAL (PERATURAN & TOMBOL MULAI UJIAN)
+    ====================================================================== -->
+    <div id="start-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 my-auto relative">
+            <div class="bg-blue-700 p-6 text-white text-center relative">
+                <div class="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">CBT UJIAN SEKOLAH - SMP 15</h1>
+                <p class="text-blue-100 text-xs sm:text-sm mt-1">Sistem Pengawasan Ujian Berbasis Browser</p>
+            </div>
 
-    <!-- Top Bar Navigation / Fullscreen Controls -->
-    <div class="w-full max-w-6xl flex justify-between items-center z-20 px-2">
-        <!-- School Identity Badge -->
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-cyan-500/40 text-cyan-300 text-xs font-semibold tracking-widest uppercase backdrop-blur-md shadow-[0_0_15px_rgba(0,242,254,0.15)]">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i> DUAL SCANNER LAUNCHING
+            <div class="p-6 space-y-5">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2.5">
+                    <h2 class="text-sm font-extrabold text-amber-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        Peraturan & Konsekuensi Ujian
+                    </h2>
+                    <ul class="text-xs sm:text-sm text-amber-900/90 space-y-1.5 list-disc pl-5 leading-relaxed">
+                        <li>Ujian otomatis berjalan dalam mode <strong>Layar Penuh (Fullscreen)</strong>.</li>
+                        <li><strong>Dilarang keluar dari browser</strong>, membuka tab baru, berpindah aplikasi, atau keluar dari mode layar penuh.</li>
+                        <li>Setiap pelanggaran akan langsung <strong>mengurangi sisa waktu ujian sebesar 5 menit</strong> dan membunyikan alarm peringatan.</li>
+                        <li>Jika pelanggaran mencapai <strong>3 kali</strong>, sesi ujian akan otomatis dihentikan dan dikunci.</li>
+                    </ul>
+                </div>
+
+                <button id="btn-start-exam" type="button" class="w-full py-3.5 px-6 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-base rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2 cursor-pointer">
+                    <span>Mulai Ujian Sekarang</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
-
-        <!-- Fullscreen Mode Toggle Button -->
-        <button id="fullscreenBtn" onclick="toggleFullscreen()" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-cyan-500/40 text-cyan-300 hover:text-white hover:border-cyan-300 text-xs font-semibold tracking-wider transition-all backdrop-blur-md shadow-[0_0_15px_rgba(0,242,254,0.15)] hover:scale-105 active:scale-95 cursor-pointer">
-            <i id="fsIcon" data-lucide="maximize" class="w-4 h-4"></i>
-            <span id="fsText">LAYAR PENUH</span>
-        </button>
     </div>
 
-    <!-- Header Title Section -->
-    <header class="z-10 text-center my-auto max-w-4xl mx-auto transition-all duration-500">
-        <h1 class="text-xl sm:text-3xl md:text-5xl font-black font-tech tracking-wider uppercase leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-100 to-cyan-400">
-            Official Website <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-amber-300">&</span> Perpustakaan Digital
-        </h1>
-        
-        <h2 class="text-sm sm:text-2xl font-extrabold font-tech text-cyan-300/90 tracking-widest mt-1">
-            SMP NEGERI 15 BANJARBARU
-        </h2>
+    <!-- =====================================================================
+         2. HEADER PENGAWASAN CBT (TIMER, PELANGGARAN, NAVIGASI)
+    ====================================================================== -->
+    <header class="h-16 bg-slate-900 text-white px-3 sm:px-6 flex items-center justify-between border-b border-slate-800 shrink-0 z-30">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-extrabold text-sm shrink-0">
+                15
+            </div>
+            <div class="truncate">
+                <p id="header-student-info" class="text-xs sm:text-sm font-bold truncate">CBT Ujian Sekolah - SMP 15</p>
+                <p id="header-active-subject" class="text-[11px] text-slate-400 truncate">Pilih Mata Pelajaran</p>
+            </div>
+        </div>
 
-        <p class="text-slate-400 text-xs sm:text-sm mt-1 font-light max-w-lg mx-auto leading-relaxed">
-            Sistem Autentikasi Ganda Multitouch untuk Peluncuran Portal Sekolah
-        </p>
+        <div class="flex items-center gap-2 sm:gap-3">
+            <!-- Tombol Kembali ke Daftar Pilihan Soal (Portal Taplink Internal) -->
+            <button id="btn-back-taplink" type="button" title="Kembali ke Daftar Pilihan Ujian" class="px-2.5 py-1.5 bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 text-xs font-bold rounded-lg border border-blue-500/40 transition cursor-pointer flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+                <span>Daftar Soal</span>
+            </button>
+
+            <!-- Indikator Sisa Waktu -->
+            <div id="timer-box" class="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-blue-400 shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span id="timer-display" class="font-mono font-extrabold text-sm sm:text-base tracking-wider text-white">--:--:--</span>
+            </div>
+
+            <!-- Badge Pelanggaran -->
+            <div id="violation-badge" class="px-2.5 py-1.5 bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 rounded-xl text-xs font-extrabold whitespace-nowrap">
+                <span class="hidden sm:inline">Pelanggaran: </span><span id="violation-count">0</span>/<span id="violation-max">3</span>
+            </div>
+
+            <!-- Tombol Bantuan Muat Ulang -->
+            <button id="btn-help-iframe" type="button" title="Bantuan Tampilan" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+            </button>
+
+            <!-- Tombol Selesai -->
+            <button id="btn-finish-exam" type="button" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow transition cursor-pointer">
+                Selesai
+            </button>
+        </div>
     </header>
 
-    <!-- Main Interactive Content Container -->
-    <main class="z-10 my-auto flex flex-col items-center justify-center relative w-full max-w-5xl min-h-[310px]">
-        
-        <!-- Step 1: Dual Hand Scanner UI Container -->
-        <div id="scannerContainer" class="flex flex-col items-center transition-all duration-700 w-full">
-            
-            <!-- Dual Scanners Layout (Left & Right) -->
-            <div class="flex flex-row items-center justify-center gap-6 sm:gap-16 md:gap-24 w-full my-2">
-                
-                <!-- ================= LEFT HAND SCANNER ================= -->
-                <div class="flex flex-col items-center">
-                    <span class="text-[11px] sm:text-xs font-tech text-cyan-300 font-bold mb-2 tracking-widest uppercase bg-slate-900/80 px-3 py-1 rounded-full border border-cyan-500/30">
-                        <i data-lucide="hand" class="w-3.5 h-3.5 inline mr-1 text-cyan-400"></i> SCANNER KIRI
-                    </span>
-
-                    <div class="relative w-36 h-36 sm:w-52 sm:h-52 md:w-60 md:h-60 flex items-center justify-center cursor-pointer group touch-none" id="scannerLeft">
-                        <!-- Left SVG Progress Ring -->
-                        <svg class="absolute top-0 left-0 w-full h-full" viewBox="0 0 220 220">
-                            <defs>
-                                <linearGradient id="gradientRingLeft" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#00f2fe" />
-                                    <stop offset="100%" stop-color="#7928CA" />
-                                </linearGradient>
-                            </defs>
-                            <circle cx="110" cy="110" r="96" stroke="rgba(255, 255, 255, 0.08)" stroke-width="8" fill="transparent" />
-                            <circle id="progressLeft" class="progress-ring__circle" cx="110" cy="110" r="96" stroke="url(#gradientRingLeft)" stroke-width="12" fill="transparent" stroke-linecap="round" stroke-dasharray="603.18" stroke-dashoffset="603.18" />
-                        </svg>
-
-                        <!-- Left Scanner Inner Pad -->
-                        <div id="padLeft" class="w-28 h-28 sm:w-40 sm:h-40 md:w-44 md:h-44 rounded-full bg-slate-950/90 border border-cyan-500/50 flex flex-col items-center justify-center relative overflow-hidden backdrop-blur-xl pulse-scanner transition-transform duration-300 shadow-2xl">
-                            <div class="scan-line"></div>
-                            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#00f2fe_1px,transparent_1px)] [background-size:14px_14px]"></div>
-
-                            <!-- Left Palm SVG Icon -->
-                            <div id="iconLeft" class="relative z-10 text-cyan-400 transition-all duration-300 transform scale-x-[-1]">
-                                <svg class="w-10 h-10 sm:w-16 sm:h-16 filter drop-shadow-[0_0_12px_rgba(0,242,254,0.7)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m0 0V4a1.5 1.5 0 00-3 0m0 0v3.5m0-3.5a1.5 1.5 0 00-3 0V11.5"></path>
-                                </svg>
-                            </div>
-
-                            <div class="relative z-10 mt-1">
-                                <span id="percentLeft" class="font-tech text-[10px] sm:text-xs tracking-wider text-cyan-300 font-extrabold bg-slate-900/90 px-2.5 py-0.5 rounded-full border border-cyan-500/40">
-                                    0%
-                                </span>
-                            </div>
+    <!-- =====================================================================
+         3. AREA UTAMA UJIAN (PORTAL PILIHAN LINK DARI GOOGLE SHEET + IFRAME SOAL)
+    ====================================================================== -->
+    <main id="exam-container" class="relative flex-1 w-full bg-slate-100 overflow-hidden flex flex-col" style="height: calc(100vh - 64px);">
+        <!-- Tampilan Portal Pilihan Tombol Link -->
+        <div id="student-portal-view" class="flex-1 w-full overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-4 sm:p-8 flex flex-col items-center">
+            <div class="max-w-lg w-full my-auto space-y-6 py-4">
+                <!-- Profil / Header Portal -->
+                <div class="text-center space-y-2">
+                    <div class="w-16 h-16 rounded-2xl bg-blue-600 text-white font-extrabold text-xl flex items-center justify-center mx-auto shadow-lg shadow-blue-600/30 border-2 border-blue-400/30">
+                        SMP 15
+                    </div>
+                    <h2 id="portal-display-title" class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                        Portal Ujian Sekolah - SMP 15
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300">
+                        Silakan pilih tombol mata pelajaran di bawah ini untuk membuka lembar soal ujian
+                    </p>
+                    <div class="flex items-center justify-center gap-2 pt-1">
+                        <div id="portal-sync-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[11px] text-emerald-300 font-semibold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>Memuat daftar ujian dari Google Sheet...</span>
                         </div>
+                        <button id="btn-refresh-sheet" type="button" title="Perbarui daftar ujian dari Google Sheet" class="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-[11px] text-white font-semibold transition cursor-pointer">
+                            Refresh
+                        </button>
                     </div>
                 </div>
 
-                <!-- Central Link Indicator -->
-                <div class="flex flex-col items-center justify-center text-cyan-400">
-                    <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full border border-cyan-500/40 bg-slate-900/90 flex items-center justify-center shadow-[0_0_15px_rgba(0,242,254,0.2)]">
-                        <i data-lucide="zap" class="w-4 h-4 sm:w-6 sm:h-6 text-amber-300 animate-pulse"></i>
-                    </div>
-                    <span class="text-[9px] sm:text-[11px] font-tech text-slate-400 tracking-widest uppercase mt-1">DUAL HOLD</span>
-                </div>
-
-                <!-- ================= RIGHT HAND SCANNER ================= -->
-                <div class="flex flex-col items-center">
-                    <span class="text-[11px] sm:text-xs font-tech text-amber-300 font-bold mb-2 tracking-widest uppercase bg-slate-900/80 px-3 py-1 rounded-full border border-amber-500/30">
-                        SCANNER KANAN <i data-lucide="hand" class="w-3.5 h-3.5 inline ml-1 text-amber-400"></i>
-                    </span>
-
-                    <div class="relative w-36 h-36 sm:w-52 sm:h-52 md:w-60 md:h-60 flex items-center justify-center cursor-pointer group touch-none" id="scannerRight">
-                        <!-- Right SVG Progress Ring -->
-                        <svg class="absolute top-0 left-0 w-full h-full" viewBox="0 0 220 220">
-                            <defs>
-                                <linearGradient id="gradientRingRight" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#f6d365" />
-                                    <stop offset="100%" stop-color="#FF0080" />
-                                </linearGradient>
-                            </defs>
-                            <circle cx="110" cy="110" r="96" stroke="rgba(255, 255, 255, 0.08)" stroke-width="8" fill="transparent" />
-                            <circle id="progressRight" class="progress-ring__circle" cx="110" cy="110" r="96" stroke="url(#gradientRingRight)" stroke-width="12" fill="transparent" stroke-linecap="round" stroke-dasharray="603.18" stroke-dashoffset="603.18" />
-                        </svg>
-
-                        <!-- Right Scanner Inner Pad -->
-                        <div id="padRight" class="w-28 h-28 sm:w-40 sm:h-40 md:w-44 md:h-44 rounded-full bg-slate-950/90 border border-amber-500/50 flex flex-col items-center justify-center relative overflow-hidden backdrop-blur-xl pulse-scanner transition-transform duration-300 shadow-2xl">
-                            <div class="scan-line"></div>
-                            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#f6d365_1px,transparent_1px)] [background-size:14px_14px]"></div>
-
-                            <!-- Right Palm SVG Icon -->
-                            <div id="iconRight" class="relative z-10 text-amber-400 transition-all duration-300 transform">
-                                <svg class="w-10 h-10 sm:w-16 sm:h-16 filter drop-shadow-[0_0_12px_rgba(246,211,101,0.7)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m0 0V4a1.5 1.5 0 00-3 0m0 0v3.5m0-3.5a1.5 1.5 0 00-3 0V11.5"></path>
-                                </svg>
-                            </div>
-
-                            <div class="relative z-10 mt-1">
-                                <span id="percentRight" class="font-tech text-[10px] sm:text-xs tracking-wider text-amber-300 font-extrabold bg-slate-900/90 px-2.5 py-0.5 rounded-full border border-amber-500/40">
-                                    0%
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Instruction Text Banner -->
-            <div class="text-center mt-3 sm:mt-5 space-y-1">
-                <div class="inline-flex items-center gap-2 text-xs sm:text-sm text-cyan-100 font-semibold bg-slate-900/80 px-5 py-2 rounded-full border border-slate-700/80 backdrop-blur-md shadow-lg">
-                    <span id="pulseDot" class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
-                    <span id="instructionText" class="tracking-wide">TEKAN KEDUA SCANNER SECARA BERSAMAAN</span>
-                </div>
-                <p id="subInstruction" class="text-[11px] text-slate-400 font-mono">Dukungan Multitouch: Gunakan 2 tangan atau 2 orang sekaligus (~4.5 detik)</p>
-            </div>
-        </div>
-
-        <!-- Step 2: Giant Countdown Display Container -->
-        <div id="countdownContainer" class="hidden flex-col items-center justify-center text-center relative z-20 my-auto">
-            <div class="text-xs sm:text-sm font-tech tracking-[0.3em] text-cyan-400 uppercase mb-2 bg-slate-900/90 px-4 py-1.5 rounded-full border border-cyan-500/30 shadow-[0_0_15px_rgba(0,242,254,0.2)]">
-                MEMULAI PROSESI PELUNCURAN
-            </div>
-            
-            <div class="relative flex items-center justify-center w-48 h-48 sm:w-56 sm:h-56">
-                <!-- Outer Glowing Rings for Countdown -->
-                <div class="absolute inset-0 rounded-full border-2 border-cyan-400/30 animate-ping"></div>
-                <div class="absolute inset-2 rounded-full border border-amber-300/40 shadow-[0_0_30px_rgba(0,242,254,0.3)]"></div>
-                
-                <span id="countNumber" class="font-tech text-8xl sm:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-cyan-200 to-cyan-500 filter drop-shadow-[0_0_35px_rgba(0,242,254,0.9)]">
-                    5
-                </span>
-            </div>
-        </div>
-
-        <!-- Step 3: Post-Launch Success View -->
-        <div id="successContent" class="hidden flex-col items-center text-center fade-in-up w-full">
-            <div class="bg-slate-900/95 border border-cyan-500/50 rounded-2xl p-4 sm:p-6 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,242,254,0.2)] relative overflow-hidden">
-                
-                <div class="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(0,242,254,0.5)]">
-                    <i data-lucide="check-circle-2" class="w-8 h-8"></i>
-                </div>
-
-                <h2 class="text-xl sm:text-3xl font-black font-tech bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 via-white to-amber-300 mb-1">
-                    RESMI DILUNCURKAN!
-                </h2>
-                <p class="text-slate-300 text-xs sm:text-sm mb-5 max-w-md mx-auto font-light leading-relaxed">
-                    Selamat & Sukses atas Peluncuran Resmi <span class="text-cyan-300 font-semibold">Website Utama</span> dan <span class="text-amber-300 font-semibold">Perpustakaan Digital</span> SMPN 15 Banjarbaru.
-                </p>
-
-                <!-- Dual Portal Access Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full text-left">
-                    
-                    <!-- Portal 1: Website Utama -->
-                    <a href="https://smpn15banjarbaru.sch.id/" target="_blank" rel="noopener noreferrer" 
-                       class="group p-4 rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-950/60 border border-cyan-500/40 hover:border-cyan-400 transition-all duration-300 hover:shadow-[0_0_25px_rgba(0,242,254,0.35)] hover:-translate-y-0.5 relative overflow-hidden">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="w-9 h-9 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 group-hover:scale-110 transition-transform">
-                                <i data-lucide="globe" class="w-5 h-5"></i>
-                            </div>
-                            <span class="text-[9px] font-mono uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full">Portal Utama</span>
-                        </div>
-                        <h3 class="text-sm font-bold text-white font-tech group-hover:text-cyan-300 transition-colors">Official Website</h3>
-                        <p class="text-[11px] text-slate-400 mt-0.5 mb-2 leading-tight">Informasi sekolah, profil, berita, galeri, & agenda akademik.</p>
-                        <div class="inline-flex items-center gap-1.5 text-[11px] font-bold text-cyan-300 group-hover:translate-x-1 transition-transform">
-                            <span>Akses Portal Website</span>
-                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                        </div>
-                    </a>
-
-                    <!-- Portal 2: Perpustakaan Digital -->
-                    <a href="https://smpn15banjarbaru.sch.id/" target="_blank" rel="noopener noreferrer" 
-                       class="group p-4 rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950/50 border border-amber-500/40 hover:border-amber-400 transition-all duration-300 hover:shadow-[0_0_25px_rgba(246,211,101,0.35)] hover:-translate-y-0.5 relative overflow-hidden">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform">
-                                <i data-lucide="book-open-check" class="w-5 h-5"></i>
-                            </div>
-                            <span class="text-[9px] font-mono uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">E-Library</span>
-                        </div>
-                        <h3 class="text-sm font-bold text-white font-tech group-hover:text-amber-300 transition-colors">Perpustakaan Digital</h3>
-                        <p class="text-[11px] text-slate-400 mt-0.5 mb-2 leading-tight">Akses ribuan e-book, bahan ajar, dan literasi digital.</p>
-                        <div class="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-300 group-hover:translate-x-1 transition-transform">
-                            <span>Buka Perpustakaan</span>
-                            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                        </div>
-                    </a>
-
+                <!-- Daftar Tombol Link Ujian Siswa -->
+                <div id="student-links-container" class="space-y-3">
+                    <!-- Dirender otomatis dari Google Sheet -->
                 </div>
             </div>
         </div>
 
+        <!-- Wrapper Iframe Halaman Soal -->
+        <div id="iframe-wrapper" class="hidden relative flex-1 w-full h-full bg-white">
+            <div id="iframe-loader" class="pointer-events-none absolute inset-0 bg-slate-50 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-300 z-10">
+                <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+                <p id="iframe-loader-title" class="text-sm font-bold text-slate-800">Memuat halaman soal...</p>
+                <p id="iframe-loader-url" class="text-xs font-mono text-slate-400 mt-1 max-w-md truncate"></p>
+            </div>
+            <iframe id="exam-iframe" class="w-full h-full border-0" allow="fullscreen; clipboard-write" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
     </main>
 
-    <!-- Footer Section -->
-    <footer class="z-10 text-center text-[11px] text-slate-500 my-auto tracking-wide">
-        <p>&copy; 2026 SMP Negeri 15 Banjarbaru. All Rights Reserved.</p>
-        <p class="text-slate-600 font-mono text-[10px]">https://smpn15banjarbaru.sch.id/</p>
-    </footer>
+    <!-- =====================================================================
+         4. OVERLAY PERINGATAN PELANGGARAN (FULLSCREEN BLOCKER)
+    ====================================================================== -->
+    <div id="violation-overlay" class="hidden fixed inset-0 z-50 bg-red-950/95 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border-2 border-red-600 text-center">
+            <div class="bg-red-600 p-5 text-white">
+                <div class="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-extrabold uppercase tracking-wide">Pelanggaran Terdeteksi!</h2>
+                <p class="text-red-100 text-xs mt-1">Status Pelanggaran: <strong id="overlay-violation-status">1 / 3</strong></p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-red-50 border border-red-200 rounded-xl p-3.5">
+                    <p id="violation-reason-text" class="text-sm font-extrabold text-red-800">Siswa keluar dari jendela ujian!</p>
+                    <p id="overlay-penalty-text" class="text-xs text-red-700 mt-1">Sisa waktu ujian Anda telah dikurangi 5 menit.</p>
+                </div>
 
-    <!-- JavaScript Multitouch Dual Scanner Application Logic -->
+                <p class="text-xs text-slate-500">
+                    Harap tetap berada di dalam jendela ujian dan jangan keluar dari mode layar penuh.
+                </p>
+
+                <button id="btn-resume-exam" class="w-full py-3.5 px-6 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold rounded-xl shadow-lg shadow-red-600/30 transition cursor-pointer">
+                    Kembali ke Ujian (Masuk Layar Penuh)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         5. MODAL KONFIRMASI SELESAI UJIAN & MODAL BANTUAN IFRAME
+    ====================================================================== -->
+    <!-- Modal Konfirmasi Selesai -->
+    <div id="confirm-finish-modal" class="hidden fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-5 border border-slate-200">
+            <div class="flex items-center gap-3 text-slate-900">
+                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-extrabold">Konfirmasi Selesai Ujian</h3>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed">
+                Apakah Anda yakin telah mengirimkan semua jawaban di halaman ujian dan ingin mengakhiri sesi CBT ini sekarang? Sesi tidak dapat dibuka kembali setelah diakhiri.
+            </p>
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button id="btn-cancel-finish" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer">
+                    Batal, Lanjut Ujian
+                </button>
+                <button id="btn-confirm-finish" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow transition cursor-pointer">
+                    Ya, Selesai Ujian
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Bantuan Iframe -->
+    <div id="help-modal" class="hidden fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+            <h3 class="text-lg font-extrabold text-slate-900">Bantuan Tampilan Ujian</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">
+                Jika halaman soal tampak kosong karena koneksi lambat, gunakan tombol muat ulang di bawah ini atau kembali ke daftar pilihan soal tanpa keluar dari mode pengawasan.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2.5 pt-2">
+                <button id="btn-reload-iframe" class="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition cursor-pointer">
+                    Muat Ulang Halaman Soal
+                </button>
+                <button id="btn-close-help" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition cursor-pointer">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         6. LAYAR UJIAN BERAKHIR / TERKUNCI (RINGKASAN SESI)
+    ====================================================================== -->
+    <div id="end-screen" class="hidden fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-200 my-auto">
+            <!-- Banner Status Akhir -->
+            <div id="end-banner" class="bg-emerald-600 p-6 text-white text-center">
+                <div id="end-icon" class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2 id="end-title" class="text-2xl font-extrabold">Ujian Telah Selesai</h2>
+                <p id="end-subtitle" class="text-white/90 text-sm mt-1">Sesi CBT SMP 15 telah ditutup dan dikunci.</p>
+            </div>
+
+            <!-- Statistik Ringkasan -->
+            <div class="p-6 space-y-5">
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <span class="block text-[11px] font-bold uppercase text-slate-400">Status Akhir</span>
+                        <span id="summary-status" class="block text-sm font-extrabold text-emerald-600 mt-1">SELESAI</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <span class="block text-[11px] font-bold uppercase text-slate-400">Sisa Waktu</span>
+                        <span id="summary-time" class="block text-sm font-mono font-extrabold text-slate-800 mt-1">00:00:00</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <span class="block text-[11px] font-bold uppercase text-slate-400">Pelanggaran</span>
+                        <span id="summary-violations" class="block text-sm font-extrabold text-slate-800 mt-1">0 / 3</span>
+                    </div>
+                </div>
+
+                <!-- Riwayat Pelanggaran -->
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                        Catatan Log Pelanggaran Sesi Ini:
+                    </h4>
+                    <div id="violation-log-list" class="bg-slate-50 border border-slate-200 rounded-xl p-3 max-h-40 overflow-y-auto text-xs space-y-2">
+                        <p class="text-slate-400 italic text-center py-2">Tidak ada pelanggaran tercatat. Kerja bagus!</p>
+                    </div>
+                </div>
+
+                <div class="pt-2 text-center">
+                    <p class="text-xs text-slate-400 mb-3">Silakan tunjukkan layar ringkasan ini kepada pengawas ruang ujian.</p>
+                    <button onclick="location.reload()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition cursor-pointer">
+                        Mulai Sesi Baru (Reset)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         7. LOGIKA JAVASCRIPT (PROCTORING, SINKRONISASI GSHEET, TIMER, FULLSCREEN)
+    ====================================================================== -->
     <script>
-        lucide.createIcons();
+        (function() {
+            // ID Google Spreadsheet yang digunakan sebagai sumber daftar ujian
+            const GSHEET_ID = '1nOtxwtqh9aFqj6JxDpfhrpnx43h53gm90PQxG51G2TU';
+            const GSHEET_GVIZ_URL = `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?tqx=out:json`;
+            const VIOLATION_COOLDOWN_MS = 1500; // Debounce 1.5 detik agar 1 kejadian tidak terhitung ganda
 
-        // Fullscreen API Toggle
-        function toggleFullscreen() {
-            const fsText = document.getElementById('fsText');
+            // Daftar ujian yang ditarik dari Google Sheet (Kolom A: Nama Ujian, Kolom B: Link, Kolom C: Durasi dalam menit)
+            let examLinks = [];
 
-            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
-                const docElm = document.documentElement;
-                if (docElm.requestFullscreen) docElm.requestFullscreen();
-                else if (docElm.mozRequestFullScreen) docElm.mozRequestFullScreen();
-                else if (docElm.webkitRequestFullscreen) docElm.webkitRequestFullscreen();
-                else if (docElm.msRequestFullscreen) docElm.msRequestFullscreen();
-                fsText.innerText = "KELUAR FULLSCREEN";
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
-                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-                else if (document.msExitFullscreen) document.msExitFullscreen();
-                fsText.innerText = "LAYAR PENUH";
-            }
-            setTimeout(() => lucide.createIcons(), 100);
-        }
+            // State Aplikasi
+            let state = {
+                isExamActive: false,
+                isLocked: false,
+                isSubjectSelected: false,
+                currentActiveUrl: '',
+                remainingSeconds: 0,
+                penaltySeconds: 300,
+                violations: 0,
+                maxViolations: 3,
+                violationLogs: [],
+                lastViolationTimestamp: 0,
+                isPointerInsideIframe: false,
+                timerInterval: null,
+                audioCtx: null
+            };
 
-        document.addEventListener('fullscreenchange', updateFsBtn);
-        document.addEventListener('webkitfullscreenchange', updateFsBtn);
+            // Referensi Elemen DOM
+            const el = {
+                startScreen: document.getElementById('start-screen'),
+                btnStartExam: document.getElementById('btn-start-exam'),
 
-        function updateFsBtn() {
-            const fsText = document.getElementById('fsText');
-            if (document.fullscreenElement || document.webkitFullscreenElement) {
-                fsText.innerText = "KELUAR FULLSCREEN";
-            } else {
-                fsText.innerText = "LAYAR PENUH";
-            }
-        }
+                // Elemen Header & Portal Siswa
+                headerStudentInfo: document.getElementById('header-student-info'),
+                headerActiveSubject: document.getElementById('header-active-subject'),
+                btnBackTaplink: document.getElementById('btn-back-taplink'),
+                timerBox: document.getElementById('timer-box'),
+                timerDisplay: document.getElementById('timer-display'),
+                violationBadge: document.getElementById('violation-badge'),
+                violationCount: document.getElementById('violation-count'),
+                violationMax: document.getElementById('violation-max'),
+                btnHelpIframe: document.getElementById('btn-help-iframe'),
+                btnFinishExam: document.getElementById('btn-finish-exam'),
 
-        // Canvas Ambient Particle System
-        const canvas = document.getElementById('bgCanvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
+                studentPortalView: document.getElementById('student-portal-view'),
+                portalDisplayTitle: document.getElementById('portal-display-title'),
+                portalSyncBadge: document.getElementById('portal-sync-badge'),
+                btnRefreshSheet: document.getElementById('btn-refresh-sheet'),
+                studentLinksContainer: document.getElementById('student-links-container'),
+                iframeWrapper: document.getElementById('iframe-wrapper'),
+                examIframe: document.getElementById('exam-iframe'),
+                iframeLoader: document.getElementById('iframe-loader'),
+                iframeLoaderTitle: document.getElementById('iframe-loader-title'),
+                iframeLoaderUrl: document.getElementById('iframe-loader-url'),
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+                violationOverlay: document.getElementById('violation-overlay'),
+                violationReasonText: document.getElementById('violation-reason-text'),
+                overlayPenaltyText: document.getElementById('overlay-penalty-text'),
+                overlayViolationStatus: document.getElementById('overlay-violation-status'),
+                btnResumeExam: document.getElementById('btn-resume-exam'),
 
-        class Particle {
-            constructor() { this.reset(); }
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2 + 0.5;
-                this.speedX = (Math.random() - 0.5) * 0.3;
-                this.speedY = (Math.random() - 0.5) * 0.3;
-                this.alpha = Math.random() * 0.5 + 0.2;
-            }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-                    this.reset();
+                confirmFinishModal: document.getElementById('confirm-finish-modal'),
+                btnCancelFinish: document.getElementById('btn-cancel-finish'),
+                btnConfirmFinish: document.getElementById('btn-confirm-finish'),
+
+                helpModal: document.getElementById('help-modal'),
+                btnReloadIframe: document.getElementById('btn-reload-iframe'),
+                btnCloseHelp: document.getElementById('btn-close-help'),
+
+                endScreen: document.getElementById('end-screen'),
+                endBanner: document.getElementById('end-banner'),
+                endIcon: document.getElementById('end-icon'),
+                endTitle: document.getElementById('end-title'),
+                endSubtitle: document.getElementById('end-subtitle'),
+                summaryStatus: document.getElementById('summary-status'),
+                summaryTime: document.getElementById('summary-time'),
+                summaryViolations: document.getElementById('summary-violations'),
+                violationLogList: document.getElementById('violation-log-list')
+            };
+
+            // =================================================================
+            // SINKRONISASI DAFTAR UJIAN DARI GOOGLE SPREADSHEET
+            // =================================================================
+            async function fetchExamLinksFromGSheet() {
+                if (el.portalSyncBadge) {
+                    el.portalSyncBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>Menyinkronkan Google Sheet...</span>';
+                }
+
+                try {
+                    const response = await fetch(`${GSHEET_GVIZ_URL}&_t=${Date.now()}`);
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    const rawText = await response.text();
+
+                    // Ekstrak objek JSON dari pembungkus google.visualization.Query.setResponse(...)
+                    const jsonStart = rawText.indexOf('{');
+                    const jsonEnd = rawText.lastIndexOf('}');
+                    if (jsonStart === -1 || jsonEnd === -1) throw new Error('Format respons Google Sheet tidak valid');
+
+                    const parsed = JSON.parse(rawText.substring(jsonStart, jsonEnd + 1));
+                    const rows = parsed?.table?.rows || [];
+                    const loadedList = [];
+
+                    rows.forEach((row, idx) => {
+                        const cells = row.c || [];
+                        const namaUjian = cells[0]?.v != null ? String(cells[0].v).trim() : '';
+                        const linkUjian = cells[1]?.v != null ? String(cells[1].v).trim() : '';
+                        const durasiRaw = cells[2]?.v != null ? String(cells[2].v).trim() : '';
+
+                        // Lewati baris kosong atau baris header jika terbaca sebagai data
+                        if (!namaUjian || !linkUjian) return;
+                        if (namaUjian.toLowerCase() === 'nama ujian' && linkUjian.toLowerCase() === 'link') return;
+
+                        const parsedMinutes = parseInt(durasiRaw.replace(/[^\d]/g, ''), 10);
+                        const durationMinutes = !isNaN(parsedMinutes) && parsedMinutes > 0 ? parsedMinutes : 60;
+
+                        loadedList.push({
+                            id: 'gsheet-exam-' + idx,
+                            title: namaUjian,
+                            url: linkUjian,
+                            durationMinutes: durationMinutes
+                        });
+                    });
+
+                    examLinks = loadedList;
+                    renderStudentPortalLinks();
+
+                    if (el.portalSyncBadge) {
+                        el.portalSyncBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>Tersinkronisasi (${examLinks.length} jadwal ujian)</span>`;
+                    }
+                } catch (err) {
+                    console.error('Gagal memuat data dari Google Sheet:', err);
+                    if (el.portalSyncBadge) {
+                        el.portalSyncBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span><span>Gagal memuat Google Sheet (klik Refresh)</span>';
+                    }
+                    el.studentLinksContainer.innerHTML = `
+                        <div class="bg-red-950/60 border border-red-500/40 rounded-2xl p-5 text-center text-red-200 text-xs sm:text-sm space-y-2">
+                            <p class="font-bold">Tidak dapat mengambil daftar ujian dari Google Spreadsheet.</p>
+                            <p class="text-red-300/80 text-xs">Pastikan koneksi internet stabil dan akses berbagi Google Sheet diatur ke <strong>"Siapa saja yang memiliki link dapat melihat"</strong>.</p>
+                        </div>
+                    `;
                 }
             }
-            draw() {
-                ctx.fillStyle = `rgba(0, 242, 254, ${this.alpha})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
+
+            // =================================================================
+            // FUNGSI UTILITAS & RENDER TOMBOL PORTAL SISWA
+            // =================================================================
+            function escapeHTML(str) {
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
             }
-        }
 
-        for (let i = 0; i < 60; i++) particles.push(new Particle());
+            // Otomatis sesuaikan link Google Form panjang agar ramah iframe jika memungkinkan
+            function normalizeExamUrl(rawUrl) {
+                let url = rawUrl.trim();
+                if (!/^https?:\/\//i.test(url)) {
+                    url = 'https://' + url;
+                }
+                if (url.includes('docs.google.com/forms') && !url.includes('embedded=true')) {
+                    url += (url.includes('?') ? '&' : '?') + 'embedded=true';
+                }
+                return url;
+            }
 
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => { p.update(); p.draw(); });
-            requestAnimationFrame(animateParticles);
-        }
-        animateParticles();
+            function renderStudentPortalLinks() {
+                if (examLinks.length === 0) {
+                    el.studentLinksContainer.innerHTML = `
+                        <div class="bg-white/10 border border-white/15 rounded-2xl p-6 text-center text-slate-300 text-sm">
+                            Belum ada daftar ujian yang diisi pada Google Spreadsheet.
+                        </div>
+                    `;
+                    return;
+                }
 
-        // Web Audio Synthesizer
-        class SoundFX {
-            constructor() { this.ctx = null; }
-            init() {
-                if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                el.studentLinksContainer.innerHTML = examLinks.map((item) => `
+                    <button type="button" data-link-id="${escapeHTML(item.id)}" class="student-exam-link-btn w-full group bg-white hover:bg-blue-50 active:scale-[0.99] text-left p-4 sm:p-5 rounded-2xl shadow-lg border-2 border-transparent hover:border-blue-500 transition flex items-center justify-between gap-4 cursor-pointer">
+                        <div class="flex items-center gap-3.5 min-w-0">
+                            <div class="w-11 h-11 rounded-xl bg-blue-600 group-hover:bg-blue-700 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-base font-extrabold text-slate-900 group-hover:text-blue-700 truncate">${escapeHTML(item.title)}</p>
+                                <p class="text-xs font-semibold text-blue-600 mt-0.5">Durasi Ujian: ${item.durationMinutes} Menit</p>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-blue-600 text-slate-600 group-hover:text-white flex items-center justify-center shrink-0 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                    </button>
+                `).join('');
+            }
+
+            // =================================================================
+            // FUNGSI UTILITAS FORMAT WAKTU & SUARA ALARM (WEB AUDIO API)
+            // =================================================================
+            function formatTime(totalSeconds) {
+                const sec = Math.max(0, Math.floor(totalSeconds));
+                const hours = Math.floor(sec / 3600);
+                const minutes = Math.floor((sec % 3600) / 60);
+                const seconds = sec % 60;
+                return [
+                    String(hours).padStart(2, '0'),
+                    String(minutes).padStart(2, '0'),
+                    String(seconds).padStart(2, '0')
+                ].join(':');
+            }
+
+            function getCurrentClockTime() {
+                const now = new Date();
+                return now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+
+            // Menghasilkan bunyi sirene/beep peringatan tanpa file eksternal
+            function playWarningAlarm() {
+                try {
+                    if (!state.audioCtx) {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        state.audioCtx = new AudioContext();
+                    }
+                    if (state.audioCtx.state === 'suspended') {
+                        state.audioCtx.resume();
+                    }
+
+                    const now = state.audioCtx.currentTime;
+                    // 3 kali nada beep tegas
+                    [0, 0.22, 0.44].forEach((offset, idx) => {
+                        const osc = state.audioCtx.createOscillator();
+                        const gain = state.audioCtx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(idx === 2 ? 980 : 780, now + offset);
+
+                        gain.gain.setValueAtTime(0.25, now + offset);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + offset + 0.18);
+
+                        osc.connect(gain);
+                        gain.connect(state.audioCtx.destination);
+
+                        osc.start(now + offset);
+                        osc.stop(now + offset + 0.18);
+                    });
+                } catch (e) {
+                    console.warn("Audio alarm tidak dapat diputar:", e);
                 }
             }
-            playHum(progress) {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(110 + (progress * 6.5), this.ctx.currentTime);
-                gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.12);
+
+            // =================================================================
+            // PEMUAT HALAMAN UJIAN (PORTAL PILIHAN & IFRAME SOAL)
+            // =================================================================
+            function showStudentPortal() {
+                state.currentActiveUrl = '';
+                state.isPointerInsideIframe = false;
+                state.isSubjectSelected = false;
+                el.examIframe.src = 'about:blank';
+                el.iframeWrapper.classList.add('hidden');
+                el.studentPortalView.classList.remove('hidden');
+                el.headerActiveSubject.textContent = 'Pilih Mata Pelajaran';
+                el.timerDisplay.textContent = '--:--:--';
+                el.timerBox.classList.remove('bg-red-950', 'border-red-600', 'animate-pulse-fast');
+                el.timerBox.classList.add('bg-slate-800', 'border-slate-700');
+                el.timerDisplay.classList.remove('text-red-300');
+                renderStudentPortalLinks();
             }
-            playTick(count) {
-                if (!this.ctx) return;
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(440 + ((6 - count) * 120), now);
-                gain.gain.setValueAtTime(0.15, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-                
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.25);
+
+            function openExamLink(linkItem) {
+                const targetUrl = normalizeExamUrl(linkItem.url);
+                state.currentActiveUrl = targetUrl;
+                state.isSubjectSelected = true;
+
+                // Atur durasi waktu sesuai kolom "Durasi" (menit) pada Google Sheet, dikurangi penalti jika sebelumnya sudah ada pelanggaran
+                const baseDurationSec = Math.max(1, linkItem.durationMinutes) * 60;
+                const totalPenaltySec = state.violations * state.penaltySeconds;
+                state.remainingSeconds = Math.max(0, baseDurationSec - totalPenaltySec);
+
+                if (state.remainingSeconds <= 0) {
+                    endExam('TIMEOUT');
+                    return;
+                }
+
+                updateTimerUI();
+                el.headerActiveSubject.textContent = `${linkItem.title} (${linkItem.durationMinutes} Menit)`;
+
+                el.studentPortalView.classList.add('hidden');
+                el.iframeWrapper.classList.remove('hidden');
+                el.iframeLoader.classList.remove('opacity-0');
+                el.iframeLoaderTitle.textContent = `Memuat ${linkItem.title}...`;
+                el.iframeLoaderUrl.textContent = targetUrl;
+
+                el.examIframe.src = targetUrl;
+                el.examIframe.onload = () => {
+                    el.iframeLoader.classList.add('opacity-0');
+                };
             }
-            playSuccess() {
-                if (!this.ctx) return;
-                const now = this.ctx.currentTime;
-                const freqs = [523.25, 659.25, 783.99, 987.77, 1046.50];
-                freqs.forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(freq, now + (idx * 0.08));
-                    gain.gain.setValueAtTime(0.25, now + (idx * 0.08));
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + (idx * 0.08) + 1.5);
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start(now + (idx * 0.08));
-                    osc.stop(now + (idx * 0.08) + 1.5);
+
+            async function enterFullscreen() {
+                try {
+                    const elem = document.documentElement;
+                    if (!document.fullscreenElement && elem.requestFullscreen) {
+                        await elem.requestFullscreen();
+                    }
+                } catch (e) {
+                    console.warn("Mode layar penuh dibatasi browser:", e);
+                }
+            }
+
+            function updateTimerUI() {
+                if (!state.isSubjectSelected) {
+                    el.timerDisplay.textContent = '--:--:--';
+                    return;
+                }
+                el.timerDisplay.textContent = formatTime(state.remainingSeconds);
+                if (state.remainingSeconds <= 300) {
+                    el.timerBox.classList.remove('bg-slate-800', 'border-slate-700');
+                    el.timerBox.classList.add('bg-red-950', 'border-red-600', 'animate-pulse-fast');
+                    el.timerDisplay.classList.add('text-red-300');
+                } else {
+                    el.timerBox.classList.remove('bg-red-950', 'border-red-600', 'animate-pulse-fast');
+                    el.timerBox.classList.add('bg-slate-800', 'border-slate-700');
+                    el.timerDisplay.classList.remove('text-red-300');
+                }
+            }
+
+            function updateViolationUI() {
+                el.violationCount.textContent = state.violations;
+                el.violationMax.textContent = state.maxViolations;
+                if (state.violations > 0) {
+                    el.violationBadge.classList.remove('bg-emerald-950/80', 'border-emerald-700/60', 'text-emerald-300');
+                    el.violationBadge.classList.add('bg-red-950', 'border-red-600', 'text-red-300');
+                }
+            }
+
+            async function startExam() {
+                state.isExamActive = true;
+                state.isLocked = false;
+                state.isSubjectSelected = false;
+                state.lastViolationTimestamp = Date.now();
+
+                await enterFullscreen();
+                el.startScreen.classList.add('hidden');
+                showStudentPortal();
+
+                if (examLinks.length === 0) {
+                    fetchExamLinksFromGSheet();
+                }
+
+                updateTimerUI();
+                updateViolationUI();
+
+                state.timerInterval = setInterval(() => {
+                    if (!state.isExamActive || state.isLocked || !state.isSubjectSelected) return;
+                    state.remainingSeconds -= 1;
+                    updateTimerUI();
+
+                    if (state.remainingSeconds <= 0) {
+                        endExam('TIMEOUT');
+                    }
+                }, 1000);
+            }
+
+            function endExam(reason) {
+                state.isExamActive = false;
+                state.isLocked = true;
+                if (state.timerInterval) {
+                    clearInterval(state.timerInterval);
+                }
+
+                el.violationOverlay.classList.add('hidden');
+                el.confirmFinishModal.classList.add('hidden');
+                el.helpModal.classList.add('hidden');
+                el.examIframe.src = 'about:blank';
+
+                if (reason === 'COMPLETED') {
+                    el.endBanner.className = 'bg-emerald-600 p-6 text-white text-center';
+                    el.endTitle.textContent = 'Ujian Telah Selesai';
+                    el.endSubtitle.textContent = 'Terima kasih, sesi CBT SMP 15 telah berhasil diakhiri.';
+                    el.summaryStatus.textContent = 'SELESAI';
+                    el.summaryStatus.className = 'block text-sm font-extrabold text-emerald-600 mt-1';
+                } else if (reason === 'TIMEOUT') {
+                    el.endBanner.className = 'bg-amber-600 p-6 text-white text-center';
+                    el.endTitle.textContent = 'Waktu Ujian Habis';
+                    el.endSubtitle.textContent = 'Alokasi waktu ujian Anda telah berakhir.';
+                    el.summaryStatus.textContent = 'WAKTU HABIS';
+                    el.summaryStatus.className = 'block text-sm font-extrabold text-amber-600 mt-1';
+                } else {
+                    el.endBanner.className = 'bg-red-600 p-6 text-white text-center';
+                    el.endTitle.textContent = 'Ujian Dihentikan Sistem';
+                    el.endSubtitle.textContent = 'Batas maksimal pelanggaran (3 kali) telah terlampaui.';
+                    el.summaryStatus.textContent = 'TERKUNCI';
+                    el.summaryStatus.className = 'block text-sm font-extrabold text-red-600 mt-1';
+                }
+
+                el.summaryTime.textContent = state.isSubjectSelected ? formatTime(state.remainingSeconds) : '--:--:--';
+                el.summaryViolations.textContent = `${state.violations} / ${state.maxViolations}`;
+
+                if (state.violationLogs.length > 0) {
+                    el.violationLogList.innerHTML = state.violationLogs.map((log, i) => `
+                        <div class="flex items-start justify-between gap-2 bg-white p-2 rounded-lg border border-red-200 text-red-800">
+                            <span><strong>#${i + 1}</strong> ${log.reason}</span>
+                            <span class="font-mono text-[11px] text-slate-500 shrink-0">${log.time}</span>
+                        </div>
+                    `).join('');
+                }
+
+                el.endScreen.classList.remove('hidden');
+            }
+
+            // =================================================================
+            // EVENT LISTENERS TOMBOL ANTARMUKA
+            // =================================================================
+            if (el.btnRefreshSheet) {
+                el.btnRefreshSheet.addEventListener('click', fetchExamLinksFromGSheet);
+            }
+
+            // Klik Salah Satu Tombol Soal oleh Siswa pada Portal
+            if (el.studentLinksContainer) {
+                el.studentLinksContainer.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.student-exam-link-btn');
+                    if (!btn) return;
+                    const linkId = btn.getAttribute('data-link-id');
+                    const selected = examLinks.find((item) => item.id === linkId);
+                    if (selected) {
+                        openExamLink(selected);
+                    }
                 });
             }
-        }
 
-        const sound = new SoundFX();
+            if (el.btnStartExam) {
+                el.btnStartExam.addEventListener('click', startExam);
+            }
 
-        // DOM Element References
-        const scannerLeft = document.getElementById('scannerLeft');
-        const scannerRight = document.getElementById('scannerRight');
-        const progressLeft = document.getElementById('progressLeft');
-        const progressRight = document.getElementById('progressRight');
-        const percentLeft = document.getElementById('percentLeft');
-        const percentRight = document.getElementById('percentRight');
-        
-        const padLeft = document.getElementById('padLeft');
-        const padRight = document.getElementById('padRight');
+            // Tombol Kembali ke Ujian pada Overlay Pelanggaran
+            if (el.btnResumeExam) {
+                el.btnResumeExam.addEventListener('click', async () => {
+                    // Set cooldown agar transisi masuk fullscreen tidak memicu pelanggaran baru
+                    state.lastViolationTimestamp = Date.now();
+                    await enterFullscreen();
+                    el.violationOverlay.classList.add('hidden');
+                });
+            }
 
-        const instructionText = document.getElementById('instructionText');
-        const subInstruction = document.getElementById('subInstruction');
+            // Tombol Selesai Ujian & Modal Konfirmasi
+            if (el.btnFinishExam) {
+                el.btnFinishExam.addEventListener('click', () => {
+                    el.confirmFinishModal.classList.remove('hidden');
+                });
+            }
 
-        const scannerContainer = document.getElementById('scannerContainer');
-        const countdownContainer = document.getElementById('countdownContainer');
-        const countNumber = document.getElementById('countNumber');
-        const successContent = document.getElementById('successContent');
-        const ambientGlow = document.getElementById('ambientGlow');
+            if (el.btnCancelFinish) {
+                el.btnCancelFinish.addEventListener('click', () => {
+                    el.confirmFinishModal.classList.add('hidden');
+                    enterFullscreen();
+                });
+            }
 
-        const radius = 96;
-        const circumference = 2 * Math.PI * radius;
-        progressLeft.style.strokeDasharray = `${circumference} ${circumference}`;
-        progressRight.style.strokeDasharray = `${circumference} ${circumference}`;
-        progressLeft.style.strokeDashoffset = circumference;
-        progressRight.style.strokeDashoffset = circumference;
+            if (el.btnConfirmFinish) {
+                el.btnConfirmFinish.addEventListener('click', () => {
+                    endExam('COMPLETED');
+                });
+            }
 
-        // Dual Scanner State Tracking
-        let isLeftActive = false;
-        let isRightActive = false;
-        let progressL = 0;
-        let progressR = 0;
-        let mainLoopFrame = null;
-        let isLaunchCompleted = false;
+            // Tombol Bantuan & Muat Ulang Iframe
+            if (el.btnHelpIframe) {
+                el.btnHelpIframe.addEventListener('click', () => {
+                    el.helpModal.classList.remove('hidden');
+                });
+            }
 
-        // Multitouch Pointer ID Tracking
-        let activePointersL = new Set();
-        let activePointersR = new Set();
+            if (el.btnCloseHelp) {
+                el.btnCloseHelp.addEventListener('click', () => {
+                    el.helpModal.classList.add('hidden');
+                });
+            }
 
-        function setRingProgress(elem, percent) {
-            const offset = circumference - (percent / 100) * circumference;
-            elem.style.strokeDashoffset = offset;
-        }
+            if (el.btnReloadIframe) {
+                el.btnReloadIframe.addEventListener('click', () => {
+                    if (state.currentActiveUrl) {
+                        el.iframeLoader.classList.remove('opacity-0');
+                        el.examIframe.src = state.currentActiveUrl;
+                    } else {
+                        showStudentPortal();
+                    }
+                    el.helpModal.classList.add('hidden');
+                });
+            }
 
-        // Pointer / Touch Event Handlers
-        function setupMultitouch() {
-            // Pointer Down
-            scannerLeft.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                sound.init();
-                activePointersL.add(e.pointerId);
-                scannerLeft.setPointerCapture(e.pointerId);
-                isLeftActive = true;
-                checkDualState();
+            // Tombol Kembali ke Daftar Pilihan Soal
+            if (el.btnBackTaplink) {
+                el.btnBackTaplink.addEventListener('click', () => {
+                    showStudentPortal();
+                });
+            }
+
+            // =================================================================
+            // SISTEM ANTI-KECURANGAN (PROCTORING LISTENERS)
+            // =================================================================
+            function triggerViolation(reasonText) {
+                if (!state.isExamActive || state.isLocked) return;
+
+                const now = Date.now();
+                if (now - state.lastViolationTimestamp < VIOLATION_COOLDOWN_MS) {
+                    return;
+                }
+                state.lastViolationTimestamp = now;
+
+                state.violations += 1;
+                if (state.isSubjectSelected) {
+                    state.remainingSeconds = Math.max(0, state.remainingSeconds - state.penaltySeconds);
+                }
+
+                state.violationLogs.push({
+                    reason: reasonText,
+                    time: getCurrentClockTime()
+                });
+
+                updateViolationUI();
+                updateTimerUI();
+                playWarningAlarm();
+
+                if (state.isSubjectSelected && state.remainingSeconds <= 0) {
+                    endExam('TIMEOUT');
+                    return;
+                }
+
+                if (state.violations >= state.maxViolations) {
+                    endExam('DISQUALIFIED');
+                    return;
+                }
+
+                const penaltyMinutes = Math.round(state.penaltySeconds / 60);
+                el.violationReasonText.textContent = reasonText;
+                el.overlayPenaltyText.innerHTML = `Sisa waktu ujian Anda telah <strong class="underline">dikurangi ${penaltyMinutes} menit</strong> dan pelanggaran ini telah dicatat oleh sistem.`;
+                el.overlayViolationStatus.textContent = `${state.violations} / ${state.maxViolations}`;
+                el.violationOverlay.classList.remove('hidden');
+            }
+
+            // Lacak posisi pointer di atas area iframe agar klik tombol di dalam halaman ujian tidak dianggap pelanggaran
+            if (el.examIframe) {
+                el.examIframe.addEventListener('pointerenter', () => { state.isPointerInsideIframe = true; });
+                el.examIframe.addEventListener('pointerleave', () => { state.isPointerInsideIframe = false; });
+                el.examIframe.addEventListener('touchstart', () => { state.isPointerInsideIframe = true; }, { passive: true });
+            }
+
+            // 1. Deteksi pindah tab atau minimize browser
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden' && state.isExamActive && !state.isLocked) {
+                    triggerViolation('Siswa membuka tab baru atau menyembunyikan browser!');
+                }
             });
 
-            scannerRight.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                sound.init();
-                activePointersR.add(e.pointerId);
-                scannerRight.setPointerCapture(e.pointerId);
-                isRightActive = true;
-                checkDualState();
-            });
-
-            // Pointer Up / Cancel / Release
-            function releaseLeft(e) {
-                activePointersL.delete(e.pointerId);
-                if (activePointersL.size === 0) {
-                    isLeftActive = false;
-                    checkDualState();
-                }
-            }
-
-            function releaseRight(e) {
-                activePointersR.delete(e.pointerId);
-                if (activePointersR.size === 0) {
-                    isRightActive = false;
-                    checkDualState();
-                }
-            }
-
-            scannerLeft.addEventListener('pointerup', releaseLeft);
-            scannerLeft.addEventListener('pointercancel', releaseLeft);
-            scannerRight.addEventListener('pointerup', releaseRight);
-            scannerRight.addEventListener('pointercancel', releaseRight);
-        }
-
-        setupMultitouch();
-
-        function checkDualState() {
-            if (isLaunchCompleted) return;
-
-            // Visual feedback when individual scanner is pressed
-            if (isLeftActive) {
-                padLeft.classList.add('scale-105', 'border-cyan-300');
-            } else {
-                padLeft.classList.remove('scale-105', 'border-cyan-300');
-            }
-
-            if (isRightActive) {
-                padRight.classList.add('scale-105', 'border-amber-300');
-            } else {
-                padRight.classList.remove('scale-105', 'border-amber-300');
-            }
-
-            // Banner Instruction Status Updating
-            if (isLeftActive && isRightActive) {
-                instructionText.innerText = "MEMINDAI DUAL TELAPAK TANGAN... TAHAN!";
-                instructionText.className = "tracking-wide text-cyan-300 font-bold";
-                subInstruction.innerText = "Autentikasi ganda aktif! Tahan kedua sisi hingga 100%";
-                subInstruction.className = "text-[11px] text-amber-300 font-mono font-semibold";
-            } else if (isLeftActive && !isRightActive) {
-                instructionText.innerText = "TEKAN SCANNER KANAN UNTUK MEMULAI";
-                instructionText.className = "tracking-wide text-amber-300 font-semibold";
-                subInstruction.innerText = "Scanner Kiri terdeteksi! Sentuh juga Scanner Kanan";
-                subInstruction.className = "text-[11px] text-cyan-400 font-mono";
-            } else if (!isLeftActive && isRightActive) {
-                instructionText.innerText = "TEKAN SCANNER KIRI UNTUK MEMULAI";
-                instructionText.className = "tracking-wide text-cyan-300 font-semibold";
-                subInstruction.innerText = "Scanner Kanan terdeteksi! Sentuh juga Scanner Kiri";
-                subInstruction.className = "text-[11px] text-amber-400 font-mono";
-            } else {
-                instructionText.innerText = "TEKAN KEDUA SCANNER SECARA BERSAMAAN";
-                instructionText.className = "tracking-wide text-cyan-100 font-semibold";
-                subInstruction.innerText = "Dukungan Multitouch: Gunakan 2 tangan atau 2 orang sekaligus (~4.5 detik)";
-                subInstruction.className = "text-[11px] text-slate-400 font-mono";
-            }
-
-            if (!mainLoopFrame) {
-                mainLoopFrame = requestAnimationFrame(updateProgressLoop);
-            }
-        }
-
-        // Main Progress Calculation Loop (~4.5 seconds full hold)
-        function updateProgressLoop() {
-            if (isLaunchCompleted) return;
-
-            const increment = 0.38; // Fill speed
-            const drainSpeed = 1.6;  // Drain speed on release
-
-            // Update Left Progress
-            if (isLeftActive && isRightActive) {
-                progressL += increment;
-                progressR += increment;
-            } else {
-                // Drain left if left released or dual hold incomplete
-                if (isLeftActive) {
-                    progressL += increment * 0.4; // slow charge if only one side held
-                } else {
-                    progressL -= drainSpeed;
-                }
-
-                if (isRightActive) {
-                    progressR += increment * 0.4;
-                } else {
-                    progressR -= drainSpeed;
-                }
-            }
-
-            // Cap limits
-            if (progressL > 100) progressL = 100;
-            if (progressL < 0) progressL = 0;
-            if (progressR > 100) progressR = 100;
-            if (progressR < 0) progressR = 0;
-
-            // Render Ring Dash offsets
-            setRingProgress(progressLeft, progressL);
-            setRingProgress(progressRight, progressR);
-
-            percentLeft.innerText = `${Math.floor(progressL)}%`;
-            percentRight.innerText = `${Math.floor(progressR)}%`;
-
-            // Play Synth audio feedback
-            const avgProgress = (progressL + progressR) / 2;
-            if (isLeftActive && isRightActive && Math.floor(avgProgress) % 3 === 0) {
-                sound.playHum(avgProgress);
-            }
-
-            // Trigger Launch Sequence when both scanners reach 100%
-            if (progressL >= 100 && progressR >= 100) {
-                onDualScanComplete();
-                return;
-            }
-
-            if (progressL > 0 || progressR > 0 || isLeftActive || isRightActive) {
-                mainLoopFrame = requestAnimationFrame(updateProgressLoop);
-            } else {
-                mainLoopFrame = null;
-            }
-        }
-
-        // Launch Sequence Trigger
-        function onDualScanComplete() {
-            isLaunchCompleted = true;
-            cancelAnimationFrame(mainLoopFrame);
-
-            percentLeft.innerText = "TERVERIFIKASI";
-            percentRight.innerText = "TERVERIFIKASI";
-            instructionText.innerText = "AUTENTIKASI GANDA BERHASIL!";
-
-            ambientGlow.style.width = '750px';
-            ambientGlow.style.height = '750px';
-
-            setTimeout(() => {
-                scannerContainer.classList.add('scale-0', 'opacity-0');
+            // 2. Deteksi keluar aplikasi / pindah jendela (kecuali klik sah di dalam iframe)
+            window.addEventListener('blur', () => {
+                if (!state.isExamActive || state.isLocked) return;
                 setTimeout(() => {
-                    scannerContainer.classList.add('hidden');
-                    countdownContainer.classList.remove('hidden');
-                    countdownContainer.classList.add('flex');
-                    startCountdownSequence();
-                }, 400);
-            }, 500);
-        }
+                    if (document.visibilityState === 'hidden') return;
+                    const activeEl = document.activeElement;
+                    const isInteractingWithIframe =
+                        activeEl === el.examIframe ||
+                        (activeEl && activeEl.tagName === 'IFRAME') ||
+                        state.isPointerInsideIframe;
 
-        // Countdown Sequence (5, 4, 3, 2, 1)
-        function startCountdownSequence() {
-            let currentVal = 5;
-
-            function runTick() {
-                countNumber.innerText = currentVal;
-                countNumber.classList.remove('animate-count');
-                void countNumber.offsetWidth; // Trigger DOM reflow
-                countNumber.classList.add('animate-count');
-
-                sound.playTick(currentVal);
-
-                if (currentVal > 1) {
-                    currentVal--;
-                    setTimeout(runTick, 1000);
-                } else {
-                    setTimeout(completeLaunch, 1000);
-                }
-            }
-
-            runTick();
-        }
-
-        // Final Celebration
-        function completeLaunch() {
-            countdownContainer.classList.add('scale-0', 'opacity-0');
-            sound.playSuccess();
-            triggerFireworks();
-
-            ambientGlow.style.width = '1000px';
-            ambientGlow.style.height = '1000px';
-
-            setTimeout(() => {
-                countdownContainer.classList.add('hidden');
-                successContent.classList.remove('hidden');
-                setInterval(launchMildConfetti, 2800);
-            }, 400);
-        }
-
-        function triggerFireworks() {
-            const duration = 3.5 * 1000;
-            const animationEnd = Date.now() + duration;
-            const defaults = { startVelocity: 35, spread: 360, ticks: 70, zIndex: 100 };
-
-            const interval = setInterval(function() {
-                const timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) return clearInterval(interval);
-
-                const particleCount = 55 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { 
-                    particleCount, 
-                    origin: { x: Math.random() * 0.3 + 0.1, y: Math.random() - 0.2 },
-                    colors: ['#00f2fe', '#4facfe', '#7928CA', '#f6d365', '#ffffff']
-                }));
-                confetti(Object.assign({}, defaults, { 
-                    particleCount, 
-                    origin: { x: Math.random() * 0.3 + 0.6, y: Math.random() - 0.2 },
-                    colors: ['#00f2fe', '#4facfe', '#7928CA', '#f6d365', '#ffffff']
-                }));
-            }, 250);
-        }
-
-        function launchMildConfetti() {
-            confetti({
-                particleCount: 20,
-                spread: 70,
-                origin: { y: 0.75 },
-                colors: ['#00f2fe', '#7928CA', '#f6d365']
+                    if (!isInteractingWithIframe && !document.hasFocus()) {
+                        triggerViolation('Siswa keluar dari jendela browser ujian!');
+                    }
+                }, 120);
             });
-        }
+
+            // 3. Deteksi keluar dari mode layar penuh (Fullscreen)
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement && state.isExamActive && !state.isLocked) {
+                    triggerViolation('Siswa keluar dari mode Layar Penuh (Fullscreen)!');
+                }
+            });
+
+            // 4. Blokir klik kanan & pintasan keyboard curang
+            document.addEventListener('contextmenu', (e) => {
+                if (state.isExamActive) e.preventDefault();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (!state.isExamActive || state.isLocked) return;
+                const key = e.key.toLowerCase();
+                if (
+                    e.key === 'F12' ||
+                    (e.ctrlKey && ['t', 'n', 'w', 'u', 'p', 's'].includes(key)) ||
+                    (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(key))
+                ) {
+                    e.preventDefault();
+                    triggerViolation(`Percobaan menggunakan pintasan terlarang (${e.key.toUpperCase()})!`);
+                }
+            });
+
+            // Ambil daftar ujian dari Google Sheet saat halaman dimuat
+            fetchExamLinksFromGSheet();
+        })();
     </script>
 </body>
 </html>
