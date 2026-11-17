@@ -564,7 +564,7 @@
                     <ol start="3" class="list-decimal pl-5 space-y-1.5 leading-relaxed">
                         <li>Klik <strong>Terapkan (Deploy) &rarr; Deployment baru (New deployment)</strong> &rarr; pilih jenis <strong>Aplikasi web (Web app)</strong>.</li>
                         <li>Pada bagian <em>Yang memiliki akses (Who has access)</em>, pilih <strong>Siapa saja (Anyone)</strong>, lalu klik <strong>Terapkan</strong> dan salin <strong>URL Aplikasi Web</strong> (berakhiran <code>/exec</code>).</li>
-                        <li>Tempelkan URL tersebut ke variabel <code>https://script.google.com/macros/s/AKfycbxbWiHQS_gx2yNFa6EoyRwjV4mlc2Up08Uq6d2lOzc9MIgMc2NdlXG5NI0OfhCeJ0MUXg/exec</code> di dalam file HTML di repository GitHub Anda.</li>
+                        <li>Tempelkan URL tersebut ke variabel <code>APPS_SCRIPT_WEB_APP_URL</code> di dalam file HTML di repository GitHub Anda.</li>
                     </ol>
                 </div>
 
@@ -599,7 +599,7 @@
             const GSHEET_SISWA_URL = `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?sheet=${encodeURIComponent('SISWA')}&tqx=out:json`;
 
             // TEMPELKAN URL WEB APP GOOGLE APPS SCRIPT (/exec) DI BAWAH INI AGAR REALTIME DI SEMUA HP SISWA:
-            let APPS_SCRIPT_WEB_APP_URL = '';
+            let APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxbWiHQS_gx2yNFa6EoyRwjV4mlc2Up08Uq6d2lOzc9MIgMc2NdlXG5NI0OfhCeJ0MUXg/exec';
 
             const VIOLATION_COOLDOWN_MS = 1500;
             const PENALTY_SECONDS = 5 * 60; // 5 menit penalti per pelanggaran
