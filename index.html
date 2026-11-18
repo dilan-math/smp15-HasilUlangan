@@ -112,7 +112,7 @@
                         </div>
                         <div class="flex items-start gap-2.5">
                             <span class="font-black text-red-600 mt-0.5">04.</span>
-                            <p>Batas maksimal pelanggaran adalah <strong>3 kali</strong>. Jika mencapai 3 kali pelanggaran, sesi ujian otomatis dikunci dan dihentikan.</p>
+                            <p>Batas maksimal pelanggaran adalah <strong>10 kali</strong>. Jika mencapai 10 kali pelanggaran, akun ujian Anda akan <strong>dikunci permanen</strong> dan hanya bisa dibuka kembali oleh Admin/Pengawas.</p>
                         </div>
                     </div>
                 </div>
@@ -156,7 +156,7 @@
                 <!-- Badge Pelanggaran -->
                 <div id="violation-badge" class="px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-xs font-extrabold text-emerald-400 flex items-center gap-1.5">
                     <span>Pelanggaran:</span>
-                    <span id="violation-count">0/3</span>
+                    <span id="violation-count">0/10</span>
                 </div>
 
                 <!-- Timer -->
@@ -233,7 +233,7 @@
 
             <div class="bg-red-50 border border-red-200 rounded-2xl p-4 text-xs sm:text-sm text-red-900 space-y-1">
                 <p>Sanksi Otomatis: <strong>Waktu ujian dikurangi 5 menit</strong>.</p>
-                <p>Status Pelanggaran Anda: <strong id="overlay-violation-status" class="text-red-700">1 dari 3</strong></p>
+                <p>Status Pelanggaran Anda: <strong id="overlay-violation-status" class="text-red-700">1 dari 10</strong></p>
             </div>
 
             <button id="btn-resume-exam" type="button" class="w-full py-3.5 px-5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm sm:text-base shadow-lg transition cursor-pointer">
@@ -300,6 +300,12 @@
             <button id="btn-back-home" type="button" class="w-full py-3.5 px-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm transition cursor-pointer">
                 Kembali ke Halaman Awal
             </button>
+            <button id="btn-check-unlock" type="button" class="hidden w-full py-3.5 px-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm transition cursor-pointer">
+                Cek Status Buka Kunci dari Admin
+            </button>
+            <p id="lock-hint-text" class="hidden text-[11px] font-semibold text-red-600">
+                Sesi Anda dikunci karena pelanggaran/stop paksa. Silakan melapor ke Pengawas untuk membuka kunci sebelum dapat masuk kembali.
+            </p>
         </div>
     </div>
 
@@ -467,94 +473,150 @@
 
                     <div class="relative">
                         <pre id="apps-script-code" class="bg-slate-900 text-emerald-300 p-3.5 rounded-xl text-[11px] font-mono overflow-x-auto leading-relaxed select-all">function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('MONITORING');
-  if (!sheet) {
-    sheet = ss.insertSheet('MONITORING');
-    sheet.appendRow(['sessionId', 'studentClass', 'studentName', 'status', 'activeSubject', 'violations', 'maxViolations', 'remainingSeconds', 'lastViolationReason', 'lastViolationTime', 'forceStop', 'updatedAt']);
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'Server sibuk, coba lagi' })).setMimeType(ContentService.MimeType.JSON);
   }
-  var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'get';
-  var data = sheet.getDataRange().getValues();
-  if (action === 'sync') {
-    var sid = e.parameter.sessionId;
-    var rowIndex = -1;
-    var existingForceStop = false;
-    for (var i = 1; i &lt; data.length; i++) {
-      if (String(data[i][0]) === String(sid)) {
-        rowIndex = i + 1;
-        existingForceStop = (data[i][10] === true || String(data[i][10]).toUpperCase() === 'TRUE');
-        break;
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('MONITORING');
+    if (!sheet) {
+      sheet = ss.insertSheet('MONITORING');
+      sheet.appendRow(['sessionId', 'studentClass', 'studentName', 'status', 'activeSubject', 'violations', 'maxViolations', 'remainingSeconds', 'lastViolationReason', 'lastViolationTime', 'forceStop', 'updatedAt']);
+    }
+    var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'get';
+    var data = sheet.getDataRange().getValues();
+    if (action === 'sync') {
+      var sid = e.parameter.sessionId;
+      var rowIndex = -1;
+      var existingForceStop = false;
+      var existingStatus = '';
+      var existingViolations = 0;
+      for (var i = 1; i &lt; data.length; i++) {
+        if (String(data[i][0]) === String(sid)) {
+          rowIndex = i + 1;
+          existingStatus = String(data[i][3] || '');
+          existingViolations = Number(data[i][5] || 0);
+          existingForceStop = (data[i][10] === true || String(data[i][10]).toUpperCase() === 'TRUE');
+          break;
+        }
       }
-    }
-    var rowValues = [
-      sid,
-      e.parameter.studentClass || '',
-      e.parameter.studentName || '',
-      existingForceStop ? 'STOP PAKSA' : (e.parameter.status || 'AKTIF'),
-      e.parameter.activeSubject || '-',
-      Number(e.parameter.violations || 0),
-      Number(e.parameter.maxViolations || 3),
-      e.parameter.remainingSeconds !== '' ? Number(e.parameter.remainingSeconds) : '',
-      e.parameter.lastViolationReason || '-',
-      e.parameter.lastViolationTime || '-',
-      existingForceStop,
-      Date.now()
-    ];
-    if (rowIndex &gt; 0) {
-      sheet.getRange(rowIndex, 1, 1, rowValues.length).setValues([rowValues]);
-    } else {
-      sheet.appendRow(rowValues);
-    }
-    return ContentService.createTextOutput(JSON.stringify({ ok: true, forceStop: existingForceStop })).setMimeType(ContentService.MimeType.JSON);
-  }
-  if (action === 'forceStop') {
-    var targetSid = e.parameter.sessionId;
-    for (var j = 1; j &lt; data.length; j++) {
-      if (String(data[j][0]) === String(targetSid)) {
-        sheet.getRange(j + 1, 4).setValue('STOP PAKSA');
-        sheet.getRange(j + 1, 11).setValue(true);
-        break;
+      var maxV = Number(e.parameter.maxViolations || 10);
+      var incomingV = Number(e.parameter.violations || 0);
+      var isAlreadyLocked = existingForceStop || existingStatus.indexOf('TERKUNCI') !== -1 || existingViolations &gt;= maxV;
+      var finalViolations = Math.max(existingViolations, incomingV);
+      var finalStatus = e.parameter.status || 'AKTIF';
+      var finalForceStop = existingForceStop;
+      if (isAlreadyLocked) {
+        finalForceStop = true;
+        finalStatus = existingStatus.indexOf('STOP PAKSA') !== -1 ? 'STOP PAKSA' : 'TERKUNCI (10x PELANGGARAN)';
+      } else if (finalViolations &gt;= maxV) {
+        finalForceStop = true;
+        finalStatus = 'TERKUNCI (10x PELANGGARAN)';
       }
-    }
-    return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
-  }
-  if (action === 'delete') {
-    var delSid = e.parameter.sessionId;
-    for (var k = data.length - 1; k &gt;= 1; k--) {
-      if (String(data[k][0]) === String(delSid)) {
-        sheet.deleteRow(k + 1);
+      var rowValues = [
+        sid,
+        e.parameter.studentClass || '',
+        e.parameter.studentName || '',
+        finalStatus,
+        e.parameter.activeSubject || '-',
+        finalViolations,
+        maxV,
+        e.parameter.remainingSeconds !== '' ? Number(e.parameter.remainingSeconds) : '',
+        e.parameter.lastViolationReason || '-',
+        e.parameter.lastViolationTime || '-',
+        finalForceStop,
+        Date.now()
+      ];
+      if (rowIndex &gt; 0) {
+        sheet.getRange(rowIndex, 1, 1, rowValues.length).setValues([rowValues]);
+      } else {
+        sheet.appendRow(rowValues);
       }
+      return ContentService.createTextOutput(JSON.stringify({ ok: true, forceStop: finalForceStop, locked: isAlreadyLocked || finalViolations &gt;= maxV, status: finalStatus, violations: finalViolations })).setMimeType(ContentService.MimeType.JSON);
     }
-    return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
-  }
-  if (action === 'clearDone') {
-    for (var m = data.length - 1; m &gt;= 1; m--) {
-      var st = String(data[m][3]);
-      if (st === 'SELESAI' || st === 'WAKTU HABIS') {
-        sheet.deleteRow(m + 1);
+    if (action === 'checkLock') {
+      var chkSid = e.parameter.sessionId;
+      for (var c = 1; c &lt; data.length; c++) {
+        if (String(data[c][0]) === String(chkSid)) {
+          var cStatus = String(data[c][3] || '');
+          var cViolations = Number(data[c][5] || 0);
+          var cMax = Number(data[c][6] || 10);
+          var cForce = (data[c][10] === true || String(data[c][10]).toUpperCase() === 'TRUE');
+          var locked = cForce || cStatus.indexOf('TERKUNCI') !== -1 || cViolations &gt;= cMax;
+          return ContentService.createTextOutput(JSON.stringify({ ok: true, locked: locked, status: cStatus, violations: cViolations })).setMimeType(ContentService.MimeType.JSON);
+        }
       }
+      return ContentService.createTextOutput(JSON.stringify({ ok: true, locked: false, status: 'BARU', violations: 0 })).setMimeType(ContentService.MimeType.JSON);
     }
-    return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+    if (action === 'unlock') {
+      var unlSid = e.parameter.sessionId;
+      for (var u = 1; u &lt; data.length; u++) {
+        if (String(data[u][0]) === String(unlSid)) {
+          sheet.getRange(u + 1, 4).setValue('DIBUKA ADMIN');
+          sheet.getRange(u + 1, 6).setValue(0);
+          sheet.getRange(u + 1, 9).setValue('Reset &amp; Buka Kunci oleh Admin');
+          sheet.getRange(u + 1, 11).setValue(false);
+          sheet.getRange(u + 1, 12).setValue(Date.now());
+          break;
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'forceStop') {
+      var targetSid = e.parameter.sessionId;
+      for (var j = 1; j &lt; data.length; j++) {
+        if (String(data[j][0]) === String(targetSid)) {
+          sheet.getRange(j + 1, 4).setValue('STOP PAKSA');
+          sheet.getRange(j + 1, 11).setValue(true);
+          sheet.getRange(j + 1, 12).setValue(Date.now());
+          break;
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'delete') {
+      var delSid = e.parameter.sessionId;
+      for (var k = data.length - 1; k &gt;= 1; k--) {
+        if (String(data[k][0]) === String(delSid)) {
+          sheet.deleteRow(k + 1);
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'clearDone') {
+      for (var m = data.length - 1; m &gt;= 1; m--) {
+        var st = String(data[m][3]);
+        if (st === 'SELESAI' || st === 'WAKTU HABIS') {
+          sheet.deleteRow(m + 1);
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+    }
+    var list = [];
+    for (var r = 1; r &lt; data.length; r++) {
+      if (!data[r][0]) continue;
+      list.push({
+        id: String(data[r][0]),
+        studentClass: String(data[r][1]),
+        studentName: String(data[r][2]),
+        status: String(data[r][3]),
+        activeSubject: String(data[r][4]),
+        violations: Number(data[r][5] || 0),
+        maxViolations: Number(data[r][6] || 10),
+        remainingSeconds: data[r][7] !== '' ? Number(data[r][7]) : null,
+        lastViolationReason: String(data[r][8] || '-'),
+        lastViolationTime: String(data[r][9] || '-'),
+        forceStop: (data[r][10] === true || String(data[r][10]).toUpperCase() === 'TRUE'),
+        updatedAt: Number(data[r][11] || 0)
+      });
+    }
+    return ContentService.createTextOutput(JSON.stringify({ ok: true, sessions: list })).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
   }
-  var list = [];
-  for (var r = 1; r &lt; data.length; r++) {
-    if (!data[r][0]) continue;
-    list.push({
-      id: String(data[r][0]),
-      studentClass: String(data[r][1]),
-      studentName: String(data[r][2]),
-      status: String(data[r][3]),
-      activeSubject: String(data[r][4]),
-      violations: Number(data[r][5] || 0),
-      maxViolations: Number(data[r][6] || 3),
-      remainingSeconds: data[r][7] !== '' ? Number(data[r][7]) : null,
-      lastViolationReason: String(data[r][8] || '-'),
-      lastViolationTime: String(data[r][9] || '-'),
-      forceStop: (data[r][10] === true || String(data[r][10]).toUpperCase() === 'TRUE'),
-      updatedAt: Number(data[r][11] || 0)
-    });
-  }
-  return ContentService.createTextOutput(JSON.stringify({ ok: true, sessions: list })).setMimeType(ContentService.MimeType.JSON);
 }</pre>
                         <button id="btn-copy-apps-script" type="button" class="mt-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition cursor-pointer">
                             Salin Kode Apps Script
@@ -604,6 +666,8 @@
             const VIOLATION_COOLDOWN_MS = 1500;
             const PENALTY_SECONDS = 5 * 60; // 5 menit penalti per pelanggaran
             const ADMIN_PIN = '1234';
+            const MAX_VIOLATIONS_LIMIT = 10;
+            const LOCAL_LOCK_STORAGE_KEY = 'cbt_smp15_locked_sessions_v1';
 
             // Inisialisasi Backend Real-Time (Google Apps Script / Firebase Firestore)
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'cbt-smp15-default';
@@ -626,11 +690,11 @@
                 activeSubjectTitle: '-',
                 remainingSeconds: 0,
                 violations: 0,
-                maxViolations: 3,
+                maxViolations: MAX_VIOLATIONS_LIMIT,
                 violationLogs: [],
                 lastViolationTimestamp: 0,
                 timerInterval: null,
-                heartbeatInterval: null,
+                heartbeatTimeout: null,
                 isPointerInsideIframe: false
             };
 
@@ -680,6 +744,8 @@
                 summaryViolations: document.getElementById('summary-violations'),
                 summaryStatus: document.getElementById('summary-status'),
                 btnBackHome: document.getElementById('btn-back-home'),
+                btnCheckUnlock: document.getElementById('btn-check-unlock'),
+                lockHintText: document.getElementById('lock-hint-text'),
 
                 btnOpenAdmin: document.getElementById('btn-open-admin'),
                 adminPinModal: document.getElementById('admin-pin-modal'),
@@ -796,6 +862,37 @@
 
             function getActiveAppsScriptUrl() {
                 return (APPS_SCRIPT_WEB_APP_URL || '').trim();
+            }
+
+            function buildSessionId(studentClass, studentName) {
+                return `${studentClass}_${studentName}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+            }
+
+            function getLocalLockedSessions() {
+                try {
+                    return JSON.parse(localStorage.getItem(LOCAL_LOCK_STORAGE_KEY) || '{}');
+                } catch (e) {
+                    return {};
+                }
+            }
+
+            function setLocalSessionLock(sessionId, lockInfo) {
+                if (!sessionId) return;
+                try {
+                    const current = getLocalLockedSessions();
+                    if (lockInfo) {
+                        current[sessionId] = lockInfo;
+                    } else {
+                        delete current[sessionId];
+                    }
+                    localStorage.setItem(LOCAL_LOCK_STORAGE_KEY, JSON.stringify(current));
+                } catch (e) {}
+            }
+
+            function getLocalSessionLock(sessionId) {
+                if (!sessionId) return null;
+                const current = getLocalLockedSessions();
+                return current[sessionId] || null;
             }
 
             // =================================================================
@@ -1143,8 +1240,8 @@
                         const res = await fetch(`${scriptUrl}?${params.toString()}`);
                         if (res.ok) {
                             const result = await res.json();
-                            if (result && result.forceStop === true && state.isExamActive && !state.isLocked) {
-                                endExam('FORCE_STOPPED');
+                            if (result && (result.forceStop === true || result.locked === true) && state.isExamActive && !state.isLocked) {
+                                endExam(result.status && result.status.includes('TERKUNCI') ? 'MAX_VIOLATIONS' : 'FORCE_STOPPED');
                             }
                         }
                     } catch (err) {
@@ -1164,6 +1261,74 @@
                 } catch (err) {
                     console.warn('Gagal mengirim telemetry sesi:', err);
                 }
+            }
+
+            // Cek status kunci sesi di server & memori lokal sebelum siswa masuk ujian
+            async function verifySessionLockStatus(sessionId) {
+                const localLock = getLocalSessionLock(sessionId);
+                const scriptUrl = getActiveAppsScriptUrl();
+
+                if (scriptUrl) {
+                    try {
+                        const res = await fetch(`${scriptUrl}?action=checkLock&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data && data.ok) {
+                                if (data.locked === false) {
+                                    // Admin sudah membuka kunci di server -> hapus kunci lokal di HP siswa
+                                    setLocalSessionLock(sessionId, null);
+                                    return { locked: false };
+                                }
+                                if (data.locked === true) {
+                                    const lockDetail = {
+                                        locked: true,
+                                        status: data.status || 'TERKUNCI (10x PELANGGARAN)',
+                                        violations: Number(data.violations || MAX_VIOLATIONS_LIMIT)
+                                    };
+                                    setLocalSessionLock(sessionId, lockDetail);
+                                    return lockDetail;
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('Gagal cek status kunci ke server, memakai status lokal:', err);
+                    }
+                }
+
+                const cachedSession = liveSessionsMap.get(sessionId);
+                if (cachedSession) {
+                    const isSessionLocked = cachedSession.forceStop === true ||
+                        String(cachedSession.status).includes('TERKUNCI') ||
+                        Number(cachedSession.violations || 0) >= MAX_VIOLATIONS_LIMIT;
+                    if (!isSessionLocked) {
+                        setLocalSessionLock(sessionId, null);
+                        return { locked: false };
+                    }
+                    return {
+                        locked: true,
+                        status: cachedSession.status || 'TERKUNCI (10x PELANGGARAN)',
+                        violations: Number(cachedSession.violations || MAX_VIOLATIONS_LIMIT)
+                    };
+                }
+
+                if (localLock && localLock.locked) {
+                    return localLock;
+                }
+
+                return { locked: false };
+            }
+
+            // Smart Heartbeat dengan jeda acak 35-50 detik agar aman menampung 466+ siswa serentak
+            function scheduleNextHeartbeat() {
+                if (state.heartbeatTimeout) clearTimeout(state.heartbeatTimeout);
+                if (!state.isExamActive || state.isLocked) return;
+                const jitterDelayMs = 35000 + Math.floor(Math.random() * 15000);
+                state.heartbeatTimeout = setTimeout(() => {
+                    if (state.isExamActive && !state.isLocked) {
+                        syncStudentSessionToCloud(state.isSubjectSelected ? 'MENGERJAKAN' : 'AKTIF');
+                        scheduleNextHeartbeat();
+                    }
+                }, jitterDelayMs);
             }
 
             // =================================================================
@@ -1198,16 +1363,70 @@
                 }
             }
 
-            function startExam() {
+            function showLockedEndScreen(studentClass, studentName, violationsCount, statusText) {
+                state.isExamActive = false;
+                state.isLocked = true;
+                state.studentClass = studentClass;
+                state.studentName = studentName;
+                state.sessionDocId = buildSessionId(studentClass, studentName);
+                state.violations = violationsCount;
+
+                el.startScreen.classList.add('hidden');
+                el.examContainer.classList.add('hidden');
+                el.violationOverlay.classList.add('hidden');
+                el.confirmFinishModal.classList.add('hidden');
+
+                el.endIconBox.className = 'w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto';
+                el.endTitle.textContent = 'Ujian Terkunci Permanen!';
+                el.endSubtitle.textContent = 'Anda telah mencapai 10 kali pelanggaran atau dihentikan pengawas. Ujian tidak dapat dilanjutkan kecuali dibuka kuncinya oleh Admin.';
+                el.summaryStatus.className = 'font-extrabold text-red-600';
+
+                el.summaryStudentName.textContent = studentName || '-';
+                el.summaryStudentClass.textContent = studentClass || '-';
+                el.summaryViolations.textContent = `${violationsCount} dari ${MAX_VIOLATIONS_LIMIT} kali`;
+                el.summaryStatus.textContent = statusText || 'TERKUNCI (10x PELANGGARAN)';
+
+                if (el.btnBackHome) el.btnBackHome.classList.add('hidden');
+                if (el.btnCheckUnlock) el.btnCheckUnlock.classList.remove('hidden');
+                if (el.lockHintText) el.lockHintText.classList.remove('hidden');
+
+                el.endScreen.classList.remove('hidden');
+            }
+
+            async function startExam() {
                 if (!state.studentClass || !state.studentName) return;
 
-                const cleanId = `${state.studentClass}_${state.studentName}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const cleanId = buildSessionId(state.studentClass, state.studentName);
                 state.sessionDocId = cleanId;
+
+                if (el.btnStartExam) {
+                    el.btnStartExam.disabled = true;
+                }
+                if (el.startHint) {
+                    el.startHint.textContent = 'Memeriksa status kunci peserta...';
+                }
+
+                // Cek apakah siswa ini sedang dalam status TERKUNCI (10x pelanggaran / Stop Paksa)
+                const lockCheck = await verifySessionLockStatus(cleanId);
+                if (el.btnStartExam) {
+                    el.btnStartExam.disabled = false;
+                }
+                if (lockCheck.locked) {
+                    showLockedEndScreen(
+                        state.studentClass,
+                        state.studentName,
+                        lockCheck.violations || MAX_VIOLATIONS_LIMIT,
+                        lockCheck.status || 'TERKUNCI (10x PELANGGARAN)'
+                    );
+                    return;
+                }
+
                 state.isExamActive = true;
                 state.isLocked = false;
                 state.isSubjectSelected = false;
                 state.activeSubjectTitle = 'Memilih Mata Pelajaran';
                 state.violations = 0;
+                state.maxViolations = MAX_VIOLATIONS_LIMIT;
                 state.violationLogs = [];
                 state.lastViolationTimestamp = 0;
 
@@ -1248,12 +1467,7 @@
                     }
                 }, 1000);
 
-                if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-                state.heartbeatInterval = setInterval(() => {
-                    if (state.isExamActive && !state.isLocked) {
-                        syncStudentSessionToCloud(state.isSubjectSelected ? 'MENGERJAKAN' : 'AKTIF');
-                    }
-                }, 5000);
+                scheduleNextHeartbeat();
             }
 
             function openSubjectExam(exam) {
@@ -1320,7 +1534,7 @@
                 state.isLocked = true;
 
                 if (state.timerInterval) clearInterval(state.timerInterval);
-                if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
+                if (state.heartbeatTimeout) clearTimeout(state.heartbeatTimeout);
 
                 el.violationOverlay.classList.add('hidden');
                 el.confirmFinishModal.classList.add('hidden');
@@ -1329,17 +1543,21 @@
                 exitFullscreenSafe();
 
                 let finalStatusLabel = 'SELESAI';
+                let isHardLocked = false;
+
                 if (reason === 'MAX_VIOLATIONS') {
-                    finalStatusLabel = 'TERKUNCI (3x PELANGGARAN)';
+                    finalStatusLabel = 'TERKUNCI (10x PELANGGARAN)';
+                    isHardLocked = true;
                     el.endIconBox.className = 'w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto';
-                    el.endTitle.textContent = 'Ujian Dihentikan & Dikunci!';
-                    el.endSubtitle.textContent = 'Anda telah mencapai batas maksimal 3 kali pelanggaran keluar dari layar ujian.';
+                    el.endTitle.textContent = 'Ujian Dihentikan & Dikunci Permanen!';
+                    el.endSubtitle.textContent = 'Anda telah mencapai batas maksimal 10 kali pelanggaran. Anda tidak dapat mengisi ujian kecuali kunci dibuka oleh Admin.';
                     el.summaryStatus.className = 'font-extrabold text-red-600';
                 } else if (reason === 'FORCE_STOPPED') {
                     finalStatusLabel = 'STOP PAKSA PENGAWAS';
+                    isHardLocked = true;
                     el.endIconBox.className = 'w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto';
-                    el.endTitle.textContent = 'Sesi Dihentikan Pengawas';
-                    el.endSubtitle.textContent = 'Pengawas ujian telah menghentikan sesi Anda dari jarak jauh.';
+                    el.endTitle.textContent = 'Sesi Dihentikan & Dikunci Pengawas';
+                    el.endSubtitle.textContent = 'Pengawas ujian telah menghentikan dan mengunci sesi Anda. Hubungi Admin jika perlu membuka kunci.';
                     el.summaryStatus.className = 'font-extrabold text-red-600';
                 } else if (reason === 'TIMEOUT') {
                     finalStatusLabel = 'WAKTU HABIS';
@@ -1355,9 +1573,26 @@
                     el.summaryStatus.className = 'font-extrabold text-emerald-600';
                 }
 
+                if (isHardLocked) {
+                    setLocalSessionLock(state.sessionDocId, {
+                        locked: true,
+                        studentClass: state.studentClass,
+                        studentName: state.studentName,
+                        status: finalStatusLabel,
+                        violations: state.violations
+                    });
+                    if (el.btnBackHome) el.btnBackHome.classList.add('hidden');
+                    if (el.btnCheckUnlock) el.btnCheckUnlock.classList.remove('hidden');
+                    if (el.lockHintText) el.lockHintText.classList.remove('hidden');
+                } else {
+                    if (el.btnBackHome) el.btnBackHome.classList.remove('hidden');
+                    if (el.btnCheckUnlock) el.btnCheckUnlock.classList.add('hidden');
+                    if (el.lockHintText) el.lockHintText.classList.add('hidden');
+                }
+
                 el.summaryStudentName.textContent = state.studentName || '-';
                 el.summaryStudentClass.textContent = state.studentClass || '-';
-                el.summaryViolations.textContent = `${state.violations} kali`;
+                el.summaryViolations.textContent = `${state.violations} dari ${state.maxViolations} kali`;
                 el.summaryStatus.textContent = finalStatusLabel;
 
                 el.endScreen.classList.remove('hidden');
@@ -1471,9 +1706,10 @@
 
                 el.adminMonitoringTbody.innerHTML = filtered.map((s) => {
                     const vCount = Number(s.violations || 0);
-                    const vMax = Number(s.maxViolations || 3);
+                    const vMax = Number(s.maxViolations || MAX_VIOLATIONS_LIMIT);
+                    const isSessionLocked = s.forceStop === true || String(s.status).includes('TERKUNCI') || String(s.status).includes('STOP') || vCount >= vMax;
                     let statusBadge = `<span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[11px] font-extrabold">${escapeHTML(s.status)}</span>`;
-                    if (String(s.status).includes('TERKUNCI') || String(s.status).includes('STOP')) {
+                    if (isSessionLocked) {
                         statusBadge = `<span class="px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-[11px] font-extrabold">${escapeHTML(s.status)}</span>`;
                     } else if (s.status === 'SELESAI') {
                         statusBadge = `<span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-extrabold">SELESAI</span>`;
@@ -1484,6 +1720,14 @@
                     const vBadgeClass = vCount === 0
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : (vCount < vMax ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-700 border-red-200');
+
+                    const primaryControlBtn = isSessionLocked
+                        ? `<button type="button" data-action="unlock-session" data-session-id="${escapeHTML(s.id)}" class="admin-action-btn px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold transition cursor-pointer">
+                               Buka Kunci / Reset
+                           </button>`
+                        : `<button type="button" data-action="force-stop" data-session-id="${escapeHTML(s.id)}" class="admin-action-btn px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold transition cursor-pointer">
+                               Stop Paksa
+                           </button>`;
 
                     return `
                         <tr class="hover:bg-slate-50/80 transition">
@@ -1506,9 +1750,7 @@
                                 ${formatTime(s.remainingSeconds)}
                             </td>
                             <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
-                                <button type="button" data-action="force-stop" data-session-id="${escapeHTML(s.id)}" class="admin-action-btn px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold transition cursor-pointer">
-                                    Stop Paksa
-                                </button>
+                                ${primaryControlBtn}
                                 <button type="button" data-action="delete-session" data-session-id="${escapeHTML(s.id)}" class="admin-action-btn px-2.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-[11px] font-bold transition cursor-pointer">
                                     Hapus
                                 </button>
@@ -1656,6 +1898,31 @@
                 el.btnBackHome.addEventListener('click', () => {
                     el.endScreen.classList.add('hidden');
                     el.startScreen.classList.remove('hidden');
+                });
+            }
+
+            if (el.btnCheckUnlock) {
+                el.btnCheckUnlock.addEventListener('click', async () => {
+                    if (!state.sessionDocId) return;
+                    el.btnCheckUnlock.disabled = true;
+                    el.btnCheckUnlock.textContent = 'Memeriksa status kunci ke server...';
+
+                    const checkResult = await verifySessionLockStatus(state.sessionDocId);
+
+                    el.btnCheckUnlock.disabled = false;
+                    el.btnCheckUnlock.textContent = 'Cek Status Buka Kunci dari Admin';
+
+                    if (!checkResult.locked) {
+                        state.isLocked = false;
+                        state.violations = 0;
+                        el.endScreen.classList.add('hidden');
+                        el.startScreen.classList.remove('hidden');
+                        if (el.startHint) {
+                            el.startHint.innerHTML = `<span class="text-emerald-600 font-bold">✓ Kunci ujian telah dibuka oleh Admin. Silakan klik "Mulai Ujian Sekarang".</span>`;
+                        }
+                    } else if (el.lockHintText) {
+                        el.lockHintText.textContent = 'Kunci BELUM dibuka oleh Admin. Silakan minta Pengawas menekan tombol "Buka Kunci / Reset" di Dashboard Admin.';
+                    }
                 });
             }
 
@@ -1834,9 +2101,13 @@
                     const scriptUrl = getActiveAppsScriptUrl();
                     if (scriptUrl) {
                         try {
-                            if (action === 'force-stop') {
+                            if (action === 'unlock-session') {
+                                setLocalSessionLock(sessionId, null);
+                                await fetch(`${scriptUrl}?action=unlock&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`);
+                            } else if (action === 'force-stop') {
                                 await fetch(`${scriptUrl}?action=forceStop&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`);
                             } else if (action === 'delete-session') {
+                                setLocalSessionLock(sessionId, null);
                                 await fetch(`${scriptUrl}?action=delete&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`);
                             }
                             await fetchMonitoringFromAppsScript();
@@ -1847,7 +2118,19 @@
                     }
 
                     if (!db || !currentUser) {
-                        if (action === 'delete-session') {
+                        if (action === 'unlock-session') {
+                            setLocalSessionLock(sessionId, null);
+                            const existing = liveSessionsMap.get(sessionId);
+                            if (existing) {
+                                existing.forceStop = false;
+                                existing.violations = 0;
+                                existing.status = 'DIBUKA ADMIN';
+                                existing.updatedAt = Date.now();
+                            }
+                            renderAdminMonitoringTable();
+                            renderAdminSiswaTable();
+                        } else if (action === 'delete-session') {
+                            setLocalSessionLock(sessionId, null);
                             liveSessionsMap.delete(sessionId);
                             renderAdminMonitoringTable();
                             renderAdminSiswaTable();
@@ -1857,13 +2140,23 @@
 
                     const sessionRef = doc(db, 'artifacts', appId, 'public', 'data', 'cbt_monitoring_sessions', sessionId);
                     try {
-                        if (action === 'force-stop') {
+                        if (action === 'unlock-session') {
+                            setLocalSessionLock(sessionId, null);
+                            await updateDoc(sessionRef, {
+                                forceStop: false,
+                                violations: 0,
+                                status: 'DIBUKA ADMIN',
+                                lastViolationReason: 'Reset & Buka Kunci oleh Admin',
+                                updatedAt: Date.now()
+                            });
+                        } else if (action === 'force-stop') {
                             await updateDoc(sessionRef, {
                                 forceStop: true,
                                 status: 'STOP PAKSA',
                                 updatedAt: Date.now()
                             });
                         } else if (action === 'delete-session') {
+                            setLocalSessionLock(sessionId, null);
                             await deleteDoc(sessionRef);
                         }
                     } catch (err) {
@@ -1871,6 +2164,21 @@
                     }
                 });
             }
+
+            // Jika perangkat siswa sebelumnya terkunci (misal halaman di-refresh), langsung tampilkan layar terkunci
+            (function restoreLockStateOnLoad() {
+                const lockedMap = getLocalLockedSessions();
+                const lockedEntries = Object.values(lockedMap).filter((item) => item && item.locked);
+                if (lockedEntries.length > 0) {
+                    const lastLocked = lockedEntries[lockedEntries.length - 1];
+                    showLockedEndScreen(
+                        lastLocked.studentClass || '-',
+                        lastLocked.studentName || '-',
+                        lastLocked.violations || MAX_VIOLATIONS_LIMIT,
+                        lastLocked.status || 'TERKUNCI (10x PELANGGARAN)'
+                    );
+                }
+            })();
 
             // Inisialisasi backend real-time & ambil data siswa serta jadwal ujian dari Google Sheet
             initRealtimeBackend();
