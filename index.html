@@ -410,6 +410,9 @@
                 </div>
             </div>
 
+            <!-- Banner Notifikasi Aksi Admin -->
+            <div id="admin-action-banner" class="hidden rounded-2xl px-4 py-3 text-xs sm:text-sm font-bold border"></div>
+
             <!-- PANEL 1: TABEL MONITORING REALTIME -->
             <div id="admin-panel-monitoring" class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
                 <div class="overflow-x-auto">
@@ -552,18 +555,25 @@
       return ContentService.createTextOutput(JSON.stringify({ ok: true, locked: false, status: 'BARU', violations: 0 })).setMimeType(ContentService.MimeType.JSON);
     }
     if (action === 'unlock') {
-      var unlSid = e.parameter.sessionId;
+      var unlSid = String(e.parameter.sessionId || '');
+      var unlClass = String(e.parameter.studentClass || '');
+      var unlName = String(e.parameter.studentName || '');
+      var unlockedCount = 0;
       for (var u = 1; u &lt; data.length; u++) {
-        if (String(data[u][0]) === String(unlSid)) {
+        var rowSid = String(data[u][0] || '');
+        var rowClass = String(data[u][1] || '');
+        var rowName = String(data[u][2] || '');
+        if (rowSid === unlSid || (unlClass &amp;&amp; unlName &amp;&amp; rowClass === unlClass &amp;&amp; rowName === unlName)) {
           sheet.getRange(u + 1, 4).setValue('DIBUKA ADMIN');
           sheet.getRange(u + 1, 6).setValue(0);
+          sheet.getRange(u + 1, 7).setValue(10);
           sheet.getRange(u + 1, 9).setValue('Reset &amp; Buka Kunci oleh Admin');
           sheet.getRange(u + 1, 11).setValue(false);
           sheet.getRange(u + 1, 12).setValue(Date.now());
-          break;
+          unlockedCount++;
         }
       }
-      return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ ok: true, unlockedCount: unlockedCount })).setMimeType(ContentService.MimeType.JSON);
     }
     if (action === 'forceStop') {
       var targetSid = e.parameter.sessionId;
@@ -779,20 +789,32 @@
                 adminFilterKelas: document.getElementById('admin-filter-kelas'),
                 adminSearchInput: document.getElementById('admin-search-input'),
                 btnAdminClearLogs: document.getElementById('btn-admin-clear-logs'),
+                adminActionBanner: document.getElementById('admin-action-banner'),
                 adminMonitoringTbody: document.getElementById('admin-monitoring-tbody'),
                 adminSiswaTbody: document.getElementById('admin-siswa-tbody')
             };
 
-            // =================================================================
-            // UTILITAS UMUM
-            // =================================================================
+            function showAdminBanner(message, type = 'info') {
+                if (!el.adminActionBanner) return;
+                const styles = {
+                    success: 'bg-emerald-50 border-emerald-300 text-emerald-800',
+                    warning: 'bg-amber-50 border-amber-300 text-amber-900',
+                    error: 'bg-red-50 border-red-300 text-red-800',
+                    info: 'bg-blue-50 border-blue-300 text-blue-800'
+                };
+                el.adminActionBanner.className = `rounded-2xl px-4 py-3 text-xs sm:text-sm font-bold border ${styles[type] || styles.info}`;
+                el.adminActionBanner.innerHTML = message;
+                el.adminActionBanner.classList.remove('hidden');
+            }
+
             function escapeHTML(str) {
-                return String(str || '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#39;');
+                return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[ch]));
             }
 
             function formatTime(totalSeconds) {
@@ -1173,6 +1195,7 @@
                     if (data && Array.isArray(data.sessions)) {
                         liveSessionsMap.clear();
                         data.sessions.forEach((item) => {
+                            item.maxViolations = MAX_VIOLATIONS_LIMIT;
                             liveSessionsMap.set(item.id, item);
                             if (
                                 state.isExamActive &&
@@ -1706,7 +1729,7 @@
 
                 el.adminMonitoringTbody.innerHTML = filtered.map((s) => {
                     const vCount = Number(s.violations || 0);
-                    const vMax = Number(s.maxViolations || MAX_VIOLATIONS_LIMIT);
+                    const vMax = MAX_VIOLATIONS_LIMIT;
                     const isSessionLocked = s.forceStop === true || String(s.status).includes('TERKUNCI') || String(s.status).includes('STOP') || vCount >= vMax;
                     let statusBadge = `<span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[11px] font-extrabold">${escapeHTML(s.status)}</span>`;
                     if (isSessionLocked) {
@@ -1722,10 +1745,10 @@
                         : (vCount < vMax ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-700 border-red-200');
 
                     const primaryControlBtn = isSessionLocked
-                        ? `<button type="button" data-action="unlock-session" data-session-id="${escapeHTML(s.id)}" class="admin-action-btn px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-xs transition cursor-pointer">
+                        ? `<button type="button" data-action="unlock-session" data-session-id="${escapeHTML(s.id)}" data-student-class="${escapeHTML(s.studentClass)}" data-student-name="${escapeHTML(s.studentName)}" class="admin-action-btn px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-xs transition cursor-pointer">
                                Buka Kunci / Reset
                            </button>`
-                        : `<button type="button" data-action="force-stop" data-session-id="${escapeHTML(s.id)}" class="admin-action-btn px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-xs transition cursor-pointer">
+                        : `<button type="button" data-action="force-stop" data-session-id="${escapeHTML(s.id)}" data-student-class="${escapeHTML(s.studentClass)}" data-student-name="${escapeHTML(s.studentName)}" class="admin-action-btn px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-xs transition cursor-pointer">
                                Stop Paksa
                            </button>`;
 
@@ -2096,6 +2119,8 @@
                     if (!btn) return;
                     const action = btn.getAttribute('data-action');
                     const sessionId = btn.getAttribute('data-session-id');
+                    const studentClass = btn.getAttribute('data-student-class') || '';
+                    const studentName = btn.getAttribute('data-student-name') || '';
                     if (!sessionId) return;
 
                     const originalBtnText = btn.textContent.trim();
@@ -2110,6 +2135,7 @@
                             if (existing) {
                                 existing.forceStop = false;
                                 existing.violations = 0;
+                                existing.maxViolations = MAX_VIOLATIONS_LIMIT;
                                 existing.status = 'DIBUKA ADMIN';
                                 existing.lastViolationReason = 'Reset & Buka Kunci oleh Admin';
                                 existing.updatedAt = Date.now();
@@ -2138,12 +2164,29 @@
                             else if (action === 'delete-session') endpointAction = 'delete';
 
                             if (endpointAction) {
-                                const res = await fetch(`${scriptUrl}?action=${endpointAction}&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`);
+                                const params = new URLSearchParams({
+                                    action: endpointAction,
+                                    sessionId: sessionId,
+                                    studentClass: studentClass,
+                                    studentName: studentName,
+                                    _t: String(Date.now())
+                                });
+                                const res = await fetch(`${scriptUrl}?${params.toString()}`);
                                 if (!res.ok) throw new Error('HTTP ' + res.status);
+                                const jsonRes = await res.json();
+
+                                if (action === 'unlock-session') {
+                                    if (typeof jsonRes.unlockedCount === 'undefined') {
+                                        showAdminBanner('⚠️ Perhatian: Server Google Apps Script Anda masih memakai kode versi lama sehingga perintah "Buka Kunci" belum diproses oleh Spreadsheet. Buka tab <b>Pengaturan Server Sync</b>, salin kode terbaru, lalu klik <b>Terapkan &rarr; Kelola deployment &rarr; Edit &rarr; Versi baru</b> di Google Apps Script.', 'warning');
+                                    } else {
+                                        showAdminBanner(`✓ Kunci ujian <b>${escapeHTML(studentName)} (${escapeHTML(studentClass)})</b> berhasil dibuka &amp; direset menjadi 0/10.`, 'success');
+                                    }
+                                }
                             }
                             await fetchMonitoringFromAppsScript();
                         } catch (err) {
                             console.error('Gagal menjalankan aksi via Apps Script:', err);
+                            showAdminBanner('Gagal terhubung ke server Google Apps Script. Periksa koneksi internet Anda.', 'error');
                         } finally {
                             btn.disabled = false;
                             btn.textContent = originalBtnText;
