@@ -1722,10 +1722,10 @@
                         : (vCount < vMax ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-700 border-red-200');
 
                     const primaryControlBtn = isSessionLocked
-                        ? `<button type="button" data-action="unlock-session" data-session-id="${escapeHTML(s.id)}" class="admin-action-btn px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold transition cursor-pointer">
+                        ? `<button type="button" data-action="unlock-session" data-session-id="${escapeHTML(s.id)}" class="admin-action-btn px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-xs transition cursor-pointer">
                                Buka Kunci / Reset
                            </button>`
-                        : `<button type="button" data-action="force-stop" data-session-id="${escapeHTML(s.id)}" class="admin-action-btn px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold transition cursor-pointer">
+                        : `<button type="button" data-action="force-stop" data-session-id="${escapeHTML(s.id)}" class="admin-action-btn px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold shadow-xs transition cursor-pointer">
                                Stop Paksa
                            </button>`;
 
@@ -2098,50 +2098,70 @@
                     const sessionId = btn.getAttribute('data-session-id');
                     if (!sessionId) return;
 
+                    const originalBtnText = btn.textContent.trim();
+                    btn.disabled = true;
+                    btn.textContent = 'Memproses...';
+
+                    // Perbarui tampilan tabel admin secara optimis (langsung berubah tanpa menunggu lama)
+                    const applyOptimisticSessionUpdate = () => {
+                        const existing = liveSessionsMap.get(sessionId);
+                        if (action === 'unlock-session') {
+                            setLocalSessionLock(sessionId, null);
+                            if (existing) {
+                                existing.forceStop = false;
+                                existing.violations = 0;
+                                existing.status = 'DIBUKA ADMIN';
+                                existing.lastViolationReason = 'Reset & Buka Kunci oleh Admin';
+                                existing.updatedAt = Date.now();
+                            }
+                        } else if (action === 'force-stop') {
+                            if (existing) {
+                                existing.forceStop = true;
+                                existing.status = 'STOP PAKSA';
+                                existing.updatedAt = Date.now();
+                            }
+                        } else if (action === 'delete-session') {
+                            setLocalSessionLock(sessionId, null);
+                            liveSessionsMap.delete(sessionId);
+                        }
+                        renderAdminMonitoringTable();
+                        renderAdminSiswaTable();
+                    };
+
                     const scriptUrl = getActiveAppsScriptUrl();
                     if (scriptUrl) {
                         try {
-                            if (action === 'unlock-session') {
-                                setLocalSessionLock(sessionId, null);
-                                await fetch(`${scriptUrl}?action=unlock&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`);
-                            } else if (action === 'force-stop') {
-                                await fetch(`${scriptUrl}?action=forceStop&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`);
-                            } else if (action === 'delete-session') {
-                                setLocalSessionLock(sessionId, null);
-                                await fetch(`${scriptUrl}?action=delete&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`);
+                            applyOptimisticSessionUpdate();
+                            let endpointAction = '';
+                            if (action === 'unlock-session') endpointAction = 'unlock';
+                            else if (action === 'force-stop') endpointAction = 'forceStop';
+                            else if (action === 'delete-session') endpointAction = 'delete';
+
+                            if (endpointAction) {
+                                const res = await fetch(`${scriptUrl}?action=${endpointAction}&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`);
+                                if (!res.ok) throw new Error('HTTP ' + res.status);
                             }
                             await fetchMonitoringFromAppsScript();
                         } catch (err) {
                             console.error('Gagal menjalankan aksi via Apps Script:', err);
+                        } finally {
+                            btn.disabled = false;
+                            btn.textContent = originalBtnText;
                         }
                         return;
                     }
 
                     if (!db || !currentUser) {
-                        if (action === 'unlock-session') {
-                            setLocalSessionLock(sessionId, null);
-                            const existing = liveSessionsMap.get(sessionId);
-                            if (existing) {
-                                existing.forceStop = false;
-                                existing.violations = 0;
-                                existing.status = 'DIBUKA ADMIN';
-                                existing.updatedAt = Date.now();
-                            }
-                            renderAdminMonitoringTable();
-                            renderAdminSiswaTable();
-                        } else if (action === 'delete-session') {
-                            setLocalSessionLock(sessionId, null);
-                            liveSessionsMap.delete(sessionId);
-                            renderAdminMonitoringTable();
-                            renderAdminSiswaTable();
-                        }
+                        applyOptimisticSessionUpdate();
+                        btn.disabled = false;
+                        btn.textContent = originalBtnText;
                         return;
                     }
 
                     const sessionRef = doc(db, 'artifacts', appId, 'public', 'data', 'cbt_monitoring_sessions', sessionId);
                     try {
+                        applyOptimisticSessionUpdate();
                         if (action === 'unlock-session') {
-                            setLocalSessionLock(sessionId, null);
                             await updateDoc(sessionRef, {
                                 forceStop: false,
                                 violations: 0,
@@ -2156,11 +2176,13 @@
                                 updatedAt: Date.now()
                             });
                         } else if (action === 'delete-session') {
-                            setLocalSessionLock(sessionId, null);
                             await deleteDoc(sessionRef);
                         }
                     } catch (err) {
                         console.error('Gagal menjalankan aksi pengawas:', err);
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = originalBtnText;
                     }
                 });
             }
