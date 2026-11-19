@@ -864,15 +864,29 @@
                 return `${mins} menit ${secs} detik`;
             }
 
+            function extractAwaySecondsFromLogText(reasonText) {
+                const str = String(reasonText || '');
+                // Cocokkan pola "(keluar 1 menit 20 detik)", "(keluar 15 detik)", atau "[TotalKeluar:80]"
+                const tagMatch = str.match(/\[TotalKeluar:(\d+)\]/i);
+                if (tagMatch) return Number(tagMatch[1]) || 0;
+
+                const parenMatch = str.match(/\(keluar\s+([^)]+)\)/i);
+                if (!parenMatch) return 0;
+                const inner = parenMatch[1];
+                let total = 0;
+                const minMatch = inner.match(/(\d+)\s*menit/i);
+                const secMatch = inner.match(/(\d+)\s*detik/i);
+                if (minMatch) total += Number(minMatch[1]) * 60;
+                if (secMatch) total += Number(secMatch[1]);
+                return total;
+            }
+
             function normalizeExamUrl(rawUrl) {
-                const trimmed = String(rawUrl || '').trim();
-                if (!trimmed) return '';
-                let url = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-                // Otomatis ubah Google Form agar kompatibel di dalam iframe
-                if (url.includes('docs.google.com/forms') && url.includes('/viewform')) {
-                    if (!url.includes('embedded=true')) {
-                        url += (url.includes('?') ? '&' : '?') + 'embedded=true';
-                    }
+                const url = String(rawUrl || '').trim();
+                if (!url) return '';
+                if (url.includes('docs.google.com/forms') && !url.includes('embedded=true')) {
+                    const separator = url.includes('?') ? '&' : '?';
+                    return `${url}${separator}embedded=true`;
                 }
                 return url;
             }
@@ -1295,6 +1309,11 @@
                 const effectiveAwaySeconds = state.totalAwaySeconds + livePendingAway;
 
                 const lastLog = state.violationLogs.length > 0 ? state.violationLogs[state.violationLogs.length - 1] : null;
+                let formattedLastReason = lastLog ? lastLog.reason : '-';
+                if (lastLog && effectiveAwaySeconds > 0 && !/\[TotalKeluar:\d+\]/i.test(formattedLastReason)) {
+                    formattedLastReason = `${formattedLastReason} [TotalKeluar:${effectiveAwaySeconds}]`;
+                }
+
                 const payloadObj = {
                     id: state.sessionDocId,
                     studentBaseKey: state.studentBaseKey,
@@ -1306,7 +1325,7 @@
                     maxViolations: state.maxViolations,
                     awaySeconds: effectiveAwaySeconds,
                     remainingSeconds: state.isSubjectSelected ? state.remainingSeconds : null,
-                    lastViolationReason: lastLog ? lastLog.reason : '-',
+                    lastViolationReason: formattedLastReason,
                     lastViolationTime: lastLog ? lastLog.time : '-',
                     updatedAt: Date.now()
                 };
@@ -1719,7 +1738,11 @@
                     if (state.violationLogs.length > 0) {
                         const lastEntry = state.violationLogs[state.violationLogs.length - 1];
                         lastEntry.awaySec = (lastEntry.awaySec || 0) + awayDelta;
-                        lastEntry.reason = `${lastEntry.reason.replace(/\s*\(keluar.*\)$/i, '')} (keluar ${formatAwayDuration(lastEntry.awaySec)})`;
+                        const cleanBaseReason = lastEntry.reason
+                            .replace(/\s*\[TotalKeluar:\d+\]/gi, '')
+                            .replace(/\s*\(keluar[^)]*\)/gi, '')
+                            .trim();
+                        lastEntry.reason = `${cleanBaseReason} (keluar ${formatAwayDuration(lastEntry.awaySec)})`;
                         if (el.violationReasonText) {
                             el.violationReasonText.textContent = lastEntry.reason;
                         }
@@ -1776,6 +1799,7 @@
             }
 
             function endExam(reason) {
+                finalizeReturnFromAway(false);
                 stopAwayTimerAndGetDelta();
                 state.isExamActive = false;
                 state.isLocked = true;
@@ -1971,7 +1995,9 @@
                 el.adminMonitoringTbody.innerHTML = filtered.map((s) => {
                     const vCount = Number(s.violations || 0);
                     const vMax = MAX_VIOLATIONS_LIMIT;
-                    const awaySec = Number(s.awaySeconds || 0);
+                    const parsedLogAway = extractAwaySecondsFromLogText(s.lastViolationReason);
+                    const awaySec = Math.max(Number(s.awaySeconds || 0), parsedLogAway);
+                    const cleanDisplayReason = String(s.lastViolationReason || '-').replace(/\s*\[TotalKeluar:\d+\]/gi, '').trim();
                     const isSessionLocked = s.forceStop === true || String(s.status).includes('TERKUNCI') || String(s.status).includes('STOP') || vCount >= vMax;
                     let statusBadge = `<span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[11px] font-extrabold">${escapeHTML(s.status)}</span>`;
                     if (isSessionLocked) {
@@ -2017,7 +2043,7 @@
                                 </span>
                             </td>
                             <td class="py-3 px-4">
-                                <p class="text-xs font-semibold text-slate-700">${escapeHTML(s.lastViolationReason || '-')}</p>
+                                <p class="text-xs font-semibold text-slate-700">${escapeHTML(cleanDisplayReason)}</p>
                                 <p class="text-[11px] text-slate-400">Pukul: ${escapeHTML(s.lastViolationTime || '-')}</p>
                             </td>
                             <td class="py-3 px-4 font-mono font-bold text-slate-800">
