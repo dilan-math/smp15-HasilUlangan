@@ -550,13 +550,17 @@
     }
     if (action === 'checkLock') {
       var chkSid = String(e.parameter.sessionId || '').trim();
+      var chkBase = String(e.parameter.baseKey || '').trim();
       var chkClass = String(e.parameter.studentClass || '').trim().toLowerCase();
       var chkName = String(e.parameter.studentName || '').trim().toLowerCase();
       for (var c = data.length - 1; c &gt;= 1; c--) {
         var rSid = String(data[c][0] || '').trim();
         var rClass = String(data[c][1] || '').trim().toLowerCase();
         var rName = String(data[c][2] || '').trim().toLowerCase();
-        if (rSid === chkSid || (chkClass &amp;&amp; chkName &amp;&amp; rClass === chkClass &amp;&amp; rName === chkName)) {
+        var isMatch = (chkSid &amp;&amp; rSid === chkSid) ||
+                      (chkBase &amp;&amp; rSid.indexOf(chkBase) === 0) ||
+                      (chkClass &amp;&amp; chkName &amp;&amp; rClass === chkClass &amp;&amp; rName === chkName);
+        if (isMatch) {
           var cStatus = String(data[c][3] || '');
           var cViolations = Number(data[c][5] || 0);
           var cMax = Number(data[c][6] || 10);
@@ -571,6 +575,7 @@
     }
     if (action === 'unlock') {
       var unlSid = String(e.parameter.sessionId || '').trim();
+      var unlBase = String(e.parameter.baseKey || '').trim();
       var unlClass = String(e.parameter.studentClass || '').trim().toLowerCase();
       var unlName = String(e.parameter.studentName || '').trim().toLowerCase();
       var unlockedCount = 0;
@@ -578,7 +583,10 @@
         var rowSid = String(data[u][0] || '').trim();
         var rowClass = String(data[u][1] || '').trim().toLowerCase();
         var rowName = String(data[u][2] || '').trim().toLowerCase();
-        if (rowSid === unlSid || (unlClass &amp;&amp; unlName &amp;&amp; rowClass === unlClass &amp;&amp; rowName === unlName)) {
+        var isUnlockMatch = (unlSid &amp;&amp; rowSid === unlSid) ||
+                            (unlBase &amp;&amp; rowSid.indexOf(unlBase) === 0) ||
+                            (unlClass &amp;&amp; unlName &amp;&amp; rowClass === unlClass &amp;&amp; rowName === unlName);
+        if (isUnlockMatch) {
           sheet.getRange(u + 1, 4).setValue('DIBUKA ADMIN');
           sheet.getRange(u + 1, 6).setValue(0);
           sheet.getRange(u + 1, 7).setValue(10);
@@ -1354,17 +1362,19 @@
             }
 
             // Cek status kunci sesi di server & memori lokal sebelum siswa masuk ujian
-            async function verifySessionLockStatus(studentBaseKey, studentClass = '', studentName = '') {
+            async function verifySessionLockStatus(studentBaseKey, studentClass = '', studentName = '', specificSessionId = '') {
                 const localLock = getLocalSessionLock(studentBaseKey);
                 const scriptUrl = getActiveAppsScriptUrl();
                 const normClass = String(studentClass || '').trim().toLowerCase();
                 const normName = String(studentName || '').trim().toLowerCase();
+                const effectiveSessionId = specificSessionId || (localLock && localLock.sessionId) || state.sessionDocId || studentBaseKey;
 
                 if (scriptUrl) {
                     try {
                         const params = new URLSearchParams({
                             action: 'checkLock',
-                            sessionId: studentBaseKey,
+                            sessionId: effectiveSessionId,
+                            baseKey: studentBaseKey,
                             studentClass: studentClass,
                             studentName: studentName,
                             _t: String(Date.now())
@@ -1375,12 +1385,13 @@
                             if (data && data.ok) {
                                 if (data.locked === false) {
                                     // Admin sudah membuka kunci di server -> hapus seluruh kunci lokal siswa ini
-                                    clearAllLocalLocksForStudent(studentClass, studentName, studentBaseKey);
+                                    clearAllLocalLocksForStudent(studentClass, studentName, effectiveSessionId);
                                     return { locked: false };
                                 }
                                 if (data.locked === true) {
                                     const lockDetail = {
                                         locked: true,
+                                        sessionId: effectiveSessionId,
                                         studentClass: studentClass,
                                         studentName: studentName,
                                         status: data.status || 'TERKUNCI (10x PELANGGARAN)',
@@ -1516,9 +1527,10 @@
                         return;
                     }
                     const baseKey = state.studentBaseKey || buildStudentBaseKey(state.studentClass, state.studentName);
-                    const res = await verifySessionLockStatus(baseKey, state.studentClass, state.studentName);
+                    const res = await verifySessionLockStatus(baseKey, state.studentClass, state.studentName, state.sessionDocId);
                     if (!res.locked) {
                         stopAutoUnlockWatcher();
+                        clearAllLocalLocksForStudent(state.studentClass, state.studentName, state.sessionDocId);
                         state.isLocked = false;
                         state.violations = 0;
                         el.endScreen.classList.add('hidden');
@@ -1529,8 +1541,9 @@
                     }
                 };
 
-                // Cek otomatis setiap 4 detik agar HP siswa langsung terbuka begitu Admin menekan Reset
-                state.unlockWatchInterval = setInterval(checkNow, 4000);
+                // Cek langsung & berkala setiap 3.5 detik agar HP siswa otomatis terbuka begitu Admin menekan Reset
+                checkNow();
+                state.unlockWatchInterval = setInterval(checkNow, 3500);
             }
 
             async function startExam() {
@@ -1547,7 +1560,7 @@
                 }
 
                 // Cek apakah siswa ini sedang dalam status TERKUNCI (10x pelanggaran / Stop Paksa)
-                const lockCheck = await verifySessionLockStatus(baseKey, state.studentClass, state.studentName);
+                const lockCheck = await verifySessionLockStatus(baseKey, state.studentClass, state.studentName, state.sessionDocId);
                 if (el.btnStartExam) {
                     el.btnStartExam.disabled = false;
                 }
@@ -1635,7 +1648,7 @@
             function getPersistedAwayStart() {
                 if (state.awayStartTime) return state.awayStartTime;
                 try {
-                    const saved = Number(sessionStorage.getItem(AWAY_START_STORAGE_KEY) || 0);
+                    const saved = Number(localStorage.getItem(AWAY_START_STORAGE_KEY) || sessionStorage.getItem(AWAY_START_STORAGE_KEY) || 0);
                     if (saved > 0) {
                         state.awayStartTime = saved;
                         return saved;
@@ -1650,6 +1663,7 @@
                     const now = Date.now();
                     state.awayStartTime = now;
                     try {
+                        localStorage.setItem(AWAY_START_STORAGE_KEY, String(now));
                         sessionStorage.setItem(AWAY_START_STORAGE_KEY, String(now));
                     } catch (e) {}
                 }
@@ -1662,6 +1676,7 @@
                 state.totalAwaySeconds += deltaSec;
                 state.awayStartTime = null;
                 try {
+                    localStorage.removeItem(AWAY_START_STORAGE_KEY);
                     sessionStorage.removeItem(AWAY_START_STORAGE_KEY);
                 } catch (e) {}
                 return deltaSec;
@@ -1778,6 +1793,7 @@
                 if (isHardLocked) {
                     setLocalSessionLock(state.studentBaseKey || buildStudentBaseKey(state.studentClass, state.studentName), {
                         locked: true,
+                        sessionId: state.sessionDocId,
                         studentClass: state.studentClass,
                         studentName: state.studentName,
                         status: finalStatusLabel,
@@ -2141,12 +2157,13 @@
                     el.btnCheckUnlock.disabled = true;
                     el.btnCheckUnlock.textContent = 'Memeriksa status kunci ke server...';
 
-                    const checkResult = await verifySessionLockStatus(baseKey, state.studentClass, state.studentName);
+                    const checkResult = await verifySessionLockStatus(baseKey, state.studentClass, state.studentName, state.sessionDocId);
 
                     el.btnCheckUnlock.disabled = false;
                     el.btnCheckUnlock.textContent = 'Cek Status Buka Kunci dari Admin';
 
                     if (!checkResult.locked) {
+                        clearAllLocalLocksForStudent(state.studentClass, state.studentName, state.sessionDocId);
                         state.isLocked = false;
                         state.violations = 0;
                         el.endScreen.classList.add('hidden');
@@ -2381,6 +2398,7 @@
                                 const params = new URLSearchParams({
                                     action: endpointAction,
                                     sessionId: sessionId,
+                                    baseKey: buildStudentBaseKey(studentClass, studentName),
                                     studentClass: studentClass,
                                     studentName: studentName,
                                     _t: String(Date.now())
@@ -2452,7 +2470,9 @@
                     const lastLocked = lockedEntries[lockedEntries.length - 1];
                     const cls = lastLocked.studentClass || '-';
                     const nm = lastLocked.studentName || '-';
+                    const savedSid = lastLocked.sessionId || '';
                     const baseKey = buildStudentBaseKey(cls, nm);
+                    state.sessionDocId = savedSid;
                     showLockedEndScreen(
                         cls,
                         nm,
@@ -2460,9 +2480,10 @@
                         lastLocked.status || 'TERKUNCI (10x PELANGGARAN)'
                     );
                     // Langsung cek ke server apakah Admin sudah menekan Buka Kunci / Reset
-                    const checkRes = await verifySessionLockStatus(baseKey, cls, nm);
+                    const checkRes = await verifySessionLockStatus(baseKey, cls, nm, savedSid);
                     if (!checkRes.locked) {
                         stopAutoUnlockWatcher();
+                        clearAllLocalLocksForStudent(cls, nm, savedSid);
                         state.isLocked = false;
                         state.violations = 0;
                         el.endScreen.classList.add('hidden');
