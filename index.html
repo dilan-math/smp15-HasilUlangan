@@ -1369,8 +1369,40 @@
                 const normName = String(studentName || '').trim().toLowerCase();
                 const effectiveSessionId = specificSessionId || (localLock && localLock.sessionId) || state.sessionDocId || studentBaseKey;
 
+                const evaluateSessionListLock = (sessionsList) => {
+                    let foundAnyMatch = false;
+                    for (const item of sessionsList) {
+                        const rSid = String(item.id || '').trim();
+                        const itemClass = String(item.studentClass || '').trim().toLowerCase();
+                        const itemName = String(item.studentName || '').trim().toLowerCase();
+                        const sameStudent = (effectiveSessionId && rSid === effectiveSessionId) ||
+                            (studentBaseKey && rSid.startsWith(studentBaseKey)) ||
+                            (normClass && normName && itemClass === normClass && itemName === normName);
+                        if (sameStudent) {
+                            foundAnyMatch = true;
+                            const isSessionLocked = item.forceStop === true ||
+                                String(item.status).includes('TERKUNCI') ||
+                                String(item.status).includes('STOP') ||
+                                Number(item.violations || 0) >= MAX_VIOLATIONS_LIMIT;
+                            if (isSessionLocked) {
+                                return {
+                                    found: true,
+                                    locked: true,
+                                    sessionId: rSid || effectiveSessionId,
+                                    studentClass: studentClass,
+                                    studentName: studentName,
+                                    status: item.status || 'TERKUNCI (10x PELANGGARAN)',
+                                    violations: Number(item.violations || MAX_VIOLATIONS_LIMIT)
+                                };
+                            }
+                        }
+                    }
+                    return { found: foundAnyMatch, locked: false };
+                };
+
                 if (scriptUrl) {
                     try {
+                        // 1. Cek via endpoint khusus checkLock
                         const params = new URLSearchParams({
                             action: 'checkLock',
                             sessionId: effectiveSessionId,
@@ -1382,9 +1414,17 @@
                         const res = await fetch(`${scriptUrl}?${params.toString()}`);
                         if (res.ok) {
                             const data = await res.json();
-                            if (data && data.ok) {
+                            if (data && data.ok && Array.isArray(data.sessions)) {
+                                // Jika Apps Script versi lama mengembalikan daftar sessions, evaluasi langsung dari daftar
+                                const listEval = evaluateSessionListLock(data.sessions);
+                                if (!listEval.locked) {
+                                    clearAllLocalLocksForStudent(studentClass, studentName, effectiveSessionId);
+                                    return { locked: false };
+                                }
+                                setLocalSessionLock(studentBaseKey, listEval);
+                                return listEval;
+                            } else if (data && data.ok) {
                                 if (data.locked === false) {
-                                    // Admin sudah membuka kunci di server -> hapus seluruh kunci lokal siswa ini
                                     clearAllLocalLocksForStudent(studentClass, studentName, effectiveSessionId);
                                     return { locked: false };
                                 }
@@ -1408,23 +1448,13 @@
                 }
 
                 // Cek di cache seluruh riwayat sesi milik siswa ini
-                for (const item of liveSessionsMap.values()) {
-                    const itemClass = String(item.studentClass || '').trim().toLowerCase();
-                    const itemName = String(item.studentName || '').trim().toLowerCase();
-                    const sameStudent = (normClass && normName && itemClass === normClass && itemName === normName) ||
-                        String(item.id || '').startsWith(studentBaseKey);
-                    if (sameStudent) {
-                        const isSessionLocked = item.forceStop === true ||
-                            String(item.status).includes('TERKUNCI') ||
-                            Number(item.violations || 0) >= MAX_VIOLATIONS_LIMIT;
-                        if (isSessionLocked) {
-                            return {
-                                locked: true,
-                                status: item.status || 'TERKUNCI (10x PELANGGARAN)',
-                                violations: Number(item.violations || MAX_VIOLATIONS_LIMIT)
-                            };
-                        }
-                    }
+                const cachedEval = evaluateSessionListLock(Array.from(liveSessionsMap.values()));
+                if (cachedEval.locked) {
+                    return cachedEval;
+                }
+                if (cachedEval.found && !cachedEval.locked) {
+                    clearAllLocalLocksForStudent(studentClass, studentName, effectiveSessionId);
+                    return { locked: false };
                 }
 
                 if (localLock && localLock.locked) {
@@ -1695,7 +1725,7 @@
                         }
                     }
                     if (triggerSync) {
-                        syncStudentSessionToCloud('PELANGGARAN');
+                        syncStudentSessionToCloud(state.isSubjectSelected ? 'MENGERJAKAN' : 'AKTIF');
                     }
                 }
                 return awayDelta;
@@ -2119,9 +2149,9 @@
             if (el.btnResumeExam) {
                 el.btnResumeExam.addEventListener('click', () => {
                     finalizeReturnFromAway(false);
-                    syncStudentSessionToCloud(state.isSubjectSelected ? 'MENGERJAKAN' : 'AKTIF');
                     el.violationOverlay.classList.add('hidden');
                     enterFullscreen();
+                    syncStudentSessionToCloud(state.isSubjectSelected ? 'MENGERJAKAN' : 'AKTIF');
                 });
             }
 
@@ -2409,7 +2439,24 @@
 
                                 if (action === 'unlock-session') {
                                     if (typeof jsonRes.unlockedCount === 'undefined') {
-                                        showAdminBanner('⚠️ Perhatian: Server Google Apps Script Anda masih memakai kode versi lama sehingga perintah "Buka Kunci" belum diproses oleh Spreadsheet. Buka tab <b>Pengaturan Server Sync</b>, salin kode terbaru, lalu klik <b>Terapkan &rarr; Kelola deployment &rarr; Edit &rarr; Versi baru</b> di Google Apps Script.', 'warning');
+                                        // Cadangan jika server Apps Script masih memakai versi lama: paksa reset baris via action=sync
+                                        const fallbackSyncParams = new URLSearchParams({
+                                            action: 'sync',
+                                            sessionId: sessionId,
+                                            studentClass: studentClass,
+                                            studentName: studentName,
+                                            status: 'DIBUKA ADMIN',
+                                            activeSubject: (existing && existing.activeSubject) || '-',
+                                            violations: '0',
+                                            maxViolations: String(MAX_VIOLATIONS_LIMIT),
+                                            awaySeconds: String((existing && existing.awaySeconds) || 0),
+                                            remainingSeconds: existing && existing.remainingSeconds != null ? String(existing.remainingSeconds) : '',
+                                            lastViolationReason: 'Reset & Buka Kunci oleh Admin',
+                                            lastViolationTime: new Date().toLocaleTimeString('id-ID'),
+                                            _t: String(Date.now())
+                                        });
+                                        await fetch(`${scriptUrl}?${fallbackSyncParams.toString()}`);
+                                        showAdminBanner('⚠️ Server Apps Script Anda masih menjalankan kode versi lama. Silakan salin kode terbaru dari tab <b>Pengaturan Server Sync</b> lalu pilih <b>Terapkan &rarr; Kelola deployment &rarr; Edit &rarr; Versi baru</b> agar fitur buka kunci permanen berjalan penuh.', 'warning');
                                     } else {
                                         showAdminBanner(`✓ Kunci ujian <b>${escapeHTML(studentName)} (${escapeHTML(studentClass)})</b> berhasil dibuka &amp; direset menjadi 0/10.`, 'success');
                                     }
