@@ -32,8 +32,9 @@
         <!-- Bar Atas -->
         <header class="max-w-3xl w-full mx-auto flex items-center justify-between gap-3 pt-2">
             <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-blue-700 text-white flex items-center justify-center font-black text-lg shadow-md">
-                    15
+                <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center p-1 shadow-md overflow-hidden shrink-0">
+                    <img src="https://raw.githubusercontent.com/dilan-math/smp15-HasilUlangan/282e19d087819a7a0ee87a2ea514b509cad6b85c/Logo%20SMP15BJB%20(1).png" alt="Logo SMP Negeri 15" class="w-full h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                    <span class="hidden w-full h-full rounded-xl bg-blue-700 text-white flex items-center justify-center font-black text-lg">15</span>
                 </div>
                 <div>
                     <h1 class="text-base sm:text-lg font-extrabold text-slate-900 leading-tight">CBT SMP NEGERI 15</h1>
@@ -343,8 +344,9 @@
         <header class="bg-slate-900 text-white px-4 sm:px-6 py-3.5 sticky top-0 z-20 shadow-md">
             <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-black text-sm">
-                        15
+                    <div class="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center overflow-hidden shrink-0">
+                        <img src="https://raw.githubusercontent.com/dilan-math/smp15-HasilUlangan/282e19d087819a7a0ee87a2ea514b509cad6b85c/Logo%20SMP15BJB%20(1).png" alt="Logo SMP Negeri 15" class="w-full h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                        <span class="hidden w-full h-full rounded-lg bg-blue-600 flex items-center justify-center font-black text-sm">15</span>
                     </div>
                     <div>
                         <h2 class="text-sm sm:text-base font-black tracking-tight">Dashboard Pengawas &amp; Live Monitoring</h2>
@@ -423,6 +425,7 @@
                                 <th class="py-3 px-4">Status</th>
                                 <th class="py-3 px-4">Mata Pelajaran</th>
                                 <th class="py-3 px-4">Pelanggaran</th>
+                                <th class="py-3 px-4">Total Waktu Keluar</th>
                                 <th class="py-3 px-4">Log Kecurangan Terakhir</th>
                                 <th class="py-3 px-4">Sisa Waktu</th>
                                 <th class="py-3 px-4 text-right">Kontrol Pengawas</th>
@@ -430,7 +433,7 @@
                         </thead>
                         <tbody id="admin-monitoring-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm">
                             <tr>
-                                <td colspan="7" class="py-10 text-center text-slate-400">Belum ada aktivitas sesi ujian siswa yang tercatat.</td>
+                                <td colspan="8" class="py-10 text-center text-slate-400">Belum ada aktivitas sesi ujian siswa yang tercatat.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -487,9 +490,9 @@
     var sheet = ss.getSheetByName('MONITORING');
     if (!sheet) {
       sheet = ss.insertSheet('MONITORING');
-      sheet.appendRow(['sessionId', 'studentClass', 'studentName', 'status', 'activeSubject', 'violations', 'maxViolations', 'remainingSeconds', 'lastViolationReason', 'lastViolationTime', 'forceStop', 'updatedAt']);
+      sheet.appendRow(['sessionId', 'studentClass', 'studentName', 'status', 'activeSubject', 'violations', 'maxViolations', 'remainingSeconds', 'lastViolationReason', 'lastViolationTime', 'forceStop', 'updatedAt', 'awaySeconds']);
     }
-    var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'get';
+    var action = (e &amp;&amp; e.parameter &amp;&amp; e.parameter.action) ? e.parameter.action : 'get';
     var data = sheet.getDataRange().getValues();
     if (action === 'sync') {
       var sid = e.parameter.sessionId;
@@ -497,19 +500,23 @@
       var existingForceStop = false;
       var existingStatus = '';
       var existingViolations = 0;
+      var existingAwaySeconds = 0;
       for (var i = 1; i &lt; data.length; i++) {
         if (String(data[i][0]) === String(sid)) {
           rowIndex = i + 1;
           existingStatus = String(data[i][3] || '');
           existingViolations = Number(data[i][5] || 0);
           existingForceStop = (data[i][10] === true || String(data[i][10]).toUpperCase() === 'TRUE');
+          existingAwaySeconds = Number(data[i][12] || 0);
           break;
         }
       }
       var maxV = Number(e.parameter.maxViolations || 10);
       var incomingV = Number(e.parameter.violations || 0);
+      var incomingAway = Number(e.parameter.awaySeconds || 0);
       var isAlreadyLocked = existingForceStop || existingStatus.indexOf('TERKUNCI') !== -1 || existingViolations &gt;= maxV;
       var finalViolations = Math.max(existingViolations, incomingV);
+      var finalAwaySeconds = Math.max(existingAwaySeconds, incomingAway);
       var finalStatus = e.parameter.status || 'AKTIF';
       var finalForceStop = existingForceStop;
       if (isAlreadyLocked) {
@@ -531,28 +538,36 @@
         e.parameter.lastViolationReason || '-',
         e.parameter.lastViolationTime || '-',
         finalForceStop,
-        Date.now()
+        Date.now(),
+        finalAwaySeconds
       ];
       if (rowIndex &gt; 0) {
         sheet.getRange(rowIndex, 1, 1, rowValues.length).setValues([rowValues]);
       } else {
         sheet.appendRow(rowValues);
       }
-      return ContentService.createTextOutput(JSON.stringify({ ok: true, forceStop: finalForceStop, locked: isAlreadyLocked || finalViolations &gt;= maxV, status: finalStatus, violations: finalViolations })).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ ok: true, forceStop: finalForceStop, locked: isAlreadyLocked || finalViolations &gt;= maxV, status: finalStatus, violations: finalViolations, awaySeconds: finalAwaySeconds })).setMimeType(ContentService.MimeType.JSON);
     }
     if (action === 'checkLock') {
-      var chkSid = e.parameter.sessionId;
-      for (var c = 1; c &lt; data.length; c++) {
-        if (String(data[c][0]) === String(chkSid)) {
+      var chkSid = String(e.parameter.sessionId || '');
+      var chkClass = String(e.parameter.studentClass || '');
+      var chkName = String(e.parameter.studentName || '');
+      for (var c = data.length - 1; c &gt;= 1; c--) {
+        var rSid = String(data[c][0] || '');
+        var rClass = String(data[c][1] || '');
+        var rName = String(data[c][2] || '');
+        if (rSid === chkSid || (chkClass &amp;&amp; chkName &amp;&amp; rClass === chkClass &amp;&amp; rName === chkName)) {
           var cStatus = String(data[c][3] || '');
           var cViolations = Number(data[c][5] || 0);
           var cMax = Number(data[c][6] || 10);
           var cForce = (data[c][10] === true || String(data[c][10]).toUpperCase() === 'TRUE');
           var locked = cForce || cStatus.indexOf('TERKUNCI') !== -1 || cViolations &gt;= cMax;
-          return ContentService.createTextOutput(JSON.stringify({ ok: true, locked: locked, status: cStatus, violations: cViolations })).setMimeType(ContentService.MimeType.JSON);
+          if (locked) {
+            return ContentService.createTextOutput(JSON.stringify({ ok: true, locked: true, status: cStatus, violations: cViolations })).setMimeType(ContentService.MimeType.JSON);
+          }
         }
       }
-      return ContentService.createTextOutput(JSON.stringify({ ok: true, locked: false, status: 'BARU', violations: 0 })).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ ok: true, locked: false, status: 'AMAN', violations: 0 })).setMimeType(ContentService.MimeType.JSON);
     }
     if (action === 'unlock') {
       var unlSid = String(e.parameter.sessionId || '');
@@ -620,7 +635,8 @@
         lastViolationReason: String(data[r][8] || '-'),
         lastViolationTime: String(data[r][9] || '-'),
         forceStop: (data[r][10] === true || String(data[r][10]).toUpperCase() === 'TRUE'),
-        updatedAt: Number(data[r][11] || 0)
+        updatedAt: Number(data[r][11] || 0),
+        awaySeconds: Number(data[r][12] || 0)
       });
     }
     return ContentService.createTextOutput(JSON.stringify({ ok: true, sessions: list })).setMimeType(ContentService.MimeType.JSON);
@@ -675,7 +691,7 @@
 
             const VIOLATION_COOLDOWN_MS = 1500;
             const PENALTY_SECONDS = 5 * 60; // 5 menit penalti per pelanggaran
-            const ADMIN_PIN = '1234';
+            const ADMIN_PIN = '9090';
             const MAX_VIOLATIONS_LIMIT = 10;
             const LOCAL_LOCK_STORAGE_KEY = 'cbt_smp15_locked_sessions_v1';
 
@@ -693,6 +709,7 @@
                 exams: [],
                 studentClass: '',
                 studentName: '',
+                studentBaseKey: '',
                 sessionDocId: '',
                 isExamActive: false,
                 isLocked: false,
@@ -701,6 +718,8 @@
                 remainingSeconds: 0,
                 violations: 0,
                 maxViolations: MAX_VIOLATIONS_LIMIT,
+                totalAwaySeconds: 0,
+                awayStartTime: null,
                 violationLogs: [],
                 lastViolationTimestamp: 0,
                 timerInterval: null,
@@ -825,6 +844,16 @@
                 return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
             }
 
+            function formatAwayDuration(totalSeconds) {
+                const safe = Math.max(0, Math.round(Number(totalSeconds) || 0));
+                if (safe === 0) return '0 detik';
+                const mins = Math.floor(safe / 60);
+                const secs = safe % 60;
+                if (mins === 0) return `${secs} detik`;
+                if (secs === 0) return `${mins} menit`;
+                return `${mins} menit ${secs} detik`;
+            }
+
             function normalizeExamUrl(rawUrl) {
                 const trimmed = String(rawUrl || '').trim();
                 if (!trimmed) return '';
@@ -886,8 +915,15 @@
                 return (APPS_SCRIPT_WEB_APP_URL || '').trim();
             }
 
-            function buildSessionId(studentClass, studentName) {
+            function buildStudentBaseKey(studentClass, studentName) {
                 return `${studentClass}_${studentName}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+            }
+
+            function buildExamSessionId(studentClass, studentName, subjectTitle = '') {
+                const base = buildStudentBaseKey(studentClass, studentName);
+                const subjSlug = String(subjectTitle || 'UMUM').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 28);
+                const timeSuffix = Date.now().toString(36).slice(-4);
+                return `${base}__${subjSlug}_${timeSuffix}`;
             }
 
             function getLocalLockedSessions() {
@@ -1222,15 +1258,21 @@
 
             async function syncStudentSessionToCloud(statusOverride = null) {
                 if (!state.sessionDocId) return;
+                // Jika siswa masih berada di luar layar saat sync berjalan, hitung akumulasi sementara
+                const livePendingAway = state.awayStartTime ? Math.max(0, Math.round((Date.now() - state.awayStartTime) / 1000)) : 0;
+                const effectiveAwaySeconds = state.totalAwaySeconds + livePendingAway;
+
                 const lastLog = state.violationLogs.length > 0 ? state.violationLogs[state.violationLogs.length - 1] : null;
                 const payloadObj = {
                     id: state.sessionDocId,
+                    studentBaseKey: state.studentBaseKey,
                     studentName: state.studentName,
                     studentClass: state.studentClass,
                     status: statusOverride || (state.isLocked ? 'TERKUNCI' : 'AKTIF'),
                     activeSubject: state.activeSubjectTitle,
                     violations: state.violations,
                     maxViolations: state.maxViolations,
+                    awaySeconds: effectiveAwaySeconds,
                     remainingSeconds: state.isSubjectSelected ? state.remainingSeconds : null,
                     lastViolationReason: lastLog ? lastLog.reason : '-',
                     lastViolationTime: lastLog ? lastLog.time : '-',
@@ -1255,6 +1297,7 @@
                             activeSubject: payloadObj.activeSubject,
                             violations: String(payloadObj.violations),
                             maxViolations: String(payloadObj.maxViolations),
+                            awaySeconds: String(payloadObj.awaySeconds),
                             remainingSeconds: payloadObj.remainingSeconds != null ? String(payloadObj.remainingSeconds) : '',
                             lastViolationReason: payloadObj.lastViolationReason,
                             lastViolationTime: payloadObj.lastViolationTime,
@@ -1287,19 +1330,26 @@
             }
 
             // Cek status kunci sesi di server & memori lokal sebelum siswa masuk ujian
-            async function verifySessionLockStatus(sessionId) {
-                const localLock = getLocalSessionLock(sessionId);
+            async function verifySessionLockStatus(studentBaseKey, studentClass = '', studentName = '') {
+                const localLock = getLocalSessionLock(studentBaseKey);
                 const scriptUrl = getActiveAppsScriptUrl();
 
                 if (scriptUrl) {
                     try {
-                        const res = await fetch(`${scriptUrl}?action=checkLock&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`);
+                        const params = new URLSearchParams({
+                            action: 'checkLock',
+                            sessionId: studentBaseKey,
+                            studentClass: studentClass,
+                            studentName: studentName,
+                            _t: String(Date.now())
+                        });
+                        const res = await fetch(`${scriptUrl}?${params.toString()}`);
                         if (res.ok) {
                             const data = await res.json();
                             if (data && data.ok) {
                                 if (data.locked === false) {
                                     // Admin sudah membuka kunci di server -> hapus kunci lokal di HP siswa
-                                    setLocalSessionLock(sessionId, null);
+                                    setLocalSessionLock(studentBaseKey, null);
                                     return { locked: false };
                                 }
                                 if (data.locked === true) {
@@ -1308,7 +1358,7 @@
                                         status: data.status || 'TERKUNCI (10x PELANGGARAN)',
                                         violations: Number(data.violations || MAX_VIOLATIONS_LIMIT)
                                     };
-                                    setLocalSessionLock(sessionId, lockDetail);
+                                    setLocalSessionLock(studentBaseKey, lockDetail);
                                     return lockDetail;
                                 }
                             }
@@ -1318,20 +1368,22 @@
                     }
                 }
 
-                const cachedSession = liveSessionsMap.get(sessionId);
-                if (cachedSession) {
-                    const isSessionLocked = cachedSession.forceStop === true ||
-                        String(cachedSession.status).includes('TERKUNCI') ||
-                        Number(cachedSession.violations || 0) >= MAX_VIOLATIONS_LIMIT;
-                    if (!isSessionLocked) {
-                        setLocalSessionLock(sessionId, null);
-                        return { locked: false };
+                // Cek di cache seluruh riwayat sesi milik siswa ini
+                for (const item of liveSessionsMap.values()) {
+                    const sameStudent = (item.studentClass === studentClass && item.studentName === studentName) ||
+                        String(item.id || '').startsWith(studentBaseKey);
+                    if (sameStudent) {
+                        const isSessionLocked = item.forceStop === true ||
+                            String(item.status).includes('TERKUNCI') ||
+                            Number(item.violations || 0) >= MAX_VIOLATIONS_LIMIT;
+                        if (isSessionLocked) {
+                            return {
+                                locked: true,
+                                status: item.status || 'TERKUNCI (10x PELANGGARAN)',
+                                violations: Number(item.violations || MAX_VIOLATIONS_LIMIT)
+                            };
+                        }
                     }
-                    return {
-                        locked: true,
-                        status: cachedSession.status || 'TERKUNCI (10x PELANGGARAN)',
-                        violations: Number(cachedSession.violations || MAX_VIOLATIONS_LIMIT)
-                    };
                 }
 
                 if (localLock && localLock.locked) {
@@ -1391,7 +1443,7 @@
                 state.isLocked = true;
                 state.studentClass = studentClass;
                 state.studentName = studentName;
-                state.sessionDocId = buildSessionId(studentClass, studentName);
+                state.studentBaseKey = buildStudentBaseKey(studentClass, studentName);
                 state.violations = violationsCount;
 
                 el.startScreen.classList.add('hidden');
@@ -1419,8 +1471,8 @@
             async function startExam() {
                 if (!state.studentClass || !state.studentName) return;
 
-                const cleanId = buildSessionId(state.studentClass, state.studentName);
-                state.sessionDocId = cleanId;
+                const baseKey = buildStudentBaseKey(state.studentClass, state.studentName);
+                state.studentBaseKey = baseKey;
 
                 if (el.btnStartExam) {
                     el.btnStartExam.disabled = true;
@@ -1430,7 +1482,7 @@
                 }
 
                 // Cek apakah siswa ini sedang dalam status TERKUNCI (10x pelanggaran / Stop Paksa)
-                const lockCheck = await verifySessionLockStatus(cleanId);
+                const lockCheck = await verifySessionLockStatus(baseKey, state.studentClass, state.studentName);
                 if (el.btnStartExam) {
                     el.btnStartExam.disabled = false;
                 }
@@ -1447,9 +1499,12 @@
                 state.isExamActive = true;
                 state.isLocked = false;
                 state.isSubjectSelected = false;
+                state.sessionDocId = '';
                 state.activeSubjectTitle = 'Memilih Mata Pelajaran';
                 state.violations = 0;
                 state.maxViolations = MAX_VIOLATIONS_LIMIT;
+                state.totalAwaySeconds = 0;
+                state.awayStartTime = null;
                 state.violationLogs = [];
                 state.lastViolationTimestamp = 0;
 
@@ -1471,14 +1526,6 @@
                 updateTimerUI();
                 updateViolationUI();
 
-                if (db && currentUser && state.sessionDocId && !getActiveAppsScriptUrl()) {
-                    try {
-                        const sessionRef = doc(db, 'artifacts', appId, 'public', 'data', 'cbt_monitoring_sessions', state.sessionDocId);
-                        setDoc(sessionRef, { forceStop: false }, { merge: true }).catch(() => {});
-                    } catch (e) {}
-                }
-                syncStudentSessionToCloud('AKTIF');
-
                 if (state.timerInterval) clearInterval(state.timerInterval);
                 state.timerInterval = setInterval(() => {
                     if (!state.isExamActive || state.isLocked || !state.isSubjectSelected) return;
@@ -1494,9 +1541,18 @@
             }
 
             function openSubjectExam(exam) {
+                // Buat ID sesi unik per mata pelajaran yang dikerjakan agar riwayat 3+ ujian Kevin tetap tersimpan terpisah
+                state.sessionDocId = buildExamSessionId(state.studentClass, state.studentName, exam.title);
                 state.isSubjectSelected = true;
                 state.activeSubjectTitle = exam.title;
                 state.remainingSeconds = exam.durationMinutes * 60;
+                state.violations = 0;
+                state.totalAwaySeconds = 0;
+                state.awayStartTime = null;
+                state.violationLogs = [];
+                state.lastViolationTimestamp = 0;
+
+                updateViolationUI();
 
                 if (el.headerSubjectTitle) {
                     el.headerSubjectTitle.textContent = exam.title;
@@ -1511,6 +1567,21 @@
                 syncStudentSessionToCloud('MENGERJAKAN');
             }
 
+            function startAwayTimer() {
+                if (!state.isExamActive || state.isLocked) return;
+                if (!state.awayStartTime) {
+                    state.awayStartTime = Date.now();
+                }
+            }
+
+            function stopAwayTimerAndGetDelta() {
+                if (!state.awayStartTime) return 0;
+                const deltaSec = Math.max(1, Math.round((Date.now() - state.awayStartTime) / 1000));
+                state.totalAwaySeconds += deltaSec;
+                state.awayStartTime = null;
+                return deltaSec;
+            }
+
             function recordViolation(reason) {
                 if (!state.isExamActive || state.isLocked) return;
 
@@ -1518,9 +1589,10 @@
                 if (now - state.lastViolationTimestamp < VIOLATION_COOLDOWN_MS) return;
                 state.lastViolationTimestamp = now;
 
+                startAwayTimer();
                 state.violations += 1;
                 const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                state.violationLogs.push({ reason, time: timeStr });
+                state.violationLogs.push({ reason, time: timeStr, awaySec: 0 });
 
                 // Kurangi waktu ujian sebesar 5 menit jika sedang mengerjakan soal
                 if (state.isSubjectSelected) {
@@ -1553,6 +1625,7 @@
             }
 
             function endExam(reason) {
+                stopAwayTimerAndGetDelta();
                 state.isExamActive = false;
                 state.isLocked = true;
 
@@ -1597,7 +1670,7 @@
                 }
 
                 if (isHardLocked) {
-                    setLocalSessionLock(state.sessionDocId, {
+                    setLocalSessionLock(state.studentBaseKey || buildStudentBaseKey(state.studentClass, state.studentName), {
                         locked: true,
                         studentClass: state.studentClass,
                         studentName: state.studentName,
@@ -1615,7 +1688,7 @@
 
                 el.summaryStudentName.textContent = state.studentName || '-';
                 el.summaryStudentClass.textContent = state.studentClass || '-';
-                el.summaryViolations.textContent = `${state.violations} dari ${state.maxViolations} kali`;
+                el.summaryViolations.textContent = `${state.violations} dari ${state.maxViolations} kali (Keluar: ${formatAwayDuration(state.totalAwaySeconds)})`;
                 el.summaryStatus.textContent = finalStatusLabel;
 
                 el.endScreen.classList.remove('hidden');
@@ -1642,6 +1715,47 @@
                 if (!state.isExamActive || state.isLocked) return;
                 if (document.visibilityState === 'hidden') {
                     recordViolation('Meninggalkan tab ujian / menekan tombol Home');
+                } else if (document.visibilityState === 'visible' && state.awayStartTime) {
+                    const awayDelta = stopAwayTimerAndGetDelta();
+                    if (state.violationLogs.length > 0) {
+                        const lastEntry = state.violationLogs[state.violationLogs.length - 1];
+                        lastEntry.awaySec = (lastEntry.awaySec || 0) + awayDelta;
+                        lastEntry.reason = `${lastEntry.reason.replace(/\s*\(keluar.*\)$/i, '')} (keluar ${formatAwayDuration(lastEntry.awaySec)})`;
+                        if (el.violationReasonText) {
+                            el.violationReasonText.textContent = lastEntry.reason;
+                        }
+                    }
+                    syncStudentSessionToCloud('PELANGGARAN');
+                }
+            });
+
+            // 2. Deteksi pindah aplikasi / split screen / floating window (kecuali klik di dalam iframe soal)
+            window.addEventListener('blur', () => {
+                if (!state.isExamActive || state.isLocked) return;
+                setTimeout(() => {
+                    if (!state.isExamActive || state.isLocked) return;
+                    const activeEl = document.activeElement;
+                    const isIframeFocused = activeEl === el.examIframe || (activeEl && activeEl.tagName === 'IFRAME');
+                    if (document.visibilityState === 'visible' && (isIframeFocused || state.isPointerInsideIframe)) {
+                        return;
+                    }
+                    recordViolation('Membuka aplikasi lain atau keluar dari fokus layar ujian');
+                }, 120);
+            });
+
+            window.addEventListener('focus', () => {
+                if (!state.isExamActive || state.isLocked) return;
+                if (document.visibilityState === 'visible' && state.awayStartTime) {
+                    const awayDelta = stopAwayTimerAndGetDelta();
+                    if (state.violationLogs.length > 0) {
+                        const lastEntry = state.violationLogs[state.violationLogs.length - 1];
+                        lastEntry.awaySec = (lastEntry.awaySec || 0) + awayDelta;
+                        lastEntry.reason = `${lastEntry.reason.replace(/\s*\(keluar.*\)$/i, '')} (keluar ${formatAwayDuration(lastEntry.awaySec)})`;
+                        if (el.violationReasonText) {
+                            el.violationReasonText.textContent = lastEntry.reason;
+                        }
+                    }
+                    syncStudentSessionToCloud('PELANGGARAN');
                 }
             });
 
@@ -1721,7 +1835,7 @@
                 if (filtered.length === 0) {
                     el.adminMonitoringTbody.innerHTML = `
                         <tr>
-                            <td colspan="7" class="py-10 text-center text-slate-400">Belum ada aktivitas sesi ujian siswa yang sesuai filter.</td>
+                            <td colspan="8" class="py-10 text-center text-slate-400">Belum ada aktivitas sesi ujian siswa yang sesuai filter.</td>
                         </tr>
                     `;
                     return;
@@ -1730,6 +1844,7 @@
                 el.adminMonitoringTbody.innerHTML = filtered.map((s) => {
                     const vCount = Number(s.violations || 0);
                     const vMax = MAX_VIOLATIONS_LIMIT;
+                    const awaySec = Number(s.awaySeconds || 0);
                     const isSessionLocked = s.forceStop === true || String(s.status).includes('TERKUNCI') || String(s.status).includes('STOP') || vCount >= vMax;
                     let statusBadge = `<span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-[11px] font-extrabold">${escapeHTML(s.status)}</span>`;
                     if (isSessionLocked) {
@@ -1743,6 +1858,10 @@
                     const vBadgeClass = vCount === 0
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : (vCount < vMax ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-700 border-red-200');
+
+                    const awayBadgeClass = awaySec === 0
+                        ? 'bg-slate-100 text-slate-600'
+                        : (awaySec < 30 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700');
 
                     const primaryControlBtn = isSessionLocked
                         ? `<button type="button" data-action="unlock-session" data-session-id="${escapeHTML(s.id)}" data-student-class="${escapeHTML(s.studentClass)}" data-student-name="${escapeHTML(s.studentName)}" class="admin-action-btn px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold shadow-xs transition cursor-pointer">
@@ -1763,6 +1882,11 @@
                             <td class="py-3 px-4">
                                 <span class="px-2.5 py-1 rounded-lg border text-xs font-black ${vBadgeClass}">
                                     ${vCount} / ${vMax}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold ${awayBadgeClass}">
+                                    ${escapeHTML(formatAwayDuration(awaySec))}
                                 </span>
                             </td>
                             <td class="py-3 px-4">
@@ -1880,7 +2004,11 @@
 
             if (el.btnBackSubjects) {
                 el.btnBackSubjects.addEventListener('click', () => {
+                    if (state.isSubjectSelected && state.sessionDocId) {
+                        syncStudentSessionToCloud('SELESAI');
+                    }
                     state.isSubjectSelected = false;
+                    state.sessionDocId = '';
                     state.activeSubjectTitle = 'Memilih Mata Pelajaran';
                     el.examIframe.src = 'about:blank';
                     el.iframeExamView.classList.add('hidden');
@@ -1888,12 +2016,18 @@
                     el.btnBackSubjects.classList.add('hidden');
                     el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
                     updateTimerUI();
-                    syncStudentSessionToCloud('AKTIF');
                 });
             }
 
             if (el.btnResumeExam) {
                 el.btnResumeExam.addEventListener('click', () => {
+                    const awayDelta = stopAwayTimerAndGetDelta();
+                    if (awayDelta > 0 && state.violationLogs.length > 0) {
+                        const lastEntry = state.violationLogs[state.violationLogs.length - 1];
+                        lastEntry.awaySec = (lastEntry.awaySec || 0) + awayDelta;
+                        lastEntry.reason = `${lastEntry.reason.replace(/\s*\(keluar.*\)$/i, '')} (keluar ${formatAwayDuration(lastEntry.awaySec)})`;
+                    }
+                    syncStudentSessionToCloud(state.isSubjectSelected ? 'MENGERJAKAN' : 'AKTIF');
                     el.violationOverlay.classList.add('hidden');
                     enterFullscreen();
                 });
@@ -1926,11 +2060,12 @@
 
             if (el.btnCheckUnlock) {
                 el.btnCheckUnlock.addEventListener('click', async () => {
-                    if (!state.sessionDocId) return;
+                    const baseKey = state.studentBaseKey || buildStudentBaseKey(state.studentClass, state.studentName);
+                    if (!baseKey) return;
                     el.btnCheckUnlock.disabled = true;
                     el.btnCheckUnlock.textContent = 'Memeriksa status kunci ke server...';
 
-                    const checkResult = await verifySessionLockStatus(state.sessionDocId);
+                    const checkResult = await verifySessionLockStatus(baseKey, state.studentClass, state.studentName);
 
                     el.btnCheckUnlock.disabled = false;
                     el.btnCheckUnlock.textContent = 'Cek Status Buka Kunci dari Admin';
@@ -2131,15 +2266,18 @@
                     const applyOptimisticSessionUpdate = () => {
                         const existing = liveSessionsMap.get(sessionId);
                         if (action === 'unlock-session') {
+                            setLocalSessionLock(buildStudentBaseKey(studentClass, studentName), null);
                             setLocalSessionLock(sessionId, null);
-                            if (existing) {
-                                existing.forceStop = false;
-                                existing.violations = 0;
-                                existing.maxViolations = MAX_VIOLATIONS_LIMIT;
-                                existing.status = 'DIBUKA ADMIN';
-                                existing.lastViolationReason = 'Reset & Buka Kunci oleh Admin';
-                                existing.updatedAt = Date.now();
-                            }
+                            liveSessionsMap.forEach((item) => {
+                                if (item.id === sessionId || (studentClass && studentName && item.studentClass === studentClass && item.studentName === studentName)) {
+                                    item.forceStop = false;
+                                    item.violations = 0;
+                                    item.maxViolations = MAX_VIOLATIONS_LIMIT;
+                                    item.status = 'DIBUKA ADMIN';
+                                    item.lastViolationReason = 'Reset & Buka Kunci oleh Admin';
+                                    item.updatedAt = Date.now();
+                                }
+                            });
                         } else if (action === 'force-stop') {
                             if (existing) {
                                 existing.forceStop = true;
