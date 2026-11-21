@@ -102,7 +102,6 @@
     <!-- 1. HALAMAN AWAL / LOGIN PESERTA UJIAN                               -->
     <!-- =================================================================== -->
     <div id="start-screen" class="min-h-screen flex flex-col justify-between bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-4 sm:p-6">
-        <!-- Header Sekolah -->
         <header class="max-w-4xl w-full mx-auto flex items-center justify-between gap-3 pt-1">
             <div class="flex items-center gap-3">
                 <img src="https://raw.githubusercontent.com/dilan-math/smp15-HasilUlangan/282e19d087819a7a0ee87a2ea514b509cad6b85c/Logo%20SMP15BJB%20(1).png"
@@ -120,7 +119,6 @@
             </button>
         </header>
 
-        <!-- Kartu Masuk Peserta -->
         <main class="max-w-xl w-full mx-auto my-6">
             <div class="bg-white text-slate-800 rounded-3xl shadow-2xl border border-slate-200/80 p-6 sm:p-8">
                 <div class="flex items-center justify-between gap-2 mb-5">
@@ -165,10 +163,9 @@
                     </button>
                 </div>
 
-                <!-- Tata Tertib Singkat -->
                 <div class="mt-6 pt-5 border-t border-slate-100 space-y-2 text-xs text-slate-600">
                     <p class="font-extrabold text-slate-800 uppercase tracking-wider text-[11px]">Peraturan Ujian Online:</p>
-                    <p><span class="font-black text-blue-600">01.</span> Setiap mata pelajaran hanya dapat dikerjakan <strong>1 kali percobaan</strong>. Jika ingin mengulang, wajib meminta <strong>Reset</strong> kepada Pengawas/Admin.</p>
+                    <p><span class="font-black text-blue-600">01.</span> Jika jaringan terputus sebelum menekan tombol <strong>Selesai</strong> (dan pelanggaran &lt; 10x), Anda dapat masuk kembali untuk <strong>menyambung sisa waktu</strong>. Setelah menekan <strong>Selesai</strong>, mengulang ujian wajib meminta <strong>Reset</strong> Admin.</p>
                     <p><span class="font-black text-blue-600">02.</span> Dilarang keluar aplikasi, pindah tab, mengambil <strong>Screenshot / Rekam Layar</strong>, menyalin/menerjemahkan teks, atau menggunakan <em>Split Screen</em>.</p>
                     <p><span class="font-black text-blue-600">03.</span> Pelanggaran otomatis tercatat ke server Pengawas (maksimal <strong>10 kali</strong> sebelum akun dikunci permanen).</p>
                 </div>
@@ -184,7 +181,6 @@
     <!-- 2. KONTAINER UTAMA UJIAN (PORTAL MATA PELAJARAN & IFRAME SOAL)      -->
     <!-- =================================================================== -->
     <div id="exam-container" class="hidden">
-        <!-- Topbar Ujian -->
         <header class="h-14 shrink-0 bg-slate-900 text-white px-3 sm:px-5 flex items-center justify-between gap-2 border-b border-slate-800 shadow-md z-20">
             <div class="flex items-center gap-2.5 min-w-0">
                 <img src="https://raw.githubusercontent.com/dilan-math/smp15-HasilUlangan/282e19d087819a7a0ee87a2ea514b509cad6b85c/Logo%20SMP15BJB%20(1).png"
@@ -201,23 +197,19 @@
             </div>
 
             <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-                <!-- Indikator Pelanggaran -->
                 <div id="violation-badge" class="px-2.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] font-extrabold">
                     Pelanggaran: <span id="violation-count-text">0/10</span>
                 </div>
 
-                <!-- Timer Mundur -->
                 <div id="exam-timer-badge" class="flex px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-slate-200 items-center gap-1.5">
                     <span id="exam-timer">--:--:--</span>
                 </div>
 
-                <!-- Tombol Kembali ke Daftar Soal -->
                 <button id="back-to-portal-btn" type="button"
                     class="hidden px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[11px] transition cursor-pointer">
                     Daftar Soal
                 </button>
 
-                <!-- Tombol Selesai / Keluar -->
                 <button id="finish-exam-btn" type="button"
                     class="px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-[11px] transition cursor-pointer">
                     Selesai
@@ -225,7 +217,6 @@
             </div>
         </header>
 
-        <!-- Sub-Tampilan A: Portal Pemilihan Mata Pelajaran (Dari Sheet1) -->
         <section id="subject-portal-view" class="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50">
             <div class="max-w-4xl mx-auto space-y-5">
                 <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -234,7 +225,7 @@
                             Jadwal Ujian Aktif
                         </span>
                         <h2 class="text-lg sm:text-xl font-black text-slate-900">Pilih Mata Pelajaran Ujian</h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Waktu hitung mundur akan berjalan otomatis setelah Anda menekan tombol <strong>Kerjakan Soal Sekarang</strong>.</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Jika jaringan terputus sebelum menekan tombol <strong>Selesai</strong>, klik <strong>Lanjutkan Ujian</strong> untuk menyambung sisa waktu Anda.</p>
                     </div>
                     <button id="refresh-subjects-btn" type="button"
                         class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold transition cursor-pointer self-start sm:self-auto">
@@ -250,7 +241,6 @@
             </div>
         </section>
 
-        <!-- Sub-Tampilan B: Lembar Soal Iframe + Watermark Identitas -->
         <section id="iframe-exam-view" class="hidden">
             <div id="iframe-loader" class="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 p-6 text-center">
                 <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
@@ -334,7 +324,7 @@
         <div class="max-w-sm w-full bg-white rounded-3xl p-6 shadow-2xl text-center space-y-4">
             <h3 class="text-lg font-black text-slate-900">Akhiri Sesi Ujian?</h3>
             <p class="text-xs text-slate-600 leading-relaxed">
-                Pastikan Anda sudah menekan tombol <strong>Kirim / Submit</strong> pada lembar soal Google Form sebelum mengakhiri ujian.
+                Pastikan Anda sudah menekan tombol <strong>Kirim / Submit</strong> pada lembar soal Google Form. Setelah menekan <strong>Ya, Selesai</strong>, soal ini akan terkunci dan tidak dapat dibuka ulang tanpa Reset Pengawas.
             </p>
             <div class="flex gap-2.5 pt-2">
                 <button id="cancel-finish-btn" type="button"
@@ -376,7 +366,6 @@
     <!-- 7. DASHBOARD ADMIN LIVE MONITORING & KONTROL RESET                  -->
     <!-- =================================================================== -->
     <div id="admin-dashboard" class="hidden fixed inset-0 z-50 bg-slate-100 flex flex-col overflow-hidden">
-        <!-- Topbar Admin -->
         <header class="bg-slate-900 text-white px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shrink-0 shadow">
             <div class="flex items-center gap-3">
                 <img src="https://raw.githubusercontent.com/dilan-math/smp15-HasilUlangan/282e19d087819a7a0ee87a2ea514b509cad6b85c/Logo%20SMP15BJB%20(1).png"
@@ -397,7 +386,6 @@
             </button>
         </header>
 
-        <!-- Tab Navigasi Admin -->
         <div class="bg-white border-b border-slate-200 px-4 sm:px-6 flex gap-6 shrink-0">
             <button id="tab-monitoring-btn" type="button"
                 class="py-3 text-xs font-black border-b-2 border-blue-600 text-blue-600 cursor-pointer">
@@ -409,11 +397,8 @@
             </button>
         </div>
 
-        <!-- Konten Utama Admin -->
         <div class="flex-1 overflow-y-auto p-4 sm:p-6">
-            <!-- Panel 1: Monitoring Tabel -->
             <div id="admin-panel-monitoring" class="max-w-7xl mx-auto space-y-5">
-                <!-- Kartu Statistik -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
                         <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Sesi Ujian</p>
@@ -433,7 +418,6 @@
                     </div>
                 </div>
 
-                <!-- Filter & Aksi Cepat -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
                         <input id="admin-search-input" type="text" placeholder="Cari nama siswa atau mata pelajaran..."
@@ -455,7 +439,6 @@
 
                 <div id="admin-sync-alert" class="hidden p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800"></div>
 
-                <!-- Tabel Monitoring -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
                     <table class="w-full text-left border-collapse min-w-[920px]">
                         <thead>
@@ -479,7 +462,6 @@
                 </div>
             </div>
 
-            <!-- Panel 2: Pengaturan Google Apps Script -->
             <div id="admin-panel-appsscript" class="hidden max-w-4xl mx-auto space-y-4">
                 <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -523,8 +505,7 @@
                 STUDENTS_CACHE: 'cbt_smp15_students_cache_v2',
                 SUBJECTS_CACHE: 'cbt_smp15_subjects_cache_v2',
                 ACTIVE_LOCK: 'cbt_smp15_locked_session_v2',
-                AWAY_TRACKER: 'cbt_smp15_away_tracker_v2',
-                EXAM_END_TIME: 'cbt_smp15_exam_end_time_v2',
+                ACTIVE_EXAM_SESSION: 'cbt_smp15_active_exam_session_v1',
                 ATTEMPTED_EXAMS: 'cbt_smp15_attempted_exams_v1'
             };
 
@@ -554,8 +535,15 @@
                 '    var startedAt = String(p.startedAt || new Date().toISOString());',
                 '    var nowIso = new Date().toISOString();',
                 '    var foundRow = -1;',
-                '    for (var i = 1; i < data.length; i++) {',
-                '      if (String(data[i][0]).trim() === sid) { foundRow = i + 1; break; }',
+                '    for (var i = data.length - 1; i >= 1; i--) {',
+                '      var rSid = String(data[i][0] || "").trim();',
+                '      var rClass = String(data[i][1] || "").trim().toLowerCase();',
+                '      var rName = String(data[i][2] || "").trim().toLowerCase();',
+                '      var rSub = String(data[i][3] || "").trim().toLowerCase();',
+                '      if ((sid && rSid === sid) || (sName && rName === sName.toLowerCase() && rClass === sClass.toLowerCase() && rSub === sSub.toLowerCase())) {',
+                '        foundRow = i + 1;',
+                '        break;',
+                '      }',
                 '    }',
                 '    if (foundRow > 0) {',
                 '      var curStatus = String(data[foundRow - 1][4] || "");',
@@ -563,8 +551,8 @@
                 '      if (curStatus === "DIBUKA ADMIN" && unlockedFlag === "TRUE" && status === "LOCKED") {',
                 '        return ContentService.createTextOutput(JSON.stringify({ status: "unlocked" })).setMimeType(ContentService.MimeType.JSON);',
                 '      }',
-                '      var keepStartedAt = data[foundRow - 1][12] ? String(data[foundRow - 1][12]) : startedAt;',
-                '      sheet.getRange(foundRow, 2, 1, 12).setValues([[sClass, sName, sSub, status, viol, maxV, reason, nowIso, baseKey, "FALSE", awaySec, keepStartedAt]]);',
+                '      var keepStartedAt = (curStatus === "DIBUKA ADMIN") ? startedAt : (data[foundRow - 1][12] ? String(data[foundRow - 1][12]) : startedAt);',
+                '      sheet.getRange(foundRow, 1, 1, 13).setValues([[sid || String(data[foundRow - 1][0]), sClass, sName, sSub, status, viol, maxV, reason, nowIso, baseKey, "FALSE", awaySec, keepStartedAt]]);',
                 '    } else {',
                 '      sheet.appendRow([sid, sClass, sName, sSub, status, viol, maxV, reason, nowIso, baseKey, "FALSE", awaySec, startedAt]);',
                 '    }',
@@ -642,6 +630,9 @@
                 awayStartTime: null,
                 lastBlurTime: 0,
                 pendingBlurTimer: null,
+                lastViolationTimestamp: 0,
+                lastViewportWidth: window.innerWidth,
+                lastViewportHeight: window.innerHeight,
                 touchStartTime: 0,
                 isPointerInsideIframe: false,
                 adminSessions: []
@@ -649,12 +640,11 @@
 
             const el = {
                 startScreen: document.getElementById('start-screen'),
-                openAdminPinBtn: document.getElementById('open-admin-pin-btn'),
-                reloadStudentsBtn: document.getElementById('reload-students-btn'),
                 studentClassSelect: document.getElementById('student-class-select'),
                 studentNameSelect: document.getElementById('student-name-select'),
                 startErrorMsg: document.getElementById('start-error-msg'),
                 startExamBtn: document.getElementById('start-exam-btn'),
+                reloadStudentsBtn: document.getElementById('reload-students-btn'),
 
                 examContainer: document.getElementById('exam-container'),
                 headerStudentName: document.getElementById('header-student-name'),
@@ -668,8 +658,8 @@
                 finishExamBtn: document.getElementById('finish-exam-btn'),
 
                 subjectPortalView: document.getElementById('subject-portal-view'),
-                refreshSubjectsBtn: document.getElementById('refresh-subjects-btn'),
                 subjectsGrid: document.getElementById('subjects-grid'),
+                refreshSubjectsBtn: document.getElementById('refresh-subjects-btn'),
 
                 iframeExamView: document.getElementById('iframe-exam-view'),
                 iframeLoader: document.getElementById('iframe-loader'),
@@ -697,6 +687,7 @@
                 cancelFinishBtn: document.getElementById('cancel-finish-btn'),
                 confirmFinishBtn: document.getElementById('confirm-finish-btn'),
 
+                openAdminPinBtn: document.getElementById('open-admin-pin-btn'),
                 adminPinModal: document.getElementById('admin-pin-modal'),
                 adminPinInput: document.getElementById('admin-pin-input'),
                 adminPinError: document.getElementById('admin-pin-error'),
@@ -720,15 +711,15 @@
                 adminSyncAlert: document.getElementById('admin-sync-alert'),
                 adminMonitoringTbody: document.getElementById('admin-monitoring-tbody'),
                 testAppsScriptBtn: document.getElementById('test-apps-script-btn'),
-                testServerResult: document.getElementById('test-server-result'),
                 copyAppsScriptBtn: document.getElementById('copy-apps-script-btn'),
+                testServerResult: document.getElementById('test-server-result'),
                 appsScriptCodeBox: document.getElementById('apps-script-code-box')
             };
 
             // =================================================================
-            // FUNGSI UTILITAS & PARSING SPREADSHEET
+            // FUNGSI UTILITAS UMUM
             // =================================================================
-            function escapeHTML(str) {
+            function escapeHtml(str) {
                 return String(str || '')
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
@@ -737,75 +728,487 @@
                     .replace(/'/g, '&#39;');
             }
 
+            function formatSeconds(sec) {
+                const s = Math.max(0, Math.floor(Number(sec) || 0));
+                if (s < 60) return s + ' detik';
+                const m = Math.floor(s / 60);
+                const rem = s % 60;
+                return rem > 0 ? (m + ' menit ' + rem + ' detik') : (m + ' menit');
+            }
+
+            function formatClock(isoStr) {
+                if (!isoStr) return '-';
+                const d = new Date(isoStr);
+                if (isNaN(d.getTime())) return String(isoStr);
+                const hh = String(d.getHours()).padStart(2, '0');
+                const mm = String(d.getMinutes()).padStart(2, '0');
+                const ss = String(d.getSeconds()).padStart(2, '0');
+                return 'Pukul ' + hh + ':' + mm + ':' + ss;
+            }
+
             function parseGvizJson(rawText) {
-                const startIdx = rawText.indexOf('{');
-                const endIdx = rawText.lastIndexOf('}');
-                if (startIdx === -1 || endIdx === -1) throw new Error('Format gviz tidak valid');
-                return JSON.parse(rawText.slice(startIdx, endIdx + 1));
+                const start = rawText.indexOf('{');
+                const end = rawText.lastIndexOf('}');
+                if (start === -1 || end === -1) throw new Error('Format gviz tidak valid');
+                return JSON.parse(rawText.substring(start, end + 1));
             }
 
-            function formatDurationHuman(totalSec) {
-                const sec = Math.max(0, Math.floor(Number(totalSec || 0)));
-                if (sec < 60) return `${sec} detik`;
-                const mins = Math.floor(sec / 60);
-                const remSec = sec % 60;
-                return remSec > 0 ? `${mins} menit ${remSec} detik` : `${mins} menit`;
+            function getStudentSubjectKey(sClass, sName, sSub) {
+                return [
+                    String(sClass || '').trim().toLowerCase(),
+                    String(sName || '').trim().toLowerCase(),
+                    String(sSub || '').trim().toLowerCase()
+                ].join('||');
             }
 
-            function extractAwaySecondsFromLogText(reasonText) {
-                const m = String(reasonText || '').match(/\[TotalKeluar:(\d+)\]/i);
-                return m ? Number(m[1]) : 0;
-            }
-
-            function formatStartClockWIB(startedAtIso, sessionId) {
-                let d = null;
-                if (startedAtIso) {
-                    const parsed = Date.parse(startedAtIso);
-                    if (!Number.isNaN(parsed)) d = new Date(parsed);
+            // =================================================================
+            // PENGELOLAAN STORAGE LOKAL (ATTEMPT, RESUME SESI, & LOCK)
+            // =================================================================
+            function getAttemptedMap() {
+                try {
+                    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTED_EXAMS) || '{}');
+                } catch (_) {
+                    return {};
                 }
-                if (!d && sessionId) {
-                    const parts = String(sessionId).split('_');
-                    const lastPart = Number(parts[parts.length - 1]);
-                    if (!Number.isNaN(lastPart) && lastPart > 1700000000000) {
-                        d = new Date(lastPart);
+            }
+
+            function setExamAttempted(sClass, sName, sSub, attempted) {
+                try {
+                    const map = getAttemptedMap();
+                    const key = getStudentSubjectKey(sClass, sName, sSub);
+                    if (attempted) {
+                        map[key] = true;
+                    } else {
+                        delete map[key];
+                    }
+                    localStorage.setItem(STORAGE_KEYS.ATTEMPTED_EXAMS, JSON.stringify(map));
+                } catch (_) {}
+            }
+
+            function isExamAttempted(sClass, sName, sSub) {
+                const map = getAttemptedMap();
+                return Boolean(map[getStudentSubjectKey(sClass, sName, sSub)]);
+            }
+
+            function getActiveExamSessionsMap() {
+                try {
+                    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVE_EXAM_SESSION) || '{}');
+                } catch (_) {
+                    return {};
+                }
+            }
+
+            function getSavedActiveSession(sClass, sName, sSub) {
+                const map = getActiveExamSessionsMap();
+                return map[getStudentSubjectKey(sClass, sName, sSub)] || null;
+            }
+
+            function persistActiveExamSession() {
+                if (!state.studentClass || !state.studentName || !state.currentSubject) return;
+                try {
+                    const map = getActiveExamSessionsMap();
+                    const key = getStudentSubjectKey(state.studentClass, state.studentName, state.currentSubject.title);
+                    map[key] = {
+                        sessionId: state.sessionId,
+                        studentClass: state.studentClass,
+                        studentName: state.studentName,
+                        subjectTitle: state.currentSubject.title,
+                        subjectUrl: state.currentSubject.url,
+                        durationMinutes: state.currentSubject.durationMinutes,
+                        examStartedAt: state.examStartedAt,
+                        examEndTime: state.examEndTime,
+                        violations: state.violations,
+                        totalAwaySeconds: state.totalAwaySeconds,
+                        lastViolationReason: state.lastViolationReason
+                    };
+                    localStorage.setItem(STORAGE_KEYS.ACTIVE_EXAM_SESSION, JSON.stringify(map));
+                } catch (_) {}
+            }
+
+            function clearSavedActiveSession(sClass, sName, sSub) {
+                try {
+                    const map = getActiveExamSessionsMap();
+                    delete map[getStudentSubjectKey(sClass, sName, sSub)];
+                    localStorage.setItem(STORAGE_KEYS.ACTIVE_EXAM_SESSION, JSON.stringify(map));
+                } catch (_) {}
+            }
+
+            function persistLockedSession() {
+                try {
+                    localStorage.setItem(STORAGE_KEYS.ACTIVE_LOCK, JSON.stringify({
+                        sessionId: state.sessionId,
+                        studentClass: state.studentClass,
+                        studentName: state.studentName,
+                        subjectTitle: state.currentSubject ? state.currentSubject.title : '',
+                        violations: state.violations,
+                        totalAwaySeconds: state.totalAwaySeconds,
+                        lastViolationReason: state.lastViolationReason,
+                        examStartedAt: state.examStartedAt
+                    }));
+                } catch (_) {}
+            }
+
+            function clearLockedSession() {
+                try {
+                    localStorage.removeItem(STORAGE_KEYS.ACTIVE_LOCK);
+                } catch (_) {}
+            }
+
+            // =================================================================
+            // MUAT DATA SISWA (SHEET "SISWA") & JADWAL UJIAN ("Sheet1")
+            // =================================================================
+            async function loadStudentsFromSheet(forceRefresh = false) {
+                if (!forceRefresh) {
+                    try {
+                        const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDENTS_CACHE) || 'null');
+                        if (cached && Object.keys(cached).length > 0) {
+                            state.studentsByClass = cached;
+                            populateClassDropdown();
+                        }
+                    } catch (_) {}
+                }
+
+                try {
+                    const url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent('SISWA') + '&_ts=' + Date.now();
+                    const res = await fetch(url);
+                    const text = await res.text();
+                    const json = parseGvizJson(text);
+                    const rows = (json.table && json.table.rows) ? json.table.rows : [];
+                    const grouped = {};
+
+                    rows.forEach((r, idx) => {
+                        const c = r.c || [];
+                        const rawClass = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+                        const rawName = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
+                        if (!rawClass || !rawName) return;
+                        if (idx === 0 && (rawClass.toLowerCase() === 'kelas' || rawName.toLowerCase().includes('nama'))) return;
+                        if (!grouped[rawClass]) grouped[rawClass] = [];
+                        if (!grouped[rawClass].includes(rawName)) grouped[rawClass].push(rawName);
+                    });
+
+                    if (Object.keys(grouped).length > 0) {
+                        Object.keys(grouped).forEach(k => grouped[k].sort((a, b) => a.localeCompare(b)));
+                        state.studentsByClass = grouped;
+                        localStorage.setItem(STORAGE_KEYS.STUDENTS_CACHE, JSON.stringify(grouped));
+                        populateClassDropdown();
+                    }
+                } catch (err) {
+                    if (Object.keys(state.studentsByClass).length === 0) {
+                        el.studentClassSelect.innerHTML = '<option value="">Gagal memuat data siswa. Periksa internet.</option>';
                     }
                 }
-                if (!d) return '-';
-                try {
-                    return 'Pukul ' + d.toLocaleTimeString('id-ID', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                        hour12: false
-                    }).replace(/\./g, ':');
-                } catch (e) {
-                    return '-';
+            }
+
+            function populateClassDropdown() {
+                const classes = Object.keys(state.studentsByClass).sort((a, b) => a.localeCompare(b));
+                const prevClass = el.studentClassSelect.value;
+                el.studentClassSelect.innerHTML = '<option value="">-- Pilih Kelas Anda --</option>' +
+                    classes.map(cls => '<option value="' + escapeHtml(cls) + '">' + escapeHtml(cls) + '</option>').join('');
+                if (prevClass && state.studentsByClass[prevClass]) {
+                    el.studentClassSelect.value = prevClass;
                 }
             }
 
-            function normalizeExamUrl(rawUrl) {
-                return String(rawUrl || '').trim();
+            async function loadSubjectsFromSheet() {
+                try {
+                    const url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent('Sheet1') + '&_ts=' + Date.now();
+                    const res = await fetch(url);
+                    const text = await res.text();
+                    const json = parseGvizJson(text);
+                    const rows = (json.table && json.table.rows) ? json.table.rows : [];
+                    const list = [];
+
+                    rows.forEach((r, idx) => {
+                        const c = r.c || [];
+                        const title = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+                        const link = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
+                        const durVal = c[2] && c[2].v != null ? Number(c[2].v) : DEFAULT_EXAM_DURATION_MINUTES;
+                        if (!title || !link) return;
+                        if (idx === 0 && (title.toLowerCase().includes('nama ujian') || link.toLowerCase().includes('link'))) return;
+                        list.push({
+                            title: title,
+                            url: link,
+                            durationMinutes: (!isNaN(durVal) && durVal > 0) ? durVal : DEFAULT_EXAM_DURATION_MINUTES
+                        });
+                    });
+
+                    if (list.length > 0) {
+                        state.subjects = list;
+                        localStorage.setItem(STORAGE_KEYS.SUBJECTS_CACHE, JSON.stringify(list));
+                    }
+                } catch (_) {
+                    try {
+                        const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBJECTS_CACHE) || '[]');
+                        if (cached.length > 0) state.subjects = cached;
+                    } catch (__) {}
+                }
+                await syncAttemptedStatusWithServer();
+                renderSubjectsGrid();
             }
 
-            function enterFullscreenSafe() {
+            // Sinkronisasi status percobaan & buka kunci Admin dari Spreadsheet
+            async function syncAttemptedStatusWithServer() {
+                if (!state.studentClass || !state.studentName) return;
                 try {
-                    const docEl = document.documentElement;
-                    if (!document.fullscreenElement && docEl.requestFullscreen) {
-                        docEl.requestFullscreen().catch(() => {});
+                    const res = await fetch(APPS_SCRIPT_WEB_APP_URL + '?action=get&_ts=' + Date.now());
+                    const data = await res.json();
+                    const sessions = Array.isArray(data.sessions) ? data.sessions : [];
+                    const mySessions = sessions.filter(s =>
+                        String(s.studentClass || '').trim().toLowerCase() === state.studentClass.toLowerCase() &&
+                        String(s.studentName || '').trim().toLowerCase() === state.studentName.toLowerCase()
+                    );
+
+                    state.subjects.forEach(sub => {
+                        const match = mySessions.find(s => String(s.subjectTitle || '').trim().toLowerCase() === sub.title.toLowerCase());
+                        if (!match) {
+                            setExamAttempted(state.studentClass, state.studentName, sub.title, false);
+                            clearSavedActiveSession(state.studentClass, state.studentName, sub.title);
+                        } else if (match.status === 'DIBUKA ADMIN' || match.unlockedByAdmin) {
+                            setExamAttempted(state.studentClass, state.studentName, sub.title, false);
+                            clearSavedActiveSession(state.studentClass, state.studentName, sub.title);
+                        } else if (match.status === 'FINISHED') {
+                            setExamAttempted(state.studentClass, state.studentName, sub.title, true);
+                            clearSavedActiveSession(state.studentClass, state.studentName, sub.title);
+                        }
+                    });
+                } catch (_) {}
+            }
+
+            function renderSubjectsGrid() {
+                if (!state.subjects || state.subjects.length === 0) {
+                    el.subjectsGrid.innerHTML = '<div class="col-span-full bg-white p-8 rounded-3xl text-center text-sm font-bold text-slate-500 border border-slate-200">Belum ada jadwal ujian aktif di Sheet1.</div>';
+                    return;
+                }
+
+                el.subjectsGrid.innerHTML = state.subjects.map((sub, idx) => {
+                    const finished = isExamAttempted(state.studentClass, state.studentName, sub.title);
+                    const savedActive = getSavedActiveSession(state.studentClass, state.studentName, sub.title);
+                    const isResumable = !finished && savedActive && savedActive.examEndTime && savedActive.examEndTime > Date.now();
+
+                    let statusBadge = '<span class="text-xs font-extrabold text-emerald-600">Tersedia</span>';
+                    let btnHtml = '<button type="button" data-sub-idx="' + idx + '" class="start-subject-btn w-full py-3.5 px-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm shadow-md shadow-blue-600/20 transition cursor-pointer">Kerjakan Soal Sekarang</button>';
+
+                    if (finished) {
+                        statusBadge = '<span class="text-xs font-extrabold text-red-600">Terkunci (1/1 Percobaan)</span>';
+                        btnHtml = '<button type="button" disabled class="w-full py-3.5 px-5 rounded-2xl bg-slate-200 text-slate-500 font-black text-xs sm:text-sm cursor-not-allowed">Sudah Selesai • Minta Reset Admin</button>';
+                    } else if (isResumable) {
+                        const remMin = Math.max(1, Math.ceil((savedActive.examEndTime - Date.now()) / 60000));
+                        statusBadge = '<span class="text-xs font-extrabold text-amber-600">Sedang Berlangsung (Sisa ~' + remMin + ' mnt)</span>';
+                        btnHtml = '<button type="button" data-sub-idx="' + idx + '" class="start-subject-btn w-full py-3.5 px-5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs sm:text-sm shadow-md transition cursor-pointer">Lanjutkan Ujian (Sambung Waktu)</button>';
                     }
-                } catch (e) {}
+
+                    return [
+                        '<div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm flex flex-col justify-between gap-4">',
+                        '  <div>',
+                        '    <div class="flex items-center justify-between gap-2 mb-2">',
+                        '      <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-black uppercase">Durasi: ' + sub.durationMinutes + ' Menit</span>',
+                        '      ' + statusBadge,
+                        '    </div>',
+                        '    <h3 class="text-lg font-black text-slate-900">' + escapeHtml(sub.title) + '</h3>',
+                        '  </div>',
+                        '  ' + btnHtml,
+                        '</div>'
+                    ].join('');
+                }).join('');
+
+                el.subjectsGrid.querySelectorAll('.start-subject-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = Number(btn.getAttribute('data-sub-idx'));
+                        const sub = state.subjects[idx];
+                        if (sub) openSubjectExam(sub);
+                    });
+                });
+            }
+
+            // =================================================================
+            // MEMULAI / MENYAMBUNG UJIAN & TIMER MUNDUR
+            // =================================================================
+            function openSubjectExam(sub) {
+                if (isExamAttempted(state.studentClass, state.studentName, sub.title)) {
+                    renderSubjectsGrid();
+                    return;
+                }
+
+                const savedActive = getSavedActiveSession(state.studentClass, state.studentName, sub.title);
+                state.currentSubject = sub;
+                state.isExamActive = true;
+                state.isLocked = false;
+
+                if (savedActive && savedActive.examEndTime && savedActive.examEndTime > Date.now()) {
+                    // Sambung sesi sebelumnya (saat jaringan terputus/refresh)
+                    state.sessionId = savedActive.sessionId;
+                    state.examStartedAt = savedActive.examStartedAt || new Date().toISOString();
+                    state.examEndTime = savedActive.examEndTime;
+                    state.violations = Number(savedActive.violations || 0);
+                    state.totalAwaySeconds = Number(savedActive.totalAwaySeconds || 0);
+                    state.lastViolationReason = savedActive.lastViolationReason || '-';
+                } else {
+                    // Sesi baru
+                    state.sessionId = 'SES_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7).toUpperCase();
+                    state.examStartedAt = new Date().toISOString();
+                    state.examEndTime = Date.now() + (sub.durationMinutes * 60 * 1000);
+                    state.violations = 0;
+                    state.totalAwaySeconds = 0;
+                    state.lastViolationReason = '-';
+                }
+
+                persistActiveExamSession();
+                updateViolationUI();
+                renderExamWatermark();
+
+                el.headerSubjectTitle.textContent = sub.title;
+                el.subjectPortalView.classList.add('hidden');
+                el.iframeExamView.classList.remove('hidden');
+                el.backToPortalBtn.classList.remove('hidden');
+                el.iframeLoader.classList.remove('hidden');
+
+                // Muat URL asli Google Form tanpa memaksa parameter yang memotong tampilan
+                el.examIframe.src = sub.url;
+
+                startExamTimer();
+                startHeartbeatSync();
+                syncSessionToServer('ACTIVE');
+            }
+
+            function startExamTimer() {
+                if (state.timerInterval) clearInterval(state.timerInterval);
+
+                function tick() {
+                    if (!state.examEndTime) {
+                        el.examTimer.textContent = '--:--:--';
+                        return;
+                    }
+                    const remainingMs = state.examEndTime - Date.now();
+                    if (remainingMs <= 0) {
+                        el.examTimer.textContent = '00:00:00';
+                        clearInterval(state.timerInterval);
+                        completeCurrentExam(true);
+                        return;
+                    }
+                    const totalSec = Math.ceil(remainingMs / 1000);
+                    const hrs = Math.floor(totalSec / 3600);
+                    const mins = Math.floor((totalSec % 3600) / 60);
+                    const secs = totalSec % 60;
+                    el.examTimer.textContent =
+                        String(hrs).padStart(2, '0') + ':' +
+                        String(mins).padStart(2, '0') + ':' +
+                        String(secs).padStart(2, '0');
+
+                    if (totalSec <= 300) {
+                        el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-red-600/30 border border-red-500 rounded-xl text-[11px] sm:text-xs font-mono font-black text-red-200 items-center gap-1.5 animate-pulse';
+                    } else if (totalSec <= 900) {
+                        el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-amber-500/25 border border-amber-400 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-amber-200 items-center gap-1.5';
+                    } else {
+                        el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-slate-200 items-center gap-1.5';
+                    }
+                }
+
+                tick();
+                state.timerInterval = setInterval(tick, 1000);
+            }
+
+            function stopExamTimer() {
+                if (state.timerInterval) {
+                    clearInterval(state.timerInterval);
+                    state.timerInterval = null;
+                }
+                state.examEndTime = null;
+                el.examTimer.textContent = '--:--:--';
+                el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-slate-200 items-center gap-1.5';
+            }
+
+            function completeCurrentExam(isTimeUp = false) {
+                if (state.currentSubject) {
+                    setExamAttempted(state.studentClass, state.studentName, state.currentSubject.title, true);
+                    clearSavedActiveSession(state.studentClass, state.studentName, state.currentSubject.title);
+                    syncSessionToServer('FINISHED');
+                }
+                stopExamTimer();
+                if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
+
+                state.isExamActive = false;
+                el.examIframe.src = 'about:blank';
+                el.iframeExamView.classList.add('hidden');
+                el.backToPortalBtn.classList.add('hidden');
+                el.examContainer.classList.add('hidden');
+
+                el.sumName.textContent = state.studentName;
+                el.sumClass.textContent = state.studentClass;
+                el.sumViolations.textContent = state.violations + ' / ' + MAX_VIOLATIONS;
+                el.sumAway.textContent = formatSeconds(state.totalAwaySeconds);
+                el.summarySubtitle.textContent = isTimeUp
+                    ? 'Waktu pengerjaan ujian telah habis dan sesi Anda telah dikunci.'
+                    : 'Jawaban Anda telah dikunci. Hubungi Pengawas jika memerlukan reset.';
+                el.summaryScreen.classList.remove('hidden');
+            }
+
+            // =================================================================
+            // SINKRONISASI REALTIME KE SERVER GOOGLE SPREADSHEET
+            // =================================================================
+            function syncSessionToServer(statusOverride) {
+                if (!state.studentName || !state.studentClass || !state.currentSubject) return;
+                const status = statusOverride || (state.isLocked ? 'LOCKED' : 'ACTIVE');
+                const params = new URLSearchParams({
+                    action: 'sync',
+                    sessionId: state.sessionId,
+                    studentClass: state.studentClass,
+                    studentName: state.studentName,
+                    subjectTitle: state.currentSubject.title,
+                    status: status,
+                    violations: String(state.violations),
+                    maxViolations: String(MAX_VIOLATIONS),
+                    lastViolationReason: state.lastViolationReason || '-',
+                    baseKey: state.studentClass + '_' + state.studentName,
+                    awaySeconds: String(state.totalAwaySeconds),
+                    startedAt: state.examStartedAt || new Date().toISOString(),
+                    _ts: String(Date.now())
+                });
+
+                const fullUrl = APPS_SCRIPT_WEB_APP_URL + '?' + params.toString();
+
+                // Jalur 1: Fetch non-preflight
+                fetch(fullUrl, { keepalive: true }).catch(() => {});
+
+                // Jalur 2: Image Beacon (menjamin pengiriman saat HP berpindah/menutup aplikasi)
+                try {
+                    const beacon = new Image();
+                    beacon.src = fullUrl;
+                } catch (_) {}
+            }
+
+            function startHeartbeatSync() {
+                if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
+                state.heartbeatTimer = setInterval(() => {
+                    if (state.isExamActive && state.currentSubject) {
+                        syncSessionToServer(state.isLocked ? 'LOCKED' : 'ACTIVE');
+                    }
+                }, 15000);
+            }
+
+            // =================================================================
+            // PELANGGARAN, ANTI-SCREENSHOT, ANTI-BLOK TEKS & KUNCI 10X
+            // =================================================================
+            function updateViolationUI() {
+                el.violationCountText.textContent = state.violations + '/' + MAX_VIOLATIONS;
+                if (state.violations === 0) {
+                    el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] font-extrabold';
+                } else if (state.violations < 7) {
+                    el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-amber-500/25 border border-amber-500/50 text-amber-300 text-[11px] font-extrabold';
+                } else {
+                    el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-red-600/35 border border-red-500 text-red-200 text-[11px] font-black animate-pulse';
+                }
             }
 
             function renderExamWatermark() {
                 if (!el.examWatermarkLayer) return;
-                const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(/\./g, ':');
-                const label = `${state.studentName || 'PESERTA'} • ${state.studentClass || 'SMPN 15'} • ${timeStr}`;
+                const timeTag = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                const label = (state.studentName || 'PESERTA') + ' • ' + (state.studentClass || 'SMPN 15') + ' • ' + timeTag;
                 el.examWatermarkLayer.innerHTML = Array.from({ length: 18 }, () =>
-                    `<div class="watermark-item">${escapeHTML(label)}</div>`
+                    '<div class="watermark-item">' + escapeHtml(label) + '</div>'
                 ).join('');
             }
 
-            function triggerAntiCaptureShield(durationMs = 1600) {
+            function triggerAntiCaptureShield(durationMs = 1800) {
                 if (!el.examContainer) return;
                 el.examContainer.classList.add('anti-capture-blur');
                 setTimeout(() => {
@@ -813,782 +1216,159 @@
                 }, durationMs);
             }
 
-            // =================================================================
-            // ATURAN 1 KALI PERCOBAAN PER MATA PELAJARAN
-            // =================================================================
-            function buildAttemptKey(sClass, sName, sSub) {
-                return `${String(sClass || '').trim().toLowerCase()}||${String(sName || '').trim().toLowerCase()}||${String(sSub || '').trim().toLowerCase()}`;
+            function showWarningModal(reasonText) {
+                el.violationModalTitle.textContent = 'Peringatan Pelanggaran Terdeteksi!';
+                el.violationModalDesc.textContent = reasonText;
+                el.modalViolationCounter.textContent = state.violations + ' / ' + MAX_VIOLATIONS;
+                el.modalAwayDuration.textContent = 'Total Waktu Keluar: ' + formatSeconds(state.totalAwaySeconds);
+                el.resumeExamBtn.classList.remove('hidden');
+                el.lockedAccountNotice.classList.add('hidden');
+                el.violationOverlay.classList.remove('hidden');
             }
 
-            function getAttemptedMap() {
+            function showLockedModal() {
+                el.violationModalTitle.textContent = 'AKUN UJIAN TERKUNCI (10/10)';
+                el.violationModalDesc.textContent = 'Pelanggaran terakhir: ' + state.lastViolationReason;
+                el.modalViolationCounter.textContent = MAX_VIOLATIONS + ' / ' + MAX_VIOLATIONS;
+                el.modalAwayDuration.textContent = 'Total Waktu Keluar: ' + formatSeconds(state.totalAwaySeconds);
+                el.resumeExamBtn.classList.add('hidden');
+                el.lockedAccountNotice.classList.remove('hidden');
+                el.violationOverlay.classList.remove('hidden');
+                startUnlockPolling();
+            }
+
+            function startUnlockPolling() {
+                if (state.unlockPollInterval) clearInterval(state.unlockPollInterval);
+                state.unlockPollInterval = setInterval(checkServerForUnlock, 4000);
+            }
+
+            async function checkServerForUnlock() {
+                if (!state.isLocked) return;
                 try {
-                    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTED_EXAMS) || '{}') || {};
-                } catch (e) {
-                    return {};
-                }
-            }
+                    const res = await fetch(APPS_SCRIPT_WEB_APP_URL + '?action=get&_ts=' + Date.now());
+                    const data = await res.json();
+                    const sessions = Array.isArray(data.sessions) ? data.sessions : [];
+                    const match = sessions.find(s =>
+                        (state.sessionId && s.sessionId === state.sessionId) ||
+                        (String(s.studentName || '').trim().toLowerCase() === state.studentName.toLowerCase() &&
+                         String(s.studentClass || '').trim().toLowerCase() === state.studentClass.toLowerCase() &&
+                         String(s.subjectTitle || '').trim().toLowerCase() === (state.currentSubject ? state.currentSubject.title.toLowerCase() : ''))
+                    );
 
-            function isExamAttemptedLocal(sClass, sName, sSub) {
-                const map = getAttemptedMap();
-                return Boolean(map[buildAttemptKey(sClass, sName, sSub)]);
-            }
+                    if (!match) {
+                        // Data belum sempat masuk ke server saat HP offline -> kirim ulang sekarang
+                        syncSessionToServer('LOCKED');
+                        return;
+                    }
 
-            function markExamAttemptedLocal(sClass, sName, sSub, sessionId) {
-                try {
-                    const map = getAttemptedMap();
-                    map[buildAttemptKey(sClass, sName, sSub)] = {
-                        sessionId: sessionId || '',
-                        attemptedAt: new Date().toISOString()
-                    };
-                    localStorage.setItem(STORAGE_KEYS.ATTEMPTED_EXAMS, JSON.stringify(map));
-                } catch (e) {}
-            }
-
-            function clearExamAttemptedLocal(sClass, sName, sSub) {
-                try {
-                    const map = getAttemptedMap();
-                    delete map[buildAttemptKey(sClass, sName, sSub)];
-                    localStorage.setItem(STORAGE_KEYS.ATTEMPTED_EXAMS, JSON.stringify(map));
-                } catch (e) {}
-            }
-
-            async function syncAttemptedStatusWithServer() {
-                if (!state.studentName) return;
-                const targetName = state.studentName.trim().toLowerCase();
-                const targetClass = state.studentClass.trim().toLowerCase();
-
-                const applyServerRows = (rows) => {
-                    let changed = false;
-                    const activeServerSubjects = new Set();
-
-                    rows.forEach((s) => {
-                        if (String(s.studentName || '').trim().toLowerCase() !== targetName) return;
-                        if (targetClass && String(s.studentClass || '').trim().toLowerCase() !== targetClass) return;
-                        const subTitle = String(s.subjectTitle || '').trim();
-                        if (!subTitle || subTitle.toLowerCase() === 'portal jadwal') return;
-
-                        if (s.status === 'DIBUKA ADMIN' || s.unlockedByAdmin === true) {
-                            if (isExamAttemptedLocal(state.studentClass, state.studentName, subTitle)) {
-                                clearExamAttemptedLocal(state.studentClass, state.studentName, subTitle);
-                                changed = true;
-                            }
-                        } else if (s.status === 'ACTIVE' || s.status === 'FINISHED' || s.status === 'LOCKED') {
-                            activeServerSubjects.add(subTitle.toLowerCase());
-                            if (!isExamAttemptedLocal(state.studentClass, state.studentName, subTitle)) {
-                                markExamAttemptedLocal(state.studentClass, state.studentName, subTitle, s.sessionId);
-                                changed = true;
-                            }
+                    if (match.status === 'DIBUKA ADMIN' || match.unlockedByAdmin) {
+                        clearInterval(state.unlockPollInterval);
+                        state.isLocked = false;
+                        state.violations = 0;
+                        state.totalAwaySeconds = 0;
+                        state.lastViolationReason = 'Kunci dibuka & direset oleh Pengawas';
+                        clearLockedSession();
+                        if (state.currentSubject) {
+                            setExamAttempted(state.studentClass, state.studentName, state.currentSubject.title, false);
+                            clearSavedActiveSession(state.studentClass, state.studentName, state.currentSubject.title);
                         }
-                    });
-
-                    // Jika di browser siswa terkunci lokal, namun di database server/Admin data tersebut tidak ada
-                    // (misal gagal terkirim sebelumnya atau barisnya dihapus Admin), otomatis buka kembali agar sinkron
-                    state.subjects.forEach((sub) => {
-                        if (isExamAttemptedLocal(state.studentClass, state.studentName, sub.title) &&
-                            !activeServerSubjects.has(sub.title.trim().toLowerCase())) {
-                            clearExamAttemptedLocal(state.studentClass, state.studentName, sub.title);
-                            changed = true;
-                        }
-                    });
-
-                    if (changed) renderSubjectsPortal();
-                };
-
-                if (APPS_SCRIPT_WEB_APP_URL) {
-                    try {
-                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&_ts=${Date.now()}`);
-                        const data = await res.json();
-                        if (data && Array.isArray(data.sessions)) {
-                            applyServerRows(data.sessions);
-                            return;
-                        }
-                    } catch (e) {}
-                }
-
-                try {
-                    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&_ts=${Date.now()}`;
-                    const resSheet = await fetch(sheetUrl);
-                    const txtSheet = await resSheet.text();
-                    const jsonSheet = parseGvizJson(txtSheet);
-                    const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
-                    const parsed = rows.map((r) => {
-                        const c = r.c || [];
-                        return {
-                            sessionId: c[0] && c[0].v != null ? String(c[0].v).trim() : '',
-                            studentClass: c[1] && c[1].v != null ? String(c[1].v).trim() : '',
-                            studentName: c[2] && c[2].v != null ? String(c[2].v).trim() : '',
-                            subjectTitle: c[3] && c[3].v != null ? String(c[3].v).trim() : '',
-                            status: c[4] && c[4].v != null ? String(c[4].v).trim() : '',
-                            unlockedByAdmin: (c[10] && String(c[10].v).trim() === 'TRUE')
-                        };
-                    });
-                    applyServerRows(parsed);
-                } catch (e2) {}
-            }
-
-            // =================================================================
-            // MUAT DATA SISWA (SHEET SISWA) & JADWAL UJIAN (Sheet1)
-            // =================================================================
-            function populateClassDropdown() {
-                if (!el.studentClassSelect) return;
-                const classes = Object.keys(state.studentsByClass).sort((a, b) => a.localeCompare(b, 'id', { numeric: true }));
-                if (classes.length === 0) {
-                    el.studentClassSelect.innerHTML = '<option value="">Data kelas kosong / gagal dimuat</option>';
-                    return;
-                }
-                el.studentClassSelect.innerHTML = '<option value="">-- Pilih Kelas Anda --</option>' +
-                    classes.map((cls) => `<option value="${escapeHTML(cls)}">${escapeHTML(cls)}</option>`).join('');
-            }
-
-            async function loadStudentsFromSheet() {
-                if (el.studentClassSelect) {
-                    el.studentClassSelect.innerHTML = '<option value="">Memuat daftar kelas...</option>';
-                }
-                try {
-                    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=SISWA&t=${Date.now()}`;
-                    const res = await fetch(url, { cache: 'no-store' });
-                    const text = await res.text();
-                    const json = parseGvizJson(text);
-                    const rows = (json.table && json.table.rows) || [];
-
-                    const grouped = {};
-                    rows.forEach((r, idx) => {
-                        const c = r.c || [];
-                        const col0 = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
-                        const col1 = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
-                        if (!col0 || !col1) return;
-                        if (idx === 0 && (col0.toLowerCase().includes('kelas') || col1.toLowerCase().includes('nama'))) return;
-
-                        let cls = col0;
-                        let name = col1;
-                        if (col1.length <= 8 && col0.length > 8) {
-                            cls = col1;
-                            name = col0;
-                        }
-                        if (!grouped[cls]) grouped[cls] = [];
-                        if (!grouped[cls].includes(name)) grouped[cls].push(name);
-                    });
-
-                    Object.keys(grouped).forEach((k) => grouped[k].sort((a, b) => a.localeCompare(b, 'id')));
-                    if (Object.keys(grouped).length > 0) {
-                        state.studentsByClass = grouped;
-                        try { localStorage.setItem(STORAGE_KEYS.STUDENTS_CACHE, JSON.stringify(grouped)); } catch (e) {}
+                        updateViolationUI();
+                        el.violationOverlay.classList.add('hidden');
+                        syncSessionToServer('ACTIVE');
                     }
-                } catch (e) {
-                    try {
-                        const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDENTS_CACHE) || '{}');
-                        if (Object.keys(cached).length > 0) state.studentsByClass = cached;
-                    } catch (err) {}
-                }
-                populateClassDropdown();
-            }
-
-            async function loadSubjectsFromSheet() {
-                try {
-                    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1&t=${Date.now()}`;
-                    const res = await fetch(url, { cache: 'no-store' });
-                    const text = await res.text();
-                    const json = parseGvizJson(text);
-                    const rows = (json.table && json.table.rows) || [];
-
-                    const list = [];
-                    rows.forEach((r, idx) => {
-                        const c = r.c || [];
-                        const title = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
-                        const link = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
-                        const rawDur = c[2] && c[2].v != null ? Number(c[2].v) : NaN;
-                        if (!title || !link) return;
-                        if (idx === 0 && (title.toLowerCase().includes('nama ujian') || link.toLowerCase().includes('link'))) return;
-                        list.push({
-                            title: title,
-                            url: link,
-                            durationMinutes: (!Number.isNaN(rawDur) && rawDur > 0) ? Math.round(rawDur) : DEFAULT_EXAM_DURATION_MINUTES
-                        });
-                    });
-
-                    if (list.length > 0) {
-                        state.subjects = list;
-                        try { localStorage.setItem(STORAGE_KEYS.SUBJECTS_CACHE, JSON.stringify(list)); } catch (e) {}
-                    }
-                } catch (e) {
-                    try {
-                        const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBJECTS_CACHE) || '[]');
-                        if (Array.isArray(cached) && cached.length > 0) state.subjects = cached;
-                    } catch (err) {}
-                }
-                renderSubjectsPortal();
-            }
-
-            function renderSubjectsPortal() {
-                if (!el.subjectsGrid) return;
-                if (!state.subjects || state.subjects.length === 0) {
-                    el.subjectsGrid.innerHTML = '<div class="col-span-full bg-white p-8 rounded-3xl text-center text-sm font-bold text-slate-400 border border-slate-200">Belum ada jadwal ujian aktif pada Sheet1.</div>';
-                    return;
-                }
-
-                el.subjectsGrid.innerHTML = state.subjects.map((sub, idx) => {
-                    const attempted = isExamAttemptedLocal(state.studentClass, state.studentName, sub.title);
-                    return `
-                        <div class="bg-white rounded-3xl p-5 border ${attempted ? 'border-slate-200 bg-slate-50/70' : 'border-slate-200 hover:border-blue-400'} shadow-sm flex flex-col justify-between gap-4 transition">
-                            <div class="space-y-2">
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="px-2.5 py-1 rounded-lg ${attempted ? 'bg-slate-200 text-slate-600' : 'bg-blue-50 text-blue-700'} text-[10px] font-black uppercase tracking-wider">
-                                        Durasi: ${sub.durationMinutes} Menit
-                                    </span>
-                                    <span class="text-[11px] font-extrabold ${attempted ? 'text-red-600' : 'text-emerald-600'}">
-                                        ${attempted ? 'Terkunci (1/1 Percobaan)' : 'Tersedia'}
-                                    </span>
-                                </div>
-                                <h3 class="text-base sm:text-lg font-black text-slate-900">${escapeHTML(sub.title)}</h3>
-                            </div>
-                            <button type="button" data-sub-index="${idx}" ${attempted ? 'disabled' : ''}
-                                class="open-subject-btn w-full py-3.5 px-4 rounded-2xl font-black text-xs transition ${attempted
-                                    ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 cursor-pointer'}">
-                                ${attempted ? 'Sudah Pernah Dicoba • Minta Reset Admin' : 'Kerjakan Soal Sekarang'}
-                            </button>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            // =================================================================
-            // TIMER MUNDUR UJIAN (BERJALAN SETELAH MAPEL DIPILIH)
-            // =================================================================
-            function startExamTimer(durationMinutes) {
-                if (state.timerInterval) clearInterval(state.timerInterval);
-                const totalMs = Math.max(1, Number(durationMinutes || DEFAULT_EXAM_DURATION_MINUTES)) * 60 * 1000;
-                state.examEndTime = Date.now() + totalMs;
-
-                const tick = () => {
-                    if (!state.examEndTime) return;
-                    const remMs = Math.max(0, state.examEndTime - Date.now());
-                    const totalSec = Math.floor(remMs / 1000);
-                    const hrs = String(Math.floor(totalSec / 3600)).padStart(2, '0');
-                    const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
-                    const secs = String(totalSec % 60).padStart(2, '0');
-
-                    if (el.examTimer) el.examTimer.textContent = `${hrs}:${mins}:${secs}`;
-                    if (el.examTimerBadge) {
-                        if (totalSec <= 300) {
-                            el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-red-600/25 border border-red-500 rounded-xl text-[11px] sm:text-xs font-mono font-black text-red-200 items-center gap-1.5 animate-pulse';
-                        } else if (totalSec <= 900) {
-                            el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-amber-500/20 border border-amber-400/50 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-amber-200 items-center gap-1.5';
-                        }
-                    }
-
-                    if (remMs <= 0) {
-                        clearInterval(state.timerInterval);
-                        endExam('Waktu pengerjaan ujian telah habis.');
-                    }
-                };
-
-                tick();
-                state.timerInterval = setInterval(tick, 1000);
-            }
-
-            // =================================================================
-            // SISTEM PELANGGARAN, WAKTU KELUAR & KUNCI PERMANEN
-            // =================================================================
-            function updateViolationUI() {
-                if (el.violationCountText) {
-                    el.violationCountText.textContent = `${state.violations}/${MAX_VIOLATIONS}`;
-                }
-                if (el.violationBadge) {
-                    if (state.violations >= MAX_VIOLATIONS) {
-                        el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-red-600/30 border border-red-500 text-red-200 text-[11px] font-black';
-                    } else if (state.violations > 0) {
-                        el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-amber-500/25 border border-amber-400/50 text-amber-200 text-[11px] font-extrabold';
-                    } else {
-                        el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] font-extrabold';
-                    }
-                }
-            }
-
-            function finalizeReturnFromAway(syncAfter = true) {
-                if (state.awayStartTime) {
-                    const deltaSec = Math.max(1, Math.round((Date.now() - state.awayStartTime) / 1000));
-                    state.totalAwaySeconds += deltaSec;
-                    state.awayStartTime = null;
-                    if (el.modalAwayDuration) {
-                        el.modalAwayDuration.textContent = `Total Waktu Keluar: ${formatDurationHuman(state.totalAwaySeconds)}`;
-                    }
-                    if (syncAfter && state.currentSubject) {
-                        syncSessionToServer(state.isLocked ? 'LOCKED' : 'ACTIVE');
-                    }
-                }
-            }
-
-            function persistLocalLockState() {
-                try {
-                    localStorage.setItem(STORAGE_KEYS.ACTIVE_LOCK, JSON.stringify({
-                        studentClass: state.studentClass,
-                        studentName: state.studentName,
-                        sessionId: state.sessionId,
-                        subjectTitle: state.currentSubject ? state.currentSubject.title : '',
-                        totalAwaySeconds: state.totalAwaySeconds,
-                        lastViolationReason: state.lastViolationReason
-                    }));
-                } catch (e) {}
-            }
-
-            function clearLocalLockState() {
-                try {
-                    localStorage.removeItem(STORAGE_KEYS.ACTIVE_LOCK);
-                } catch (e) {}
+                } catch (_) {}
             }
 
             function recordViolation(reasonText, startAwayTimer = false) {
                 if (!state.isExamActive || !state.currentSubject) return;
                 if (state.isLocked) return;
 
+                const nowMs = Date.now();
+                if (nowMs - state.lastViolationTimestamp < 1200) {
+                    if (startAwayTimer && !state.awayStartTime) {
+                        state.awayStartTime = nowMs;
+                    }
+                    return;
+                }
+                state.lastViolationTimestamp = nowMs;
+
                 if (startAwayTimer && !state.awayStartTime) {
-                    state.awayStartTime = Date.now();
+                    state.awayStartTime = nowMs;
                 }
 
                 state.violations = Math.min(MAX_VIOLATIONS, state.violations + 1);
-                state.lastViolationReason = reasonText || 'Terdeteksi pelanggaran aturan ujian.';
-                updateViolationUI();
+                state.lastViolationReason = reasonText;
 
-                if (el.modalViolationCounter) {
-                    el.modalViolationCounter.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
-                }
-                if (el.modalAwayDuration) {
-                    el.modalAwayDuration.textContent = `Total Waktu Keluar: ${formatDurationHuman(state.totalAwaySeconds)}`;
-                }
+                updateViolationUI();
+                persistActiveExamSession();
 
                 if (state.violations >= MAX_VIOLATIONS) {
                     state.isLocked = true;
-                    persistLocalLockState();
-                    if (el.violationModalTitle) el.violationModalTitle.textContent = 'AKUN UJIAN TERKUNCI PERMANEN!';
-                    if (el.violationModalDesc) el.violationModalDesc.textContent = state.lastViolationReason;
-                    if (el.resumeExamBtn) el.resumeExamBtn.classList.add('hidden');
-                    if (el.lockedAccountNotice) el.lockedAccountNotice.classList.remove('hidden');
-                    if (el.violationOverlay) el.violationOverlay.classList.remove('hidden');
+                    persistLockedSession();
                     syncSessionToServer('LOCKED');
-                    startUnlockPolling();
+                    showLockedModal();
                 } else {
-                    if (el.violationModalTitle) el.violationModalTitle.textContent = 'Peringatan Pelanggaran Terdeteksi!';
-                    if (el.violationModalDesc) el.violationModalDesc.textContent = state.lastViolationReason;
-                    if (el.resumeExamBtn) el.resumeExamBtn.classList.remove('hidden');
-                    if (el.lockedAccountNotice) el.lockedAccountNotice.classList.add('hidden');
-                    if (el.violationOverlay) el.violationOverlay.classList.remove('hidden');
                     syncSessionToServer('ACTIVE');
+                    showWarningModal(reasonText);
                 }
             }
 
-            // =================================================================
-            // SINKRONISASI SERVER (100% DATABASE SPREADSHEET) & CEK BUKA KUNCI
-            // =================================================================
-            async function syncSessionToServer(forcedStatus = null) {
-                if (!state.studentName) return false;
-                const subTitle = (state.currentSubject && state.currentSubject.title) ? state.currentSubject.title : '';
-                if (!subTitle) return false;
-
-                if (!state.sessionId) {
-                    state.sessionId = `${state.studentClass}_${state.studentName}_${subTitle}_${Date.now()}`;
-                }
-
-                const currentStatus = forcedStatus || (state.isLocked ? 'LOCKED' : 'ACTIVE');
-                const baseKey = `${state.studentClass}_${state.studentName}`;
-                const taggedReason = state.totalAwaySeconds > 0
-                    ? `${state.lastViolationReason} [TotalKeluar:${state.totalAwaySeconds}]`
-                    : state.lastViolationReason;
-
-                const startedAtIso = state.examStartedAt || new Date().toISOString();
-
-                if (!APPS_SCRIPT_WEB_APP_URL) return false;
-
-                const params = new URLSearchParams({
-                    action: 'sync',
-                    sessionId: state.sessionId,
-                    studentClass: state.studentClass,
-                    studentName: state.studentName,
-                    subjectTitle: subTitle,
-                    startedAt: startedAtIso,
-                    status: currentStatus,
-                    violations: String(state.violations),
-                    maxViolations: String(MAX_VIOLATIONS),
-                    lastViolationReason: taggedReason,
-                    baseKey: baseKey,
-                    awaySeconds: String(state.totalAwaySeconds),
-                    _ts: String(Date.now())
-                });
-
-                const fullUrl = `${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`;
-
-                try {
-                    const beacon = new Image();
-                    beacon.src = fullUrl;
-                } catch (e) {}
-
-                try {
-                    await fetch(fullUrl, {
-                        method: 'GET',
-                        mode: 'no-cors',
-                        keepalive: true
-                    });
-                    return true;
-                } catch (e) {
-                    return false;
-                }
-            }
-
-            function scheduleSmartHeartbeat() {
-                if (state.heartbeatTimer) clearTimeout(state.heartbeatTimer);
-                const jitterMs = 15000 + Math.floor(Math.random() * 7000);
-                state.heartbeatTimer = setTimeout(() => {
-                    if (state.isExamActive && state.currentSubject && !state.isLocked) {
-                        renderExamWatermark();
-                        syncSessionToServer('ACTIVE');
-                    }
-                    if (state.isExamActive) scheduleSmartHeartbeat();
-                }, jitterMs);
-            }
-
-            async function checkIfUnlockedByAdmin() {
-                if (!state.studentName) return false;
-                const targetSid = state.sessionId;
-                const targetName = state.studentName.trim().toLowerCase();
-                const targetClass = state.studentClass.trim().toLowerCase();
-                const targetSub = state.currentSubject ? state.currentSubject.title.trim().toLowerCase() : '';
-
-                let foundInServer = false;
-
-                const evaluateSessions = (sessionsList) => {
-                    return sessionsList.some((s) => {
-                        const matchSid = targetSid && String(s.sessionId || '').trim() === targetSid;
-                        const matchStudent = String(s.studentName || '').trim().toLowerCase() === targetName &&
-                            (!targetClass || String(s.studentClass || '').trim().toLowerCase() === targetClass);
-                        const matchSub = !targetSub || String(s.subjectTitle || '').trim().toLowerCase() === targetSub;
-                        if (matchSid || (matchStudent && matchSub)) {
-                            foundInServer = true;
-                            return s.status === 'DIBUKA ADMIN' || s.unlockedByAdmin === true || (Number(s.violations) === 0 && s.status === 'ACTIVE');
-                        }
-                        return false;
-                    });
-                };
-
-                let unlocked = false;
-
-                if (APPS_SCRIPT_WEB_APP_URL) {
-                    try {
-                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&_ts=${Date.now()}`);
-                        const data = await res.json();
-                        if (data && Array.isArray(data.sessions)) {
-                            unlocked = evaluateSessions(data.sessions);
-                        }
-                    } catch (e) {}
-                }
-
-                if (!unlocked) {
-                    try {
-                        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&_ts=${Date.now()}`;
-                        const resSheet = await fetch(sheetUrl);
-                        const txtSheet = await resSheet.text();
-                        const jsonSheet = parseGvizJson(txtSheet);
-                        const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
-                        const parsed = rows.map((r) => {
-                            const c = r.c || [];
-                            return {
-                                sessionId: c[0] && c[0].v != null ? String(c[0].v).trim() : '',
-                                studentClass: c[1] && c[1].v != null ? String(c[1].v).trim() : '',
-                                studentName: c[2] && c[2].v != null ? String(c[2].v).trim() : '',
-                                subjectTitle: c[3] && c[3].v != null ? String(c[3].v).trim() : '',
-                                status: c[4] && c[4].v != null ? String(c[4].v).trim() : '',
-                                violations: c[5] && c[5].v != null ? Number(c[5].v) : 0,
-                                unlockedByAdmin: (c[10] && String(c[10].v).trim() === 'TRUE')
-                            };
-                        });
-                        unlocked = evaluateSessions(parsed);
-                    } catch (e2) {}
-                }
-
-                // Jika akun siswa terkunci tapi datanya belum masuk ke database server, kirim ulang sekarang
-                if (!unlocked && state.isLocked && !foundInServer && state.currentSubject) {
-                    await syncSessionToServer('LOCKED');
-                }
-
-                if (unlocked) {
-                    state.isLocked = false;
-                    state.violations = 0;
-                    state.totalAwaySeconds = 0;
+            function finalizeAwayDuration() {
+                if (state.awayStartTime) {
+                    const diffSec = Math.max(1, Math.round((Date.now() - state.awayStartTime) / 1000));
+                    state.totalAwaySeconds += diffSec;
                     state.awayStartTime = null;
-                    clearLocalLockState();
-                    if (targetSub) clearExamAttemptedLocal(state.studentClass, state.studentName, targetSub);
-                    if (state.unlockPollInterval) clearInterval(state.unlockPollInterval);
-                    if (el.violationOverlay) el.violationOverlay.classList.add('hidden');
-                    updateViolationUI();
-                    returnToSubjectPortal();
-                    return true;
+                    el.modalAwayDuration.textContent = 'Total Waktu Keluar: ' + formatSeconds(state.totalAwaySeconds);
+                    persistActiveExamSession();
+                    syncSessionToServer(state.isLocked ? 'LOCKED' : 'ACTIVE');
                 }
-                return false;
-            }
-
-            function startUnlockPolling() {
-                if (state.unlockPollInterval) clearInterval(state.unlockPollInterval);
-                state.unlockPollInterval = setInterval(checkIfUnlockedByAdmin, 4000);
-            }
-
-            function restoreLockStateOnLoad() {
-                try {
-                    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVE_LOCK) || 'null');
-                    if (saved && saved.studentName) {
-                        state.studentClass = saved.studentClass || '';
-                        state.studentName = saved.studentName || '';
-                        state.sessionId = saved.sessionId || '';
-                        state.currentSubject = saved.subjectTitle ? { title: saved.subjectTitle } : null;
-                        state.violations = MAX_VIOLATIONS;
-                        state.totalAwaySeconds = Number(saved.totalAwaySeconds || 0);
-                        state.isLocked = true;
-                        state.isExamActive = true;
-
-                        updateViolationUI();
-                        if (el.violationModalTitle) el.violationModalTitle.textContent = 'AKUN UJIAN TERKUNCI PERMANEN!';
-                        if (el.violationModalDesc) el.violationModalDesc.textContent = saved.lastViolationReason || 'Batas maksimal 10 kali pelanggaran tercapai.';
-                        if (el.resumeExamBtn) el.resumeExamBtn.classList.add('hidden');
-                        if (el.lockedAccountNotice) el.lockedAccountNotice.classList.remove('hidden');
-                        if (el.violationOverlay) el.violationOverlay.classList.remove('hidden');
-
-                        startUnlockPolling();
-                        checkIfUnlockedByAdmin();
-                    }
-                } catch (e) {}
             }
 
             // =================================================================
-            // NAVIGASI UJIAN (MASUK PORTAL, BUKA MAPEL, KEMBALI, SELESAI)
-            // =================================================================
-            function enterExamPortal() {
-                const selectedClass = el.studentClassSelect.value.trim();
-                const selectedName = el.studentNameSelect.value.trim();
-
-                if (!selectedClass || !selectedName) {
-                    el.startErrorMsg.textContent = 'Silakan pilih Kelas dan Nama Lengkap Anda terlebih dahulu.';
-                    el.startErrorMsg.classList.remove('hidden');
-                    return;
-                }
-
-                el.startErrorMsg.classList.add('hidden');
-                state.studentClass = selectedClass;
-                state.studentName = selectedName;
-                state.currentSubject = null;
-                state.sessionId = '';
-                state.isExamActive = true;
-                state.isLocked = false;
-                state.violations = 0;
-                state.lastViolationReason = '-';
-                state.totalAwaySeconds = 0;
-                state.awayStartTime = null;
-
-                el.headerStudentName.textContent = selectedName;
-                el.headerStudentClass.textContent = selectedClass;
-                el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
-
-                updateViolationUI();
-                renderExamWatermark();
-
-                el.startScreen.classList.add('hidden');
-                el.summaryScreen.classList.add('hidden');
-                el.examContainer.classList.remove('hidden');
-                el.subjectPortalView.classList.remove('hidden');
-                el.iframeExamView.classList.add('hidden');
-                el.backToPortalBtn.classList.add('hidden');
-
-                if (state.timerInterval) clearInterval(state.timerInterval);
-                state.examEndTime = null;
-                if (el.examTimer) el.examTimer.textContent = '--:--:--';
-                if (el.examTimerBadge) {
-                    el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-slate-200 items-center gap-1.5';
-                }
-
-                enterFullscreenSafe();
-                loadSubjectsFromSheet().then(() => syncAttemptedStatusWithServer());
-                scheduleSmartHeartbeat();
-            }
-
-            function openSubjectExam(subjectObj) {
-                if (!subjectObj || !subjectObj.url) return;
-
-                if (isExamAttemptedLocal(state.studentClass, state.studentName, subjectObj.title)) {
-                    renderSubjectsPortal();
-                    return;
-                }
-
-                const nowStart = Date.now();
-                state.currentSubject = subjectObj;
-                state.sessionId = `${state.studentClass}_${state.studentName}_${subjectObj.title}_${nowStart}`;
-                state.examStartedAt = new Date(nowStart).toISOString();
-                state.violations = 0;
-                state.lastViolationReason = '-';
-                state.totalAwaySeconds = 0;
-                state.awayStartTime = null;
-                updateViolationUI();
-
-                markExamAttemptedLocal(state.studentClass, state.studentName, subjectObj.title, state.sessionId);
-
-                const durMins = subjectObj.durationMinutes || DEFAULT_EXAM_DURATION_MINUTES;
-                startExamTimer(durMins);
-
-                el.headerSubjectTitle.textContent = subjectObj.title;
-                el.subjectPortalView.classList.add('hidden');
-                el.iframeExamView.classList.remove('hidden');
-                el.backToPortalBtn.classList.remove('hidden');
-                if (el.iframeLoader) el.iframeLoader.classList.remove('hidden');
-
-                renderExamWatermark();
-                el.examIframe.src = normalizeExamUrl(subjectObj.url);
-                enterFullscreenSafe();
-                syncSessionToServer('ACTIVE');
-            }
-
-            function returnToSubjectPortal() {
-                if (state.currentSubject) {
-                    finalizeReturnFromAway(false);
-                    syncSessionToServer('FINISHED');
-                }
-                if (state.timerInterval) clearInterval(state.timerInterval);
-                state.examEndTime = null;
-                state.currentSubject = null;
-                state.sessionId = '';
-                if (el.examTimer) el.examTimer.textContent = '--:--:--';
-                if (el.examTimerBadge) {
-                    el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-slate-200 items-center gap-1.5';
-                }
-
-                el.examIframe.src = 'about:blank';
-                el.iframeExamView.classList.add('hidden');
-                el.subjectPortalView.classList.remove('hidden');
-                el.backToPortalBtn.classList.add('hidden');
-                el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
-                renderSubjectsPortal();
-                syncAttemptedStatusWithServer();
-            }
-
-            function endExam(subtitleText = 'Terima kasih telah mengikuti ujian dengan tertib.') {
-                finalizeReturnFromAway(false);
-                if (state.currentSubject) {
-                    syncSessionToServer('FINISHED');
-                }
-                state.isExamActive = false;
-                if (state.timerInterval) clearInterval(state.timerInterval);
-                if (state.heartbeatTimer) clearTimeout(state.heartbeatTimer);
-
-                el.examIframe.src = 'about:blank';
-                el.examContainer.classList.add('hidden');
-                el.confirmFinishModal.classList.add('hidden');
-                el.violationOverlay.classList.add('hidden');
-
-                if (el.summarySubtitle) el.summarySubtitle.textContent = subtitleText;
-                if (el.sumName) el.sumName.textContent = state.studentName || '-';
-                if (el.sumClass) el.sumClass.textContent = state.studentClass || '-';
-                if (el.sumViolations) el.sumViolations.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
-                if (el.sumAway) el.sumAway.textContent = formatDurationHuman(state.totalAwaySeconds);
-                if (el.summaryScreen) el.summaryScreen.classList.remove('hidden');
-            }
-
-            // =================================================================
-            // LISTENER ANTI-CURANG, LAYAR HP MATI, SCREENSHOT & BLOK TEKS
+            // LISTENER ANTI-CURANG (ANDROID, IOS & DESKTOP)
             // =================================================================
             if (el.examIframe) {
                 el.examIframe.addEventListener('load', () => {
-                    if (el.iframeLoader) el.iframeLoader.classList.add('hidden');
+                    el.iframeLoader.classList.add('hidden');
                 });
-                el.examIframe.addEventListener('pointerenter', () => { state.isPointerInsideIframe = true; });
-                el.examIframe.addEventListener('pointerleave', () => { state.isPointerInsideIframe = false; });
+                el.examIframe.addEventListener('pointerenter', () => {
+                    state.isPointerInsideIframe = true;
+                });
+                el.examIframe.addEventListener('pointerleave', () => {
+                    state.isPointerInsideIframe = false;
+                });
             }
 
-            // 1. Blokir seleksi teks, copy-paste, klik kanan / long-press terjemah
-            document.addEventListener('selectstart', (e) => {
-                const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
-                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-                e.preventDefault();
-            });
-
-            document.addEventListener('contextmenu', (e) => {
-                const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
-                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-                e.preventDefault();
-                if (state.isExamActive && state.currentSubject) {
-                    recordViolation('Mencoba membuka menu konteks / salin / terjemahkan teks.');
-                }
-            });
-
-            document.addEventListener('copy', (e) => {
-                if (state.isExamActive) {
-                    e.preventDefault();
-                    recordViolation('Mencoba menyalin (Copy) teks saat ujian.');
-                }
-            });
-
-            document.addEventListener('selectionchange', () => {
-                if (!state.isExamActive) return;
-                const activeTag = document.activeElement && document.activeElement.tagName ? document.activeElement.tagName.toUpperCase() : '';
-                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
-                const sel = window.getSelection ? window.getSelection() : null;
-                if (sel && sel.toString().trim().length > 0) {
-                    try { sel.removeAllRanges(); } catch (e) {}
-                    recordViolation('Mencoba memblok teks untuk salin atau terjemahan.');
-                }
-            });
-
-            document.addEventListener('touchstart', () => {
-                state.touchStartTime = Date.now();
-            }, { passive: true });
-
-            document.addEventListener('touchend', () => {
-                if (!state.isExamActive || !state.currentSubject) return;
-                const heldMs = Date.now() - state.touchStartTime;
-                if (heldMs > 520 && !state.isPointerInsideIframe) {
-                    triggerAntiCaptureShield(1600);
-                    recordViolation('Menahan layar (Long-Press) yang memicu menu salin/terjemah.');
-                }
-            }, { passive: true });
-
-            // 2. Deteksi tombol keyboard screenshot / shortcut
-            document.addEventListener('keydown', (e) => {
-                if (!state.isExamActive) return;
-                const key = String(e.key || '').toLowerCase();
-                if (key === 'printscreen' || ((e.ctrlKey || e.metaKey) && ['c', 'x', 'a', 'p', 's', 'u'].includes(key))) {
-                    e.preventDefault();
-                    triggerAntiCaptureShield(2200);
-                    recordViolation('Menekan tombol Screenshot atau pintasan terlarang.');
-                }
-            });
-
-            // 3. Toleransi layar HP mati (Screen Sleep) vs Pindah Tab / Aplikasi Lain
+            // 1. Keluar browser / tekan tombol Home HP / pindah tab
             document.addEventListener('visibilitychange', () => {
                 if (!state.isExamActive || !state.currentSubject) return;
-
                 if (document.hidden) {
-                    const sinceBlur = Date.now() - state.lastBlurTime;
-                    if (state.pendingBlurTimer) {
-                        clearTimeout(state.pendingBlurTimer);
-                        state.pendingBlurTimer = null;
-                    }
-                    // Jika blur dan hidden terjadi hampir bersamaan (< 280ms), besar kemungkinan layar HP mati / lock screen
-                    if (sinceBlur >= 0 && sinceBlur < 280) {
-                        return;
-                    }
-                    recordViolation('Meninggalkan layar ujian / berpindah tab atau aplikasi lain.', true);
+                    if (state.pendingBlurTimer) clearTimeout(state.pendingBlurTimer);
+                    triggerAntiCaptureShield(2200);
+                    recordViolation('Keluar dari browser / menekan tombol Home HP / berpindah tab.', true);
                 } else {
-                    finalizeReturnFromAway(true);
-                    renderExamWatermark();
+                    finalizeAwayDuration();
                 }
             });
 
+            window.addEventListener('pagehide', () => {
+                if (!state.isExamActive || !state.currentSubject) return;
+                recordViolation('Meninggalkan halaman ujian (Home / Recent Apps).', true);
+            });
+
+            // 2. Kehilangan fokus jendela (Screenshot / Panel Notifikasi / Split Screen)
             window.addEventListener('blur', () => {
                 if (!state.isExamActive || !state.currentSubject) return;
-                if (document.activeElement === el.examIframe) return;
                 state.lastBlurTime = Date.now();
-                triggerAntiCaptureShield(1500);
+                if (state.isPointerInsideIframe) return;
 
+                triggerAntiCaptureShield(1800);
                 if (state.pendingBlurTimer) clearTimeout(state.pendingBlurTimer);
                 state.pendingBlurTimer = setTimeout(() => {
-                    if (!document.hidden && document.activeElement !== el.examIframe && state.isExamActive && state.currentSubject) {
-                        recordViolation('Fokus layar keluar dari aplikasi ujian (Split Screen / Notifikasi / Screenshot).', true);
+                    if (document.activeElement !== el.examIframe && state.isExamActive && state.currentSubject) {
+                        recordViolation('Terdeteksi keluar fokus layar (Screenshot / Panel Notifikasi / Split Screen).', true);
                     }
-                }, 1400);
+                }, 420);
             });
 
             window.addEventListener('focus', () => {
@@ -1596,22 +1376,263 @@
                     clearTimeout(state.pendingBlurTimer);
                     state.pendingBlurTimer = null;
                 }
+                finalizeAwayDuration();
+            });
+
+            // 3. Perubahan dimensi layar / Split Screen / Floating Window / Toolbar Screenshot
+            window.addEventListener('resize', () => {
+                if (!state.isExamActive || !state.currentSubject) return;
+                const wDiff = Math.abs(window.innerWidth - state.lastViewportWidth);
+                const hDiff = Math.abs(window.innerHeight - state.lastViewportHeight);
+                state.lastViewportWidth = window.innerWidth;
+                state.lastViewportHeight = window.innerHeight;
+                if (wDiff > 90 || hDiff > 160) {
+                    triggerAntiCaptureShield(1800);
+                    recordViolation('Perubahan ukuran layar terdeteksi (Split Screen / Screenshot / Floating App).', false);
+                }
+            });
+
+            // 4. Anti-Blok Teks, Anti-Copy-Paste & Anti-Terjemahan (Android, iOS & Desktop)
+            document.addEventListener('selectstart', (e) => {
+                const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                e.preventDefault();
+            });
+
+            document.addEventListener('selectionchange', () => {
+                if (!state.isExamActive) return;
+                const sel = window.getSelection ? window.getSelection() : null;
+                if (sel && sel.toString().trim().length > 0) {
+                    try { sel.removeAllRanges(); } catch (_) {}
+                    triggerAntiCaptureShield(1400);
+                    recordViolation('Terdeteksi upaya memblokir teks soal untuk menyalin/menerjemahkan.', false);
+                }
+            });
+
+            document.addEventListener('contextmenu', (e) => {
+                const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+                e.preventDefault();
                 if (state.isExamActive && state.currentSubject) {
-                    finalizeReturnFromAway(true);
+                    recordViolation('Membuka menu konteks / tahan layar (Copy/Terjemahan diblokir).', false);
+                }
+            });
+
+            ['copy', 'cut', 'paste'].forEach(evt => {
+                document.addEventListener(evt, (e) => {
+                    const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+                    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+                    e.preventDefault();
+                    if (state.isExamActive && state.currentSubject) {
+                        recordViolation('Upaya Copy/Paste teks diblokir sistem.', false);
+                    }
+                });
+            });
+
+            // Deteksi long-press di iOS Safari / Android sebelum menu Copy/Translate muncul
+            document.addEventListener('touchstart', (e) => {
+                if (e.touches && e.touches.length > 1 && state.isExamActive && state.currentSubject) {
+                    triggerAntiCaptureShield(1600);
+                    recordViolation('Gestur multi-sentuh / tangkapan layar terdeteksi.', false);
+                }
+                state.touchStartTime = Date.now();
+            }, { passive: true });
+
+            document.addEventListener('touchend', () => {
+                if (!state.isExamActive || !state.currentSubject) return;
+                const heldMs = Date.now() - state.touchStartTime;
+                if (heldMs > 550) {
+                    const sel = window.getSelection ? window.getSelection() : null;
+                    if (sel && sel.toString().trim().length > 0) {
+                        try { sel.removeAllRanges(); } catch (_) {}
+                        recordViolation('Menahan layar (Long-Press Copy/Terjemahan) terdeteksi.', false);
+                    }
+                }
+            }, { passive: true });
+
+            // Tombol keyboard Screenshot / DevTools / Shortcut Copy
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'PrintScreen') {
+                    e.preventDefault();
+                    triggerAntiCaptureShield(2500);
+                    recordViolation('Tombol PrintScreen / Screenshot terdeteksi.', false);
+                }
+                if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'a', 'u', 's', 'p'].includes(String(e.key || '').toLowerCase())) {
+                    const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+                    if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+                        e.preventDefault();
+                        if (state.isExamActive && state.currentSubject) {
+                            recordViolation('Shortcut keyboard (' + e.key.toUpperCase() + ') diblokir.', false);
+                        }
+                    }
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'PrintScreen') {
+                    triggerAntiCaptureShield(2500);
+                    recordViolation('Tombol PrintScreen / Screenshot terdeteksi.', false);
                 }
             });
 
             // =================================================================
-            // DASHBOARD ADMIN / PENGAWAS (PIN: 9090)
+            // NAVIGASI HALAMAN SISWA & PEMULIHAN KUNCI LOKAL
             // =================================================================
-            function openAdminDashboard() {
-                el.adminDashboard.classList.remove('hidden');
-                if (el.appsScriptCodeBox) {
-                    el.appsScriptCodeBox.value = APPS_SCRIPT_TEMPLATE;
+            el.studentClassSelect.addEventListener('change', () => {
+                const cls = el.studentClassSelect.value;
+                if (!cls || !state.studentsByClass[cls]) {
+                    el.studentNameSelect.innerHTML = '<option value="">-- Pilih Kelas Terlebih Dahulu --</option>';
+                    el.studentNameSelect.disabled = true;
+                    return;
                 }
-                loadSubjectsFromSheet().then(() => fetchAdminMonitoringData());
+                const names = state.studentsByClass[cls];
+                el.studentNameSelect.innerHTML = '<option value="">-- Pilih Nama Anda --</option>' +
+                    names.map(n => '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>').join('');
+                el.studentNameSelect.disabled = false;
+            });
+
+            el.reloadStudentsBtn.addEventListener('click', () => {
+                loadStudentsFromSheet(true);
+            });
+
+            el.startExamBtn.addEventListener('click', async () => {
+                const cls = el.studentClassSelect.value;
+                const name = el.studentNameSelect.value;
+                if (!cls || !name) {
+                    el.startErrorMsg.textContent = 'Silakan pilih Kelas dan Nama Lengkap Anda terlebih dahulu.';
+                    el.startErrorMsg.classList.remove('hidden');
+                    return;
+                }
+                el.startErrorMsg.classList.add('hidden');
+
+                state.studentClass = cls;
+                state.studentName = name;
+                el.headerStudentName.textContent = name;
+                el.headerStudentClass.textContent = cls;
+                el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
+
+                el.startScreen.classList.add('hidden');
+                el.examContainer.classList.remove('hidden');
+                el.subjectPortalView.classList.remove('hidden');
+                el.iframeExamView.classList.add('hidden');
+                el.backToPortalBtn.classList.add('hidden');
+
+                await loadSubjectsFromSheet();
+            });
+
+            el.refreshSubjectsBtn.addEventListener('click', () => {
+                loadSubjectsFromSheet();
+            });
+
+            el.backToPortalBtn.addEventListener('click', () => {
+                stopExamTimer();
+                if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
+                state.isExamActive = false;
+                state.currentSubject = null;
+                el.examIframe.src = 'about:blank';
+                el.iframeExamView.classList.add('hidden');
+                el.backToPortalBtn.classList.add('hidden');
+                el.subjectPortalView.classList.remove('hidden');
+                el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
+                renderSubjectsGrid();
+            });
+
+            el.finishExamBtn.addEventListener('click', () => {
+                if (!state.currentSubject) {
+                    // Kembali ke halaman login jika masih di portal jadwal
+                    el.examContainer.classList.add('hidden');
+                    el.startScreen.classList.remove('hidden');
+                    return;
+                }
+                el.confirmFinishModal.classList.remove('hidden');
+            });
+
+            el.cancelFinishBtn.addEventListener('click', () => {
+                el.confirmFinishModal.classList.add('hidden');
+            });
+
+            el.confirmFinishBtn.addEventListener('click', () => {
+                el.confirmFinishModal.classList.add('hidden');
+                completeCurrentExam(false);
+            });
+
+            el.resumeExamBtn.addEventListener('click', () => {
+                el.violationOverlay.classList.add('hidden');
+                finalizeAwayDuration();
+            });
+
+            el.checkUnlockNowBtn.addEventListener('click', () => {
+                checkServerForUnlock();
+            });
+
+            el.backHomeBtn.addEventListener('click', () => {
+                el.summaryScreen.classList.add('hidden');
+                el.startScreen.classList.remove('hidden');
+            });
+
+            function restoreLockedSessionOnBoot() {
+                try {
+                    const locked = JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVE_LOCK) || 'null');
+                    if (locked && locked.studentName && locked.studentClass) {
+                        state.sessionId = locked.sessionId || '';
+                        state.studentClass = locked.studentClass;
+                        state.studentName = locked.studentName;
+                        state.currentSubject = { title: locked.subjectTitle || 'Ujian Terkunci', url: '', durationMinutes: 90 };
+                        state.violations = MAX_VIOLATIONS;
+                        state.totalAwaySeconds = Number(locked.totalAwaySeconds || 0);
+                        state.lastViolationReason = locked.lastViolationReason || 'Batas pelanggaran tercapai';
+                        state.examStartedAt = locked.examStartedAt || new Date().toISOString();
+                        state.isLocked = true;
+                        state.isExamActive = true;
+
+                        el.headerStudentName.textContent = state.studentName;
+                        el.headerStudentClass.textContent = state.studentClass;
+                        el.headerSubjectTitle.textContent = state.currentSubject.title;
+                        updateViolationUI();
+
+                        el.startScreen.classList.add('hidden');
+                        el.examContainer.classList.remove('hidden');
+                        showLockedModal();
+                        syncSessionToServer('LOCKED');
+                    }
+                } catch (_) {}
+            }
+
+            // =================================================================
+            // DASHBOARD ADMIN & LIVE MONITORING (100% DATABASE SPREADSHEET)
+            // =================================================================
+            el.openAdminPinBtn.addEventListener('click', () => {
+                el.adminPinInput.value = '';
+                el.adminPinError.classList.add('hidden');
+                el.adminPinModal.classList.remove('hidden');
+                setTimeout(() => el.adminPinInput.focus(), 100);
+            });
+
+            el.closeAdminPinBtn.addEventListener('click', () => {
+                el.adminPinModal.classList.add('hidden');
+            });
+
+            function submitAdminPin() {
+                if (el.adminPinInput.value.trim() === ADMIN_PIN) {
+                    el.adminPinModal.classList.add('hidden');
+                    openAdminDashboard();
+                } else {
+                    el.adminPinError.classList.remove('hidden');
+                }
+            }
+
+            el.submitAdminPinBtn.addEventListener('click', submitAdminPin);
+            el.adminPinInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') submitAdminPin();
+            });
+
+            function openAdminDashboard() {
+                el.appsScriptCodeBox.value = APPS_SCRIPT_TEMPLATE;
+                el.adminDashboard.classList.remove('hidden');
+                loadSubjectsFromSheet();
+                fetchAdminMonitoringData();
                 if (state.adminRefreshInterval) clearInterval(state.adminRefreshInterval);
-                state.adminRefreshInterval = setInterval(fetchAdminMonitoringData, 4000);
+                state.adminRefreshInterval = setInterval(fetchAdminMonitoringData, 5000);
             }
 
             function closeAdminDashboard() {
@@ -1622,479 +1643,248 @@
                 }
             }
 
+            el.closeAdminBtn.addEventListener('click', closeAdminDashboard);
+
+            el.tabMonitoringBtn.addEventListener('click', () => {
+                el.tabMonitoringBtn.className = 'py-3 text-xs font-black border-b-2 border-blue-600 text-blue-600 cursor-pointer';
+                el.tabAppsScriptBtn.className = 'py-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 cursor-pointer';
+                el.adminPanelMonitoring.classList.remove('hidden');
+                el.adminPanelAppsScript.classList.add('hidden');
+            });
+
+            el.tabAppsScriptBtn.addEventListener('click', () => {
+                el.tabAppsScriptBtn.className = 'py-3 text-xs font-black border-b-2 border-blue-600 text-blue-600 cursor-pointer';
+                el.tabMonitoringBtn.className = 'py-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 cursor-pointer';
+                el.adminPanelAppsScript.classList.remove('hidden');
+                el.adminPanelMonitoring.classList.add('hidden');
+            });
+
             async function fetchAdminMonitoringData() {
-                // Bersihkan sisa cache sesi lokal lama agar 100% terpusat pada database Google Sheet
-                try { localStorage.removeItem('cbt_smp15_local_sessions_v2'); } catch (e) {}
-
                 const mergedMap = new Map();
-                let connectedToCloud = false;
 
-                const upsertSession = (item) => {
-                    if (!item || !item.studentName) return;
-                    const key = item.sessionId || `${item.studentClass}_${item.studentName}_${item.subjectTitle}`;
-                    const existing = mergedMap.get(key);
-                    if (!existing) {
-                        mergedMap.set(key, item);
-                    } else {
-                        const existingTime = existing.lastUpdated ? Date.parse(existing.lastUpdated) || 0 : 0;
-                        const itemTime = item.lastUpdated ? Date.parse(item.lastUpdated) || 0 : 0;
-                        if (itemTime >= existingTime) {
-                            mergedMap.set(key, {
-                                ...existing,
-                                ...item,
-                                startedAt: item.startedAt || existing.startedAt || '',
-                                awaySeconds: Math.max(Number(existing.awaySeconds || 0), Number(item.awaySeconds || 0))
-                            });
-                        }
+                function upsertSession(item) {
+                    const sClass = String(item.studentClass || '').trim();
+                    const sName = String(item.studentName || '').trim();
+                    const sSub = String(item.subjectTitle || '').trim();
+                    if (!sName || !sSub || sSub.toLowerCase() === 'portal jadwal') return;
+
+                    // Cocokkan penulisan mata pelajaran dengan data real di Sheet1
+                    const realSub = state.subjects.find(s => s.title.toLowerCase() === sSub.toLowerCase());
+                    const canonicalSub = realSub ? realSub.title : sSub;
+
+                    // Kunci unik: 1 siswa hanya muncul 1 baris per mata pelajaran
+                    const uniqueKey = getStudentSubjectKey(sClass, sName, canonicalSub);
+                    const existing = mergedMap.get(uniqueKey);
+                    const newTime = new Date(item.lastUpdated || 0).getTime() || 0;
+                    const oldTime = existing ? (new Date(existing.lastUpdated || 0).getTime() || 0) : -1;
+
+                    if (!existing || newTime >= oldTime) {
+                        mergedMap.set(uniqueKey, {
+                            sessionId: String(item.sessionId || ''),
+                            studentClass: sClass,
+                            studentName: sName,
+                            subjectTitle: canonicalSub,
+                            status: String(item.status || 'ACTIVE'),
+                            violations: Number(item.violations || 0),
+                            maxViolations: Number(item.maxViolations || MAX_VIOLATIONS),
+                            lastViolationReason: String(item.lastViolationReason || '-'),
+                            lastUpdated: String(item.lastUpdated || ''),
+                            awaySeconds: Number(item.awaySeconds || 0),
+                            startedAt: String(item.startedAt || item.lastUpdated || '')
+                        });
                     }
-                };
-
-                // 1. Baca langsung dari Google Apps Script Web App
-                if (APPS_SCRIPT_WEB_APP_URL) {
-                    try {
-                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&_ts=${Date.now()}`);
-                        const data = await res.json();
-                        if (data && Array.isArray(data.sessions)) {
-                            connectedToCloud = true;
-                            data.sessions.forEach(upsertSession);
-                        }
-                    } catch (e) {}
                 }
 
-                // 2. Baca langsung dari tab MONITORING di Google Spreadsheet (Single Source of Truth)
+                // Sumber 1: Google Apps Script Web App
                 try {
-                    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&_ts=${Date.now()}`;
-                    const resSheet = await fetch(sheetUrl);
-                    const txtSheet = await resSheet.text();
-                    const jsonSheet = parseGvizJson(txtSheet);
-                    const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
-                    connectedToCloud = true;
-                    rows.forEach((row, idx) => {
-                        const c = row.c || [];
+                    const res = await fetch(APPS_SCRIPT_WEB_APP_URL + '?action=get&_ts=' + Date.now());
+                    const data = await res.json();
+                    if (Array.isArray(data.sessions)) {
+                        data.sessions.forEach(upsertSession);
+                    }
+                } catch (_) {}
+
+                // Sumber 2: Cadangan langsung tab MONITORING via gviz
+                try {
+                    const gvizUrl = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent('MONITORING') + '&_ts=' + Date.now();
+                    const gRes = await fetch(gvizUrl);
+                    const gText = await gRes.text();
+                    const gJson = parseGvizJson(gText);
+                    const rows = (gJson.table && gJson.table.rows) ? gJson.table.rows : [];
+                    rows.forEach((r, idx) => {
+                        const c = r.c || [];
                         const sid = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
                         if (!sid || (idx === 0 && sid.toLowerCase() === 'sessionid')) return;
                         upsertSession({
                             sessionId: sid,
-                            studentClass: c[1] && c[1].v != null ? String(c[1].v).trim() : '',
-                            studentName: c[2] && c[2].v != null ? String(c[2].v).trim() : '',
-                            subjectTitle: c[3] && c[3].v != null ? String(c[3].v).trim() : '',
-                            status: c[4] && c[4].v != null ? String(c[4].v).trim() : 'ACTIVE',
+                            studentClass: c[1] && c[1].v != null ? String(c[1].v) : '',
+                            studentName: c[2] && c[2].v != null ? String(c[2].v) : '',
+                            subjectTitle: c[3] && c[3].v != null ? String(c[3].v) : '',
+                            status: c[4] && c[4].v != null ? String(c[4].v) : 'ACTIVE',
                             violations: c[5] && c[5].v != null ? Number(c[5].v) : 0,
-                            maxViolations: c[6] && c[6].v != null ? Number(c[6].v) : MAX_VIOLATIONS,
-                            lastViolationReason: c[7] && c[7].v != null ? String(c[7].v).trim() : '-',
-                            lastUpdated: c[8] && c[8].v != null ? String(c[8].v).trim() : '',
-                            baseKey: c[9] && c[9].v != null ? String(c[9].v).trim() : '',
-                            unlockedByAdmin: (c[10] && String(c[10].v).trim() === 'TRUE'),
+                            maxViolations: c[6] && c[6].v != null ? Number(c[6].v) : 10,
+                            lastViolationReason: c[7] && c[7].v != null ? String(c[7].v) : '-',
+                            lastUpdated: c[8] && c[8].v != null ? String(c[8].v) : '',
                             awaySeconds: c[11] && c[11].v != null ? Number(c[11].v) : 0,
-                            startedAt: c[12] && c[12].v != null ? String(c[12].v).trim() : ''
+                            startedAt: c[12] && c[12].v != null ? String(c[12].v) : ''
                         });
                     });
-                } catch (e) {}
+                } catch (_) {}
 
-                if (!connectedToCloud && el.adminSyncAlert) {
-                    el.adminSyncAlert.textContent = 'Gagal terhubung ke database Google Spreadsheet. Periksa koneksi internet perangkat ini.';
-                    el.adminSyncAlert.classList.remove('hidden');
-                }
-
-                state.adminSessions = Array.from(mergedMap.values())
-                    .filter((s) => s.subjectTitle && s.subjectTitle.trim().toLowerCase() !== 'portal jadwal' && s.subjectTitle.trim() !== '-')
-                    .map((s) => {
-                        const rawSub = String(s.subjectTitle || '').trim();
-                        const matchedReal = state.subjects.find((sub) => sub.title.trim().toLowerCase() === rawSub.toLowerCase());
-                        return {
-                            ...s,
-                            subjectTitle: matchedReal ? matchedReal.title : rawSub
-                        };
-                    })
-                    .sort((a, b) => {
-                        const ta = a.lastUpdated ? Date.parse(a.lastUpdated) || 0 : 0;
-                        const tb = b.lastUpdated ? Date.parse(b.lastUpdated) || 0 : 0;
-                        return tb - ta;
-                    });
-
-                populateAdminFilters();
-                renderAdminMonitoringTable();
-            }
-
-            function populateAdminFilters() {
-                if (el.adminClassFilter) {
-                    const currentClass = el.adminClassFilter.value || 'ALL';
-                    const classes = Array.from(new Set(state.adminSessions.map((s) => s.studentClass).filter(Boolean))).sort();
-                    el.adminClassFilter.innerHTML = '<option value="ALL">Semua Kelas</option>' +
-                        classes.map((c) => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
-                    if (classes.includes(currentClass)) el.adminClassFilter.value = currentClass;
-                }
-
-                if (el.adminSubjectFilter) {
-                    const currentSub = el.adminSubjectFilter.value || 'ALL';
-                    const realSubjectTitles = state.subjects.map((sub) => sub.title).filter(Boolean);
-                    const sessionSubjectTitles = state.adminSessions.map((s) => s.subjectTitle).filter(Boolean);
-                    const allSubjects = Array.from(new Set([...realSubjectTitles, ...sessionSubjectTitles]));
-                    el.adminSubjectFilter.innerHTML = '<option value="ALL">Semua Mata Pelajaran</option>' +
-                        allSubjects.map((sub) => `<option value="${escapeHTML(sub)}">${escapeHTML(sub)}</option>`).join('');
-                    if (allSubjects.includes(currentSub)) el.adminSubjectFilter.value = currentSub;
-                }
-            }
-
-            function renderAdminMonitoringTable() {
-                const keyword = (el.adminSearchInput ? el.adminSearchInput.value : '').trim().toLowerCase();
-                const subjectFilter = el.adminSubjectFilter ? el.adminSubjectFilter.value : 'ALL';
-                const classFilter = el.adminClassFilter ? el.adminClassFilter.value : 'ALL';
-
-                let total = state.adminSessions.length;
-                let active = 0;
-                let warned = 0;
-                let locked = 0;
-
-                state.adminSessions.forEach((s) => {
-                    const v = Number(s.violations || 0);
-                    const isLck = s.status === 'LOCKED' || v >= MAX_VIOLATIONS;
-                    if (isLck) locked++;
-                    else if (s.status === 'ACTIVE' || s.status === 'DIBUKA ADMIN') active++;
-                    if (v > 0) warned++;
+                state.adminSessions = Array.from(mergedMap.values()).sort((a, b) => {
+                    const ta = new Date(a.lastUpdated || 0).getTime() || 0;
+                    const tb = new Date(b.lastUpdated || 0).getTime() || 0;
+                    return tb - ta;
                 });
 
-                if (el.statTotal) el.statTotal.textContent = String(total);
-                if (el.statActive) el.statActive.textContent = String(active);
-                if (el.statWarned) el.statWarned.textContent = String(warned);
-                if (el.statLocked) el.statLocked.textContent = String(locked);
+                updateAdminFilters();
+                renderAdminTable();
+            }
 
-                const filtered = state.adminSessions.filter((s) => {
-                    if (subjectFilter !== 'ALL' && String(s.subjectTitle || '').toLowerCase() !== subjectFilter.toLowerCase()) return false;
-                    if (classFilter !== 'ALL' && s.studentClass !== classFilter) return false;
-                    if (keyword) {
-                        const hay = `${s.studentName} ${s.studentClass} ${s.subjectTitle}`.toLowerCase();
-                        if (!hay.includes(keyword)) return false;
-                    }
-                    return true;
+            function updateAdminFilters() {
+                const prevSub = el.adminSubjectFilter.value;
+                const prevCls = el.adminClassFilter.value;
+
+                const subSet = new Set(state.subjects.map(s => s.title));
+                state.adminSessions.forEach(s => { if (s.subjectTitle) subSet.add(s.subjectTitle); });
+                const subList = Array.from(subSet);
+
+                el.adminSubjectFilter.innerHTML = '<option value="ALL">Semua Mata Pelajaran</option>' +
+                    subList.map(sub => '<option value="' + escapeHtml(sub) + '">' + escapeHtml(sub) + '</option>').join('');
+                if (prevSub && (prevSub === 'ALL' || subSet.has(prevSub))) el.adminSubjectFilter.value = prevSub;
+
+                const clsSet = new Set(Object.keys(state.studentsByClass));
+                state.adminSessions.forEach(s => { if (s.studentClass) clsSet.add(s.studentClass); });
+                const clsList = Array.from(clsSet).sort((a, b) => a.localeCompare(b));
+
+                el.adminClassFilter.innerHTML = '<option value="ALL">Semua Kelas</option>' +
+                    clsList.map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join('');
+                if (prevCls && (prevCls === 'ALL' || clsSet.has(prevCls))) el.adminClassFilter.value = prevCls;
+            }
+
+            function renderAdminTable() {
+                const query = el.adminSearchInput.value.trim().toLowerCase();
+                const subFilter = el.adminSubjectFilter.value;
+                const clsFilter = el.adminClassFilter.value;
+
+                const filtered = state.adminSessions.filter(s => {
+                    const matchQuery = !query ||
+                        s.studentName.toLowerCase().includes(query) ||
+                        s.subjectTitle.toLowerCase().includes(query) ||
+                        s.studentClass.toLowerCase().includes(query);
+                    const matchSub = subFilter === 'ALL' || s.subjectTitle === subFilter;
+                    const matchCls = clsFilter === 'ALL' || s.studentClass === clsFilter;
+                    return matchQuery && matchSub && matchCls;
                 });
 
-                if (!el.adminMonitoringTbody) return;
+                el.statTotal.textContent = String(state.adminSessions.length);
+                el.statActive.textContent = String(state.adminSessions.filter(s => s.status === 'ACTIVE').length);
+                el.statWarned.textContent = String(state.adminSessions.filter(s => s.violations > 0 && s.status !== 'LOCKED').length);
+                el.statLocked.textContent = String(state.adminSessions.filter(s => s.status === 'LOCKED' || s.violations >= MAX_VIOLATIONS).length);
+
                 if (filtered.length === 0) {
-                    el.adminMonitoringTbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400 font-bold">Belum ada data peserta ujian yang sesuai filter.</td></tr>';
+                    el.adminMonitoringTbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400 font-bold">Belum ada data peserta ujian pada filter ini.</td></tr>';
                     return;
                 }
 
-                el.adminMonitoringTbody.innerHTML = filtered.map((s) => {
-                    const v = Number(s.violations || 0);
-                    const isLck = s.status === 'LOCKED' || v >= MAX_VIOLATIONS;
-                    const parsedLogAway = extractAwaySecondsFromLogText(s.lastViolationReason);
-                    const awaySec = Math.max(Number(s.awaySeconds || 0), parsedLogAway);
-                    const cleanReason = String(s.lastViolationReason || '-').replace(/\s*\[TotalKeluar:\d+\]/gi, '').trim();
-                    const startTimeDisplay = formatStartClockWIB(s.startedAt, s.sessionId);
-
-                    let statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 font-black text-[10px]">MENGERJAKAN</span>';
-                    if (isLck) {
-                        statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-red-100 text-red-700 font-black text-[10px]">TERKUNCI (10X)</span>';
+                el.adminMonitoringTbody.innerHTML = filtered.map((s, idx) => {
+                    let badge = '<span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 font-black text-[10px]">MENGERJAKAN</span>';
+                    if (s.status === 'LOCKED' || s.violations >= MAX_VIOLATIONS) {
+                        badge = '<span class="px-2.5 py-1 rounded-lg bg-red-100 text-red-700 font-black text-[10px]">TERKUNCI (10X)</span>';
                     } else if (s.status === 'FINISHED') {
-                        statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-black text-[10px]">SELESAI</span>';
+                        badge = '<span class="px-2.5 py-1 rounded-lg bg-slate-200 text-slate-700 font-black text-[10px]">SELESAI</span>';
                     } else if (s.status === 'DIBUKA ADMIN') {
-                        statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-700 font-black text-[10px]">DIRESET ADMIN</span>';
+                        badge = '<span class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-700 font-black text-[10px]">DIRESET ADMIN</span>';
                     }
 
-                    return `
-                        <tr class="hover:bg-slate-50/80 transition">
-                            <td class="py-3.5 px-4">
-                                <p class="font-extrabold text-slate-900">${escapeHTML(s.studentName)}</p>
-                                <p class="text-[11px] font-bold text-blue-600">${escapeHTML(s.studentClass)}</p>
-                            </td>
-                            <td class="py-3.5 px-4 font-bold text-slate-800">${escapeHTML(s.subjectTitle)}</td>
-                            <td class="py-3.5 px-4">
-                                <span class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-mono font-extrabold text-[11px]">
-                                    ${escapeHTML(startTimeDisplay)}
-                                </span>
-                            </td>
-                            <td class="py-3.5 px-4">${statusBadge}</td>
-                            <td class="py-3.5 px-4">
-                                <span class="px-2.5 py-1 rounded-lg ${v > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'} font-black text-[11px]">
-                                    ${v} / ${MAX_VIOLATIONS}
-                                </span>
-                            </td>
-                            <td class="py-3.5 px-4">
-                                <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-[11px]">
-                                    ${formatDurationHuman(awaySec)}
-                                </span>
-                            </td>
-                            <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="${escapeHTML(cleanReason)}">
-                                ${escapeHTML(cleanReason)}
-                            </td>
-                            <td class="py-3.5 px-4 text-right">
-                                <button type="button"
-                                    data-sid="${escapeHTML(s.sessionId || '')}"
-                                    data-sname="${escapeHTML(s.studentName || '')}"
-                                    data-sclass="${escapeHTML(s.studentClass || '')}"
-                                    data-ssub="${escapeHTML(s.subjectTitle || '')}"
-                                    class="unlock-session-btn px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] rounded-xl shadow-sm transition cursor-pointer">
-                                    Buka Kunci / Reset
-                                </button>
-                            </td>
-                        </tr>
-                    `;
+                    return [
+                        '<tr class="hover:bg-slate-50/80 transition">',
+                        '  <td class="py-3.5 px-4">',
+                        '    <p class="font-extrabold text-slate-900">' + escapeHtml(s.studentName) + '</p>',
+                        '    <span class="text-[11px] font-bold text-blue-600">' + escapeHtml(s.studentClass) + '</span>',
+                        '  </td>',
+                        '  <td class="py-3.5 px-4 font-bold text-slate-800">' + escapeHtml(s.subjectTitle) + '</td>',
+                        '  <td class="py-3.5 px-4 font-mono font-bold text-slate-600">' + escapeHtml(formatClock(s.startedAt)) + '</td>',
+                        '  <td class="py-3.5 px-4">' + badge + '</td>',
+                        '  <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg bg-slate-100 font-black text-slate-800">' + s.violations + ' / ' + MAX_VIOLATIONS + '</span></td>',
+                        '  <td class="py-3.5 px-4 font-bold text-slate-700">' + escapeHtml(formatSeconds(s.awaySeconds)) + '</td>',
+                        '  <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="' + escapeHtml(s.lastViolationReason) + '">' + escapeHtml(s.lastViolationReason) + '</td>',
+                        '  <td class="py-3.5 px-4 text-right">',
+                        '    <button type="button" data-row-idx="' + idx + '" class="admin-unlock-btn px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[11px] transition cursor-pointer">',
+                        '      Buka Kunci / Reset',
+                        '    </button>',
+                        '  </td>',
+                        '</tr>'
+                    ].join('');
                 }).join('');
+
+                el.adminMonitoringTbody.querySelectorAll('.admin-unlock-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = Number(btn.getAttribute('data-row-idx'));
+                        const target = filtered[idx];
+                        if (target) unlockStudentSessionFromAdmin(target);
+                    });
+                });
             }
 
-            async function handleUnlockStudentSession(btnEl) {
-                const sid = btnEl.getAttribute('data-sid') || '';
-                const sname = btnEl.getAttribute('data-sname') || '';
-                const sclass = btnEl.getAttribute('data-sclass') || '';
-                const ssub = btnEl.getAttribute('data-ssub') || '';
+            async function unlockStudentSessionFromAdmin(sessionObj) {
+                el.adminSyncAlert.textContent = 'Mengirim perintah Buka Kunci & Reset untuk ' + sessionObj.studentName + ' (' + sessionObj.subjectTitle + ')...';
+                el.adminSyncAlert.classList.remove('hidden');
 
-                const originalText = btnEl.textContent;
-                btnEl.disabled = true;
-                btnEl.textContent = 'Memproses...';
+                const params = new URLSearchParams({
+                    action: 'unlock',
+                    sessionId: sessionObj.sessionId || '',
+                    studentName: sessionObj.studentName || '',
+                    studentClass: sessionObj.studentClass || '',
+                    subjectTitle: sessionObj.subjectTitle || '',
+                    _ts: String(Date.now())
+                });
 
                 try {
-                    clearExamAttemptedLocal(sclass, sname, ssub);
-
-                    state.adminSessions.forEach((s) => {
-                        const matchRow = (sid && s.sessionId === sid) ||
-                            (sname && s.studentName === sname && s.studentClass === sclass && (!ssub || s.subjectTitle === ssub));
-                        if (matchRow) {
-                            s.status = 'DIBUKA ADMIN';
-                            s.violations = 0;
-                            s.maxViolations = MAX_VIOLATIONS;
-                            s.unlockedByAdmin = true;
-                            s.lastViolationReason = 'Kunci dibuka & direset oleh Pengawas';
-                        }
-                    });
-                    renderAdminMonitoringTable();
-
-                    if (APPS_SCRIPT_WEB_APP_URL) {
-                        const params = new URLSearchParams({
-                            action: 'unlock',
-                            sessionId: sid,
-                            studentName: sname,
-                            studentClass: sclass,
-                            subjectTitle: ssub,
-                            _ts: String(Date.now())
-                        });
-                        await fetch(`${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
-                    }
-
-                    if (el.adminSyncAlert) {
-                        el.adminSyncAlert.textContent = `Akses ujian ${sname} (${sclass}) pada mapel "${ssub}" berhasil dibuka & direset.`;
-                        el.adminSyncAlert.classList.remove('hidden');
-                        setTimeout(() => el.adminSyncAlert.classList.add('hidden'), 5000);
-                    }
-                } catch (err) {
-                } finally {
-                    btnEl.disabled = false;
-                    btnEl.textContent = originalText;
+                    await fetch(APPS_SCRIPT_WEB_APP_URL + '?' + params.toString());
+                    el.adminSyncAlert.textContent = 'Berhasil! Akun ' + sessionObj.studentName + ' (' + sessionObj.subjectTitle + ') telah di-reset dan dapat mengerjakan kembali.';
+                    fetchAdminMonitoringData();
+                } catch (_) {
+                    el.adminSyncAlert.textContent = 'Perintah reset terkirim. Klik Refresh Data Sekarang untuk memastikan pembaruan.';
                 }
             }
 
-            // =================================================================
-            // EVENT LISTENERS UI
-            // =================================================================
-            if (el.studentClassSelect) {
-                el.studentClassSelect.addEventListener('change', () => {
-                    const cls = el.studentClassSelect.value;
-                    const names = state.studentsByClass[cls] || [];
-                    if (!cls || names.length === 0) {
-                        el.studentNameSelect.disabled = true;
-                        el.studentNameSelect.innerHTML = '<option value="">-- Pilih Kelas Terlebih Dahulu --</option>';
-                        return;
-                    }
-                    el.studentNameSelect.disabled = false;
-                    el.studentNameSelect.innerHTML = '<option value="">-- Pilih Nama Anda --</option>' +
-                        names.map((n) => `<option value="${escapeHTML(n)}">${escapeHTML(n)}</option>`).join('');
-                });
-            }
+            el.adminSearchInput.addEventListener('input', renderAdminTable);
+            el.adminSubjectFilter.addEventListener('change', renderAdminTable);
+            el.adminClassFilter.addEventListener('change', renderAdminTable);
+            el.adminRefreshBtn.addEventListener('click', fetchAdminMonitoringData);
 
-            if (el.reloadStudentsBtn) {
-                el.reloadStudentsBtn.addEventListener('click', loadStudentsFromSheet);
-            }
+            el.copyAppsScriptBtn.addEventListener('click', () => {
+                el.appsScriptCodeBox.select();
+                document.execCommand('copy');
+                el.testServerResult.className = 'p-3.5 rounded-2xl text-xs font-bold border bg-blue-50 border-blue-200 text-blue-800';
+                el.testServerResult.textContent = 'Kode Apps Script berhasil disalin ke clipboard!';
+                el.testServerResult.classList.remove('hidden');
+            });
 
-            if (el.startExamBtn) {
-                el.startExamBtn.addEventListener('click', enterExamPortal);
-            }
-
-            if (el.refreshSubjectsBtn) {
-                el.refreshSubjectsBtn.addEventListener('click', () => {
-                    loadSubjectsFromSheet().then(() => syncAttemptedStatusWithServer());
-                });
-            }
-
-            if (el.subjectsGrid) {
-                el.subjectsGrid.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.open-subject-btn');
-                    if (!btn || btn.disabled) return;
-                    const idx = Number(btn.getAttribute('data-sub-index'));
-                    if (!Number.isNaN(idx) && state.subjects[idx]) {
-                        openSubjectExam(state.subjects[idx]);
-                    }
-                });
-            }
-
-            if (el.backToPortalBtn) {
-                el.backToPortalBtn.addEventListener('click', returnToSubjectPortal);
-            }
-
-            if (el.finishExamBtn) {
-                el.finishExamBtn.addEventListener('click', () => {
-                    el.confirmFinishModal.classList.remove('hidden');
-                });
-            }
-
-            if (el.cancelFinishBtn) {
-                el.cancelFinishBtn.addEventListener('click', () => {
-                    el.confirmFinishModal.classList.add('hidden');
-                });
-            }
-
-            if (el.confirmFinishBtn) {
-                el.confirmFinishBtn.addEventListener('click', () => {
-                    endExam('Ujian telah diselesaikan oleh peserta.');
-                });
-            }
-
-            if (el.resumeExamBtn) {
-                el.resumeExamBtn.addEventListener('click', () => {
-                    if (state.isLocked) return;
-                    finalizeReturnFromAway(true);
-                    el.violationOverlay.classList.add('hidden');
-                    enterFullscreenSafe();
-                });
-            }
-
-            if (el.checkUnlockNowBtn) {
-                el.checkUnlockNowBtn.addEventListener('click', async () => {
-                    el.checkUnlockNowBtn.textContent = 'Mengirim & memeriksa server...';
-                    await syncSessionToServer('LOCKED');
-                    const ok = await checkIfUnlockedByAdmin();
-                    if (!ok) {
-                        el.checkUnlockNowBtn.textContent = 'Data Terkirim • Menunggu Pengawas Buka Kunci';
-                    }
-                });
-            }
-
-            if (el.backHomeBtn) {
-                el.backHomeBtn.addEventListener('click', () => {
-                    el.summaryScreen.classList.add('hidden');
-                    el.startScreen.classList.remove('hidden');
-                });
-            }
-
-            // Admin PIN & Dashboard Events
-            if (el.openAdminPinBtn) {
-                el.openAdminPinBtn.addEventListener('click', () => {
-                    el.adminPinInput.value = '';
-                    el.adminPinError.classList.add('hidden');
-                    el.adminPinModal.classList.remove('hidden');
-                    setTimeout(() => el.adminPinInput.focus(), 80);
-                });
-            }
-
-            if (el.closeAdminPinBtn) {
-                el.closeAdminPinBtn.addEventListener('click', () => {
-                    el.adminPinModal.classList.add('hidden');
-                });
-            }
-
-            if (el.submitAdminPinBtn) {
-                el.submitAdminPinBtn.addEventListener('click', () => {
-                    if (el.adminPinInput.value.trim() === ADMIN_PIN) {
-                        el.adminPinModal.classList.add('hidden');
-                        openAdminDashboard();
-                    } else {
-                        el.adminPinError.classList.remove('hidden');
-                    }
-                });
-            }
-
-            if (el.adminPinInput) {
-                el.adminPinInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') el.submitAdminPinBtn.click();
-                });
-            }
-
-            if (el.closeAdminBtn) {
-                el.closeAdminBtn.addEventListener('click', closeAdminDashboard);
-            }
-
-            if (el.tabMonitoringBtn) {
-                el.tabMonitoringBtn.addEventListener('click', () => {
-                    el.tabMonitoringBtn.className = 'py-3 text-xs font-black border-b-2 border-blue-600 text-blue-600 cursor-pointer';
-                    el.tabAppsScriptBtn.className = 'py-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 cursor-pointer';
-                    el.adminPanelMonitoring.classList.remove('hidden');
-                    el.adminPanelAppsScript.classList.add('hidden');
-                });
-            }
-
-            if (el.tabAppsScriptBtn) {
-                el.tabAppsScriptBtn.addEventListener('click', () => {
-                    el.tabAppsScriptBtn.className = 'py-3 text-xs font-black border-b-2 border-blue-600 text-blue-600 cursor-pointer';
-                    el.tabMonitoringBtn.className = 'py-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 cursor-pointer';
-                    el.adminPanelAppsScript.classList.remove('hidden');
-                    el.adminPanelMonitoring.classList.add('hidden');
-                });
-            }
-
-            if (el.adminSearchInput) {
-                el.adminSearchInput.addEventListener('input', renderAdminMonitoringTable);
-            }
-
-            if (el.adminSubjectFilter) {
-                el.adminSubjectFilter.addEventListener('change', renderAdminMonitoringTable);
-            }
-
-            if (el.adminClassFilter) {
-                el.adminClassFilter.addEventListener('change', renderAdminMonitoringTable);
-            }
-
-            if (el.adminRefreshBtn) {
-                el.adminRefreshBtn.addEventListener('click', fetchAdminMonitoringData);
-            }
-
-            if (el.adminMonitoringTbody) {
-                el.adminMonitoringTbody.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.unlock-session-btn');
-                    if (btn && !btn.disabled) {
-                        handleUnlockStudentSession(btn);
-                    }
-                });
-            }
-
-            if (el.testAppsScriptBtn) {
-                el.testAppsScriptBtn.addEventListener('click', async () => {
-                    if (!el.testServerResult) return;
-                    el.testServerResult.className = 'p-3.5 rounded-2xl text-xs font-bold border bg-slate-50 border-slate-200 text-slate-700';
-                    el.testServerResult.textContent = 'Sedang menguji koneksi ke Google Apps Script Web App...';
-                    el.testServerResult.classList.remove('hidden');
-                    try {
-                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&_ts=${Date.now()}`);
-                        const data = await res.json();
-                        if (data && Array.isArray(data.sessions)) {
-                            el.testServerResult.className = 'p-3.5 rounded-2xl text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800';
-                            el.testServerResult.textContent = `BERHASIL TERHUBUNG! Ditemukan ${data.sessions.length} baris data pada tab MONITORING Spreadsheet Anda.`;
-                        } else {
-                            throw new Error('Respons tidak valid');
-                        }
-                    } catch (err) {
-                        el.testServerResult.className = 'p-3.5 rounded-2xl text-xs font-bold border bg-red-50 border-red-200 text-red-700';
-                        el.testServerResult.textContent = 'GAGAL TERHUBUNG: Pastikan kode Apps Script di bawah ini sudah di-deploy di Spreadsheet Anda (1nOtxwtqh9aFqj6JxDpfhrpnx43h53gm90PQxG51G2TU) dengan akses "Siapa saja (Anyone)".';
-                    }
-                });
-            }
-
-            if (el.copyAppsScriptBtn) {
-                el.copyAppsScriptBtn.addEventListener('click', () => {
-                    el.appsScriptCodeBox.select();
-                    document.execCommand('copy');
-                    el.copyAppsScriptBtn.textContent = 'Kode Berhasil Disalin!';
-                    setTimeout(() => {
-                        el.copyAppsScriptBtn.textContent = 'Salin Kode Apps Script';
-                    }, 2500);
-                });
-            }
+            el.testAppsScriptBtn.addEventListener('click', async () => {
+                el.testServerResult.className = 'p-3.5 rounded-2xl text-xs font-bold border bg-slate-50 border-slate-200 text-slate-700';
+                el.testServerResult.textContent = 'Menguji koneksi ke Google Apps Script Web App...';
+                el.testServerResult.classList.remove('hidden');
+                try {
+                    const res = await fetch(APPS_SCRIPT_WEB_APP_URL + '?action=get&_ts=' + Date.now());
+                    const data = await res.json();
+                    const count = Array.isArray(data.sessions) ? data.sessions.length : 0;
+                    el.testServerResult.className = 'p-3.5 rounded-2xl text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800';
+                    el.testServerResult.textContent = 'Koneksi Berhasil! Server Apps Script aktif dan mengembalikan ' + count + ' baris data monitoring.';
+                } catch (err) {
+                    el.testServerResult.className = 'p-3.5 rounded-2xl text-xs font-bold border bg-red-50 border-red-200 text-red-700';
+                    el.testServerResult.textContent = 'Gagal terhubung ke Apps Script. Pastikan Web App di-deploy dengan akses "Siapa saja (Anyone)".';
+                }
+            });
 
             // =================================================================
-            // INISIALISASI AWAL SAAT HALAMAN DIMUAT
+            // INISIALISASI APLIKASI SAAT HALAMAN DIMUAT
             // =================================================================
             window.addEventListener('load', () => {
-                restoreLockStateOnLoad();
-                loadStudentsFromSheet();
+                loadStudentsFromSheet(false);
                 loadSubjectsFromSheet();
+                restoreLockedSessionOnBoot();
             });
         })();
     </script>
