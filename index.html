@@ -457,11 +457,12 @@
 
                 <!-- Tabel Monitoring -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-[820px]">
+                    <table class="w-full text-left border-collapse min-w-[920px]">
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-500">
                                 <th class="py-3.5 px-4">Peserta &amp; Kelas</th>
                                 <th class="py-3.5 px-4">Mata Pelajaran</th>
+                                <th class="py-3.5 px-4">Mulai Mengerjakan</th>
                                 <th class="py-3.5 px-4">Status</th>
                                 <th class="py-3.5 px-4">Pelanggaran</th>
                                 <th class="py-3.5 px-4">Total Waktu Keluar</th>
@@ -471,7 +472,7 @@
                         </thead>
                         <tbody id="admin-monitoring-tbody" class="divide-y divide-slate-100 text-xs">
                             <tr>
-                                <td colspan="7" class="py-8 text-center text-slate-400 font-bold">Memuat data monitoring...</td>
+                                <td colspan="8" class="py-8 text-center text-slate-400 font-bold">Memuat data monitoring...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -506,7 +507,7 @@
             // KONFIGURASI UTAMA DATABASE & KEAMANAN
             // =================================================================
             const SPREADSHEET_ID = '1nOtxwtqh9aFqj6JxDpfhrpnx43h53gm90PQxG51G2TU';
-            const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz-nY_nQ6763n-x_uV3H4V7O3W3z_6tX5Z2Q1W9E8R7T6Y5U4I3O2P1/exec';
+            const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyDHVIHEKyb2jjwQWImnylCyz_aiy-BfBrzS-4zivfjPJXUGhlpCeB39BU1HGaf3aUoaA/exec';
             const ADMIN_PIN = '9090';
             const MAX_VIOLATIONS = 10;
             const DEFAULT_EXAM_DURATION_MINUTES = 90;
@@ -618,6 +619,7 @@
                 studentName: '',
                 currentSubject: null,
                 sessionId: '',
+                examStartedAt: '',
                 isExamActive: false,
                 isLocked: false,
                 violations: 0,
@@ -745,6 +747,27 @@
                 const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
                 const s = String(sec % 60).padStart(2, '0');
                 return `${h}:${m}:${s}`;
+            }
+
+            function formatStartClockWIB(rawDateInput, sessionIdFallback = '') {
+                let d = null;
+                if (rawDateInput) {
+                    const parsed = new Date(rawDateInput);
+                    if (!Number.isNaN(parsed.getTime())) d = parsed;
+                }
+                if (!d && sessionIdFallback) {
+                    const parts = String(sessionIdFallback).split('_');
+                    const lastPart = Number(parts[parts.length - 1]);
+                    if (lastPart > 1700000000000) {
+                        const parsedSid = new Date(lastPart);
+                        if (!Number.isNaN(parsedSid.getTime())) d = parsedSid;
+                    }
+                }
+                if (!d) return '-';
+                const hh = String(d.getHours()).padStart(2, '0');
+                const mm = String(d.getMinutes()).padStart(2, '0');
+                const ss = String(d.getSeconds()).padStart(2, '0');
+                return `Pukul ${hh}:${mm}:${ss}`;
             }
 
             function extractAwaySecondsFromLogText(logText) {
@@ -1216,6 +1239,7 @@
                     studentClass: state.studentClass,
                     studentName: state.studentName,
                     subjectTitle: state.currentSubject.title,
+                    startedAt: state.examStartedAt || new Date().toISOString(),
                     status: currentStatus,
                     violations: state.violations,
                     maxViolations: MAX_VIOLATIONS,
@@ -1234,6 +1258,7 @@
                     studentClass: payload.studentClass,
                     studentName: payload.studentName,
                     subjectTitle: payload.subjectTitle,
+                    startedAt: payload.startedAt,
                     status: payload.status,
                     violations: String(payload.violations),
                     maxViolations: String(payload.maxViolations),
@@ -1433,8 +1458,10 @@
                     return;
                 }
 
+                const nowStart = Date.now();
                 state.currentSubject = subjectObj;
-                state.sessionId = `${state.studentClass}_${state.studentName}_${subjectObj.title}_${Date.now()}`;
+                state.sessionId = `${state.studentClass}_${state.studentName}_${subjectObj.title}_${nowStart}`;
+                state.examStartedAt = new Date(nowStart).toISOString();
                 state.violations = 0;
                 state.lastViolationReason = '-';
                 state.totalAwaySeconds = 0;
@@ -1780,7 +1807,7 @@
 
                 if (!el.adminMonitoringTbody) return;
                 if (filtered.length === 0) {
-                    el.adminMonitoringTbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400 font-bold">Belum ada data peserta ujian yang sesuai filter.</td></tr>';
+                    el.adminMonitoringTbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400 font-bold">Belum ada data peserta ujian yang sesuai filter.</td></tr>';
                     return;
                 }
 
@@ -1790,6 +1817,7 @@
                     const parsedLogAway = extractAwaySecondsFromLogText(s.lastViolationReason);
                     const awaySec = Math.max(Number(s.awaySeconds || 0), parsedLogAway);
                     const cleanReason = String(s.lastViolationReason || '-').replace(/\s*\[TotalKeluar:\d+\]/gi, '').trim();
+                    const startTimeDisplay = formatStartClockWIB(s.startedAt, s.sessionId);
 
                     let statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 font-black text-[10px]">MENGERJAKAN</span>';
                     if (isLck) {
@@ -1807,6 +1835,11 @@
                                 <p class="text-[11px] font-bold text-blue-600">${escapeHTML(s.studentClass)}</p>
                             </td>
                             <td class="py-3.5 px-4 font-bold text-slate-800">${escapeHTML(s.subjectTitle)}</td>
+                            <td class="py-3.5 px-4">
+                                <span class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-mono font-extrabold text-[11px]">
+                                    ${escapeHTML(startTimeDisplay)}
+                                </span>
+                            </td>
                             <td class="py-3.5 px-4">${statusBadge}</td>
                             <td class="py-3.5 px-4">
                                 <span class="px-2.5 py-1 rounded-lg ${v > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'} font-black text-[11px]">
