@@ -1320,10 +1320,20 @@ function jsonResponse(obj) {
             }
 
             let lastViolationTimestamp = 0;
+            let screenLockGraceTimer = null;
+            let lastBlurTimestamp = 0;
+            let isLikelyScreenOff = false;
+
+            function cancelPendingScreenOffCheck() {
+                if (screenLockGraceTimer) {
+                    clearTimeout(screenLockGraceTimer);
+                    screenLockGraceTimer = null;
+                }
+            }
+
             function recordViolation(reasonText) {
                 if (!state.isExamActive || state.isLocked) return;
 
-                // Debounce 1.2 detik agar 1 aksi tidak terhitung ganda
                 const now = Date.now();
                 if (now - lastViolationTimestamp < 1200) return;
                 lastViolationTimestamp = now;
@@ -1333,7 +1343,7 @@ function jsonResponse(obj) {
                     persistAwayTracker();
                 }
 
-                state.violations += 1;
+                state.violations = Math.min(MAX_VIOLATIONS, state.violations + 1);
                 state.lastViolationReason = reasonText;
                 updateViolationUI();
                 playWarningAlarm();
@@ -1346,7 +1356,7 @@ function jsonResponse(obj) {
                 }
 
                 if (el.overlayStatusBadge) {
-                    el.overlayStatusBadge.textContent = `PERINGATAN PELANGGARAN KE-${state.violations}`;
+                    el.overlayStatusBadge.textContent = `PERINGATAN PELANGGARAN (${state.violations}/${MAX_VIOLATIONS})`;
                 }
                 if (el.overlayTitle) {
                     el.overlayTitle.textContent = 'Terdeteksi Aktivitas Terlarang!';
@@ -1364,120 +1374,14 @@ function jsonResponse(obj) {
                 if (el.lockedPanel) el.lockedPanel.classList.add('hidden');
                 if (el.violationOverlay) el.violationOverlay.classList.remove('hidden');
 
-                syncSessionToServer('ACTIVE');
+                syncSessionToServer('WARNING');
             }
 
-            function enterExamPortal() {
-                const cls = el.studentClassSelect.value.trim();
-                const name = el.studentNameSelect.value.trim();
-                if (!cls || !name) {
-                    el.startErrorMsg.textContent = 'Silakan pilih Kelas dan Nama Lengkap Anda terlebih dahulu!';
-                    el.startErrorMsg.classList.remove('hidden');
-                    return;
-                }
-                el.startErrorMsg.classList.add('hidden');
-
-                state.studentClass = cls;
-                state.studentName = name;
-                state.currentSubject = null;
-                state.sessionId = `${cls}_${name}_PORTAL_${Date.now()}`;
-                state.isExamActive = true;
-                state.isLocked = false;
-                state.violations = 0;
-                state.totalAwaySeconds = 0;
-                state.awayStartTime = null;
-                state.lastViolationReason = '-';
-                state.examStartTime = Date.now();
-
-                el.headerStudentName.textContent = name;
-                el.headerStudentClass.textContent = cls;
-                if (el.headerSubjectTitle) {
-                    el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
-                }
-                renderExamWatermark();
-                updateViolationUI();
-
-                el.startScreen.classList.add('hidden');
-                el.examContainer.classList.remove('hidden');
-                el.subjectPortalView.classList.remove('hidden');
-                el.iframeExamView.classList.add('hidden');
-                el.backToPortalBtn.classList.add('hidden');
-
-                enterFullscreenSafe();
-                loadSubjectsFromSheet();
-                startExamTimer();
-                scheduleSmartHeartbeat();
-            }
-
-            function openSubjectExam(subjectObj) {
-                if (!subjectObj) return;
-                state.currentSubject = subjectObj;
-                // Buat sessionId unik per mata pelajaran agar riwayat setiap ujian tidak tertimpa
-                const cleanSubjKey = subjectObj.title.replace(/[^a-zA-Z0-9]/g, '').slice(0, 18);
-                state.sessionId = `${state.studentClass}_${state.studentName}_${cleanSubjKey}_${Date.now()}`;
-                state.violations = 0;
-                state.totalAwaySeconds = 0;
-                state.awayStartTime = null;
-                state.lastViolationReason = '-';
-                updateViolationUI();
-
-                if (el.headerSubjectTitle) {
-                    el.headerSubjectTitle.textContent = subjectObj.title;
-                }
-                el.subjectPortalView.classList.add('hidden');
-                el.iframeExamView.classList.remove('hidden');
-                el.backToPortalBtn.classList.remove('hidden');
-                if (el.iframeLoader) el.iframeLoader.classList.remove('hidden');
-
-                el.examIframe.src = normalizeExamUrl(subjectObj.url);
-                enterFullscreenSafe();
-                syncSessionToServer('ACTIVE');
-            }
-
-            function startExamTimer() {
-                if (state.timerInterval) clearInterval(state.timerInterval);
-                state.timerInterval = setInterval(() => {
-                    if (!state.isExamActive || !state.examStartTime) return;
-                    if (el.examTimer) {
-                        el.examTimer.textContent = formatTime(Date.now() - state.examStartTime);
-                    }
-                }, 1000);
-            }
-
-            function endExamSession() {
-                finalizeReturnFromAway(false);
-                syncSessionToServer('SELESAI');
-
-                state.isExamActive = false;
-                if (state.timerInterval) clearInterval(state.timerInterval);
-                if (state.heartbeatTimeout) clearTimeout(state.heartbeatTimeout);
-
-                el.confirmFinishModal.classList.add('hidden');
-                el.examContainer.classList.add('hidden');
-                el.examIframe.src = 'about:blank';
-
-                el.sumName.textContent = state.studentName;
-                el.sumClass.textContent = state.studentClass;
-                el.sumSubject.textContent = state.currentSubject ? state.currentSubject.title : 'Portal Ujian';
-                el.sumViolations.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
-                el.sumAwayTime.textContent = formatDurationHuman(state.totalAwaySeconds);
-                el.summaryScreen.classList.remove('hidden');
-
-                try {
-                    if (document.fullscreenElement && document.exitFullscreen) {
-                        document.exitFullscreen().catch(() => {});
-                    }
-                } catch (e) {}
-            }
-
-            // =================================================================
-            // LISTENER ANTI-CURANG, ANTI-SCREENSHOT & ANTI-BLOK TEKS
-            // =================================================================
             function renderExamWatermark() {
                 if (!el.examWatermarkLayer) return;
                 const label = `${state.studentName || 'PESERTA'} • ${state.studentClass || 'SMPN 15'}`;
                 const items = Array.from({ length: 18 }, () =>
-                    `<span class="text-xs sm:text-sm font-black tracking-widest uppercase text-slate-900 -rotate-24 whitespace-nowrap">${escapeHTML(label)}</span>`
+                    `<span class="text-slate-900 font-black text-xs sm:text-sm tracking-widest uppercase -rotate-12 whitespace-nowrap">${escapeHTML(label)}</span>`
                 ).join('');
                 el.examWatermarkLayer.innerHTML = items;
             }
@@ -1492,6 +1396,9 @@ function jsonResponse(obj) {
                 }, durationMs);
             }
 
+            // =================================================================
+            // LISTENER ANTI-CURANG, ANTI-SCREENSHOT & ANTI-BLOK TEKS
+            // =================================================================
             if (el.examIframe) {
                 el.examIframe.addEventListener('load', () => {
                     if (el.iframeLoader) el.iframeLoader.classList.add('hidden');
@@ -1510,53 +1417,96 @@ function jsonResponse(obj) {
                 e.preventDefault();
             });
 
-            document.addEventListener('dragstart', (e) => {
+            document.addEventListener('contextmenu', (e) => {
+                const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA') return;
                 e.preventDefault();
             });
 
-            ['copy', 'cut'].forEach((evtName) => {
+            ['copy', 'cut', 'dragstart'].forEach((evtName) => {
                 document.addEventListener(evtName, (e) => {
-                    if (!state.isExamActive) return;
+                    const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+                    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
                     e.preventDefault();
-                    if (e.clipboardData) {
-                        e.clipboardData.setData('text/plain', 'Dilarang menyalin teks saat ujian berlangsung.');
+                    if (state.isExamActive && !state.isLocked) {
+                        recordViolation('Mencoba menyalin / memblokir teks ujian');
                     }
-                    recordViolation('Percobaan menyalin (Copy/Cut) teks ujian');
                 });
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (!state.isExamActive || state.isLocked) return;
+                const key = String(e.key || '').toLowerCase();
+
+                if (key === 'printscreen' || (e.metaKey && e.shiftKey && ['3', '4', '5', 's'].includes(key))) {
+                    e.preventDefault();
+                    triggerAntiCaptureShield(2500);
+                    recordViolation('Mencoba mengambil Screenshot layar ujian');
+                    return;
+                }
+
+                if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'a', 'u', 's', 'p'].includes(key)) {
+                    const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+                    if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+                        e.preventDefault();
+                        recordViolation(`Menekan pintasan terlarang (${e.ctrlKey ? 'Ctrl' : 'Cmd'}+${key.toUpperCase()})`);
+                    }
+                }
             });
 
             document.addEventListener('visibilitychange', () => {
                 if (!state.isExamActive || state.isLocked) return;
                 if (document.visibilityState === 'hidden') {
                     triggerAntiCaptureShield(2200);
-                    recordViolation('Meninggalkan tab ujian / menekan tombol Home');
+                    cancelPendingScreenOffCheck();
+
+                    const now = Date.now();
+                    const deltaFromBlur = now - lastBlurTimestamp;
+                    isLikelyScreenOff = (deltaFromBlur >= 0 && deltaFromBlur < 200);
+
+                    screenLockGraceTimer = setTimeout(() => {
+                        if (!state.isExamActive || state.isLocked) return;
+                        if (document.visibilityState === 'hidden' && !isLikelyScreenOff) {
+                            recordViolation('Meninggalkan tab ujian / membuka aplikasi lain');
+                        }
+                    }, 1500);
                 } else if (document.visibilityState === 'visible') {
+                    cancelPendingScreenOffCheck();
+                    isLikelyScreenOff = false;
                     finalizeReturnFromAway(true);
                 }
             });
 
-            window.addEventListener('pagehide', () => {
+            window.addEventListener('pagehide', (e) => {
                 if (!state.isExamActive || state.isLocked) return;
+                if (e && e.persisted) return;
+                cancelPendingScreenOffCheck();
                 triggerAntiCaptureShield(2200);
                 recordViolation('Menutup atau meninggalkan halaman ujian');
             });
 
             window.addEventListener('blur', () => {
                 if (!state.isExamActive || state.isLocked) return;
+                lastBlurTimestamp = Date.now();
                 setTimeout(() => {
                     if (!state.isExamActive || state.isLocked) return;
+                    if (document.visibilityState === 'hidden') {
+                        return;
+                    }
                     const activeEl = document.activeElement;
                     const isIframeFocused = activeEl === el.examIframe || (activeEl && activeEl.tagName === 'IFRAME');
-                    if (document.visibilityState === 'visible' && (isIframeFocused || state.isPointerInsideIframe)) {
+                    if (isIframeFocused || state.isPointerInsideIframe) {
                         return;
                     }
                     triggerAntiCaptureShield(2200);
                     recordViolation('Membuka aplikasi lain / Screenshot / keluar dari fokus layar ujian');
-                }, 120);
+                }, 220);
             });
 
             window.addEventListener('focus', () => {
                 if (!state.isExamActive || state.isLocked) return;
+                cancelPendingScreenOffCheck();
+                isLikelyScreenOff = false;
                 if (document.visibilityState === 'visible') {
                     finalizeReturnFromAway(true);
                 }
@@ -1564,99 +1514,222 @@ function jsonResponse(obj) {
 
             document.addEventListener('fullscreenchange', () => {
                 if (!state.isExamActive || state.isLocked) return;
-                if (!isCurrentlyFullscreen()) {
-                    recordViolation('Keluar dari mode layar penuh (Fullscreen / ESC)');
+                if (!isCurrentlyFullscreen() && document.visibilityState === 'visible') {
+                    // Hanya arahkan kembali tanpa menghukum jika layar baru menyala
                 }
             });
 
-            ['webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach((fsEvt) => {
-                document.addEventListener(fsEvt, () => {
-                    if (!state.isExamActive || state.isLocked) return;
-                    if (!isCurrentlyFullscreen()) {
-                        recordViolation('Keluar dari mode layar penuh (Fullscreen)');
+            // =================================================================
+            // NAVIGASI UJIAN SISWA
+            // =================================================================
+            function startExamTimer() {
+                if (state.timerInterval) clearInterval(state.timerInterval);
+                state.examStartTime = Date.now();
+                state.timerInterval = setInterval(() => {
+                    if (el.examTimer && state.examStartTime) {
+                        el.examTimer.textContent = formatTime(Date.now() - state.examStartTime);
                     }
-                });
-            });
+                }, 1000);
+            }
 
-            document.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                if (state.isExamActive && !state.isLocked) {
-                    recordViolation('Menekan tahan layar / membuka menu konteks (Copy/Terjemah)');
+            function enterExamPortal() {
+                const selectedClass = el.studentClassSelect.value.trim();
+                const selectedName = el.studentNameSelect.value.trim();
+
+                if (!selectedClass || !selectedName) {
+                    el.startErrorMsg.textContent = 'Silakan pilih Kelas dan Nama Lengkap Anda terlebih dahulu.';
+                    el.startErrorMsg.classList.remove('hidden');
+                    return;
                 }
-            });
 
-            ['keydown', 'keyup'].forEach((keyEvt) => {
-                document.addEventListener(keyEvt, (e) => {
-                    if (!state.isExamActive || state.isLocked) return;
-                    const key = (e.key || '').toLowerCase();
-                    const isPrintScreen = key === 'printscreen' || e.keyCode === 44;
-                    const isMacOrIosShot = (e.metaKey && e.shiftKey && ['3', '4', '5', 's'].includes(key));
-                    const isWinSnip = (e.metaKey && e.shiftKey && key === 's');
+                el.startErrorMsg.classList.add('hidden');
+                state.studentClass = selectedClass;
+                state.studentName = selectedName;
+                state.currentSubject = null;
+                state.sessionId = `${selectedClass}_${selectedName}_PORTAL_${Date.now()}`;
+                state.isExamActive = true;
+                state.isLocked = false;
+                state.violations = 0;
+                state.lastViolationReason = '-';
+                state.totalAwaySeconds = 0;
+                state.awayStartTime = null;
 
-                    if (isPrintScreen || isMacOrIosShot || isWinSnip) {
-                        e.preventDefault();
-                        triggerAntiCaptureShield(2500);
-                        try {
-                            if (navigator.clipboard && navigator.clipboard.writeText) {
-                                navigator.clipboard.writeText('').catch(() => {});
-                            }
-                        } catch (err) {}
-                        recordViolation('Percobaan mengambil Screenshot layar ujian');
-                        return;
+                el.headerStudentName.textContent = selectedName;
+                el.headerStudentClass.textContent = selectedClass;
+                el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
+
+                updateViolationUI();
+                renderExamWatermark();
+
+                el.startScreen.classList.add('hidden');
+                el.summaryScreen.classList.add('hidden');
+                el.examContainer.classList.remove('hidden');
+                el.subjectPortalView.classList.remove('hidden');
+                el.iframeExamView.classList.add('hidden');
+                el.backToPortalBtn.classList.add('hidden');
+
+                enterFullscreenSafe();
+                startExamTimer();
+                loadSubjectsFromSheet();
+                syncSessionToServer('ACTIVE');
+                scheduleSmartHeartbeat();
+            }
+
+            function openSubjectExam(subjectObj) {
+                if (!subjectObj || !subjectObj.url) return;
+                state.currentSubject = subjectObj;
+                // Buat sessionId unik per mata pelajaran agar riwayat setiap ujian tidak tertimpa
+                state.sessionId = `${state.studentClass}_${state.studentName}_${subjectObj.title}_${Date.now()}`;
+                state.violations = 0;
+                state.lastViolationReason = '-';
+                state.totalAwaySeconds = 0;
+                state.awayStartTime = null;
+                updateViolationUI();
+
+                el.headerSubjectTitle.textContent = subjectObj.title;
+                el.subjectPortalView.classList.add('hidden');
+                el.iframeExamView.classList.remove('hidden');
+                el.backToPortalBtn.classList.remove('hidden');
+                if (el.iframeLoader) el.iframeLoader.classList.remove('hidden');
+
+                el.examIframe.src = normalizeExamUrl(subjectObj.url);
+                enterFullscreenSafe();
+                syncSessionToServer('ACTIVE');
+            }
+
+            function returnToSubjectPortal() {
+                el.examIframe.src = 'about:blank';
+                el.iframeExamView.classList.add('hidden');
+                el.subjectPortalView.classList.remove('hidden');
+                el.backToPortalBtn.classList.add('hidden');
+                el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
+            }
+
+            function finishExamSession() {
+                finalizeReturnFromAway(false);
+                syncSessionToServer('FINISHED');
+
+                state.isExamActive = false;
+                if (state.timerInterval) clearInterval(state.timerInterval);
+                if (state.heartbeatTimeout) clearTimeout(state.heartbeatTimeout);
+                clearPermanentLockState();
+
+                el.examIframe.src = 'about:blank';
+                el.confirmFinishModal.classList.add('hidden');
+                el.examContainer.classList.add('hidden');
+                el.violationOverlay.classList.add('hidden');
+
+                el.sumName.textContent = state.studentName || '-';
+                el.sumClass.textContent = state.studentClass || '-';
+                el.sumSubject.textContent = state.currentSubject ? state.currentSubject.title : 'Portal Ujian';
+                el.sumViolations.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
+                el.sumAwayTime.textContent = formatDurationHuman(state.totalAwaySeconds);
+
+                el.summaryScreen.classList.remove('hidden');
+            }
+
+            function restoreLockStateOnLoad() {
+                restoreAwayTracker();
+                try {
+                    const savedLock = JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVE_LOCK) || 'null');
+                    if (savedLock && savedLock.studentName && savedLock.studentClass) {
+                        state.sessionId = savedLock.sessionId || '';
+                        state.studentClass = savedLock.studentClass;
+                        state.studentName = savedLock.studentName;
+                        state.currentSubject = savedLock.subjectTitle ? { title: savedLock.subjectTitle } : null;
+                        state.violations = Number(savedLock.violations || MAX_VIOLATIONS);
+                        state.totalAwaySeconds = Math.max(state.totalAwaySeconds, Number(savedLock.totalAwaySeconds || 0));
+                        state.lastViolationReason = savedLock.lastViolationReason || 'Terkunci permanen (10x pelanggaran)';
+
+                        el.headerStudentName.textContent = state.studentName;
+                        el.headerStudentClass.textContent = state.studentClass;
+                        el.headerSubjectTitle.textContent = state.currentSubject ? state.currentSubject.title : 'Ujian Terkunci';
+                        updateViolationUI();
+
+                        el.startScreen.classList.add('hidden');
+                        el.examContainer.classList.remove('hidden');
+                        showLockScreenUI();
+                        checkAdminUnlockStatus(true);
                     }
-
-                    if (keyEvt === 'keydown') {
-                        if (
-                            (e.ctrlKey && ['a', 'c', 'x', 'v', 't', 'n', 'w', 'u', 'p', 's'].includes(key)) ||
-                            (e.metaKey && ['a', 'c', 'x', 'v', 't', 'n', 'w', 'u', 'p', 's'].includes(key)) ||
-                            (e.altKey && key === 'tab') ||
-                            e.key === 'F12'
-                        ) {
-                            e.preventDefault();
-                            recordViolation(`Menekan tombol pintasan terlarang (${e.key})`);
-                        }
-                    }
-                });
-            });
+                } catch (e) {}
+            }
 
             // =================================================================
-            // DASHBOARD ADMIN & LIVE MONITORING
+            // DASHBOARD ADMIN / PENGAWAS REAL-TIME
             // =================================================================
+            function openAdminModal() {
+                el.adminPinInput.value = '';
+                el.adminPinError.classList.add('hidden');
+                el.adminPinModal.classList.remove('hidden');
+                setTimeout(() => el.adminPinInput.focus(), 100);
+            }
+
+            function verifyAdminPin() {
+                if (el.adminPinInput.value.trim() === ADMIN_PIN) {
+                    el.adminPinModal.classList.add('hidden');
+                    openAdminDashboard();
+                } else {
+                    el.adminPinError.classList.remove('hidden');
+                    el.adminPinInput.value = '';
+                    el.adminPinInput.focus();
+                }
+            }
+
+            function openAdminDashboard() {
+                el.adminDashboard.classList.remove('hidden');
+                if (el.appsScriptCodeBox) {
+                    el.appsScriptCodeBox.value = APPS_SCRIPT_TEMPLATE;
+                }
+                fetchAdminMonitoringData();
+                if (state.adminRefreshInterval) clearInterval(state.adminRefreshInterval);
+                state.adminRefreshInterval = setInterval(fetchAdminMonitoringData, 8000);
+            }
+
+            function closeAdminDashboard() {
+                el.adminDashboard.classList.add('hidden');
+                if (state.adminRefreshInterval) clearInterval(state.adminRefreshInterval);
+            }
+
             async function fetchAdminMonitoringData() {
-                let serverSessions = [];
-                let serverOk = false;
-
-                if (APPS_SCRIPT_WEB_APP_URL) {
-                    try {
-                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`);
-                        const data = await res.json();
-                        if (data && data.status === 'ok' && Array.isArray(data.sessions)) {
-                            serverSessions = data.sessions;
-                            serverOk = true;
-                        }
-                    } catch (err) {
-                        console.warn('Gagal mengambil data server:', err);
+                let remoteSessions = [];
+                try {
+                    const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`);
+                    const data = await res.json();
+                    if (data && Array.isArray(data.sessions)) {
+                        remoteSessions = data.sessions;
                     }
+                } catch (err) {
+                    console.warn('Gagal mengambil data server:', err);
                 }
 
-                // Gabungkan dengan local sessions jika server belum merespons
-                let merged = [...serverSessions];
-                if (!serverOk) {
-                    try {
-                        const locals = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
-                        merged = locals;
-                    } catch (e) {}
-                }
+                let localSessions = [];
+                try {
+                    localSessions = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
+                } catch (e) {}
 
-                state.adminSessions = merged;
-                updateAdminClassFilterOptions(merged);
+                const mergedMap = new Map();
+                remoteSessions.forEach((s) => {
+                    const key = s.sessionId || `${s.studentClass}_${s.studentName}_${s.subjectTitle}`;
+                    mergedMap.set(key, s);
+                });
+                localSessions.forEach((s) => {
+                    const key = s.sessionId || `${s.studentClass}_${s.studentName}_${s.subjectTitle}`;
+                    if (!mergedMap.has(key)) {
+                        mergedMap.set(key, s);
+                    }
+                });
+
+                state.adminSessions = Array.from(mergedMap.values());
+                populateAdminClassFilter();
                 renderAdminMonitoringTable();
             }
 
-            function updateAdminClassFilterOptions(sessions) {
-                if (!el.adminClassFilter) return;
-                const currentVal = el.adminClassFilter.value;
-                const classes = Array.from(new Set(sessions.map((s) => s.studentClass).filter(Boolean))).sort();
+            function populateAdminClassFilter() {
+                const currentVal = el.adminClassFilter.value || 'ALL';
+                const classes = Array.from(new Set(
+                    state.adminSessions.map((s) => String(s.studentClass || '').trim()).filter(Boolean)
+                )).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
                 el.adminClassFilter.innerHTML = '<option value="ALL">Semua Kelas</option>' +
                     classes.map((c) => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
                 if (classes.includes(currentVal)) {
@@ -1665,87 +1738,80 @@ function jsonResponse(obj) {
             }
 
             function renderAdminMonitoringTable() {
-                const search = (el.adminSearchInput ? el.adminSearchInput.value : '').trim().toLowerCase();
-                const classFilter = el.adminClassFilter ? el.adminClassFilter.value : 'ALL';
+                const keyword = (el.adminSearchInput.value || '').trim().toLowerCase();
+                const classFilter = el.adminClassFilter.value || 'ALL';
 
-                const all = state.adminSessions || [];
-                const total = all.length;
-                const locked = all.filter((s) => s.status === 'LOCKED' || Number(s.violations) >= MAX_VIOLATIONS).length;
-                const warned = all.filter((s) => Number(s.violations) > 0 && Number(s.violations) < MAX_VIOLATIONS && s.status !== 'LOCKED').length;
-                const active = all.filter((s) => s.status === 'ACTIVE' || s.status === 'DIBUKA ADMIN').length;
-
-                if (el.statTotal) el.statTotal.textContent = String(total);
-                if (el.statActive) el.statActive.textContent = String(active);
-                if (el.statWarned) el.statWarned.textContent = String(warned);
-                if (el.statLocked) el.statLocked.textContent = String(locked);
-
-                const filtered = all.filter((s) => {
-                    const matchClass = classFilter === 'ALL' || s.studentClass === classFilter;
-                    const matchText = !search ||
-                        String(s.studentName || '').toLowerCase().includes(search) ||
-                        String(s.subjectTitle || '').toLowerCase().includes(search) ||
-                        String(s.studentClass || '').toLowerCase().includes(search);
-                    return matchClass && matchText;
+                const filtered = state.adminSessions.filter((s) => {
+                    if (classFilter !== 'ALL' && String(s.studentClass || '').trim() !== classFilter) return false;
+                    if (keyword) {
+                        const hay = `${s.studentName} ${s.studentClass} ${s.subjectTitle}`.toLowerCase();
+                        if (!hay.includes(keyword)) return false;
+                    }
+                    return true;
                 });
 
-                if (!el.adminMonitoringTbody) return;
+                const total = state.adminSessions.length;
+                const activeCount = state.adminSessions.filter((s) => s.status === 'ACTIVE' || s.status === 'DIBUKA ADMIN').length;
+                const warnedCount = state.adminSessions.filter((s) => Number(s.violations || 0) > 0 && Number(s.violations || 0) < MAX_VIOLATIONS).length;
+                const lockedCount = state.adminSessions.filter((s) => s.status === 'LOCKED' || Number(s.violations || 0) >= MAX_VIOLATIONS).length;
+
+                el.statTotal.textContent = String(total);
+                el.statActive.textContent = String(activeCount);
+                el.statWarned.textContent = String(warnedCount);
+                el.statLocked.textContent = String(lockedCount);
+
                 if (filtered.length === 0) {
-                    el.adminMonitoringTbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-medium">Belum ada data peserta ujian yang sesuai filter.</td></tr>`;
+                    el.adminMonitoringTbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-medium">Belum ada data peserta yang sesuai filter.</td></tr>`;
                     return;
                 }
 
-                el.adminMonitoringTbody.innerHTML = filtered.map((s) => {
+                el.adminMonitoringTbody.innerHTML = filtered.map((s, idx) => {
                     const viol = Number(s.violations || 0);
-                    const isLockedRow = s.status === 'LOCKED' || viol >= MAX_VIOLATIONS;
-                    const isUnlockedRow = s.status === 'DIBUKA ADMIN' || s.unlockedByAdmin;
+                    const isLocked = s.status === 'LOCKED' || viol >= MAX_VIOLATIONS;
                     const parsedLogAway = extractAwaySecondsFromLogText(s.lastViolationReason);
                     const awaySec = Math.max(Number(s.awaySeconds || 0), parsedLogAway);
                     const cleanDisplayReason = String(s.lastViolationReason || '-').replace(/\s*\[TotalKeluar:\d+\]/gi, '').trim();
 
-                    let statusBadge = `<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg font-extrabold text-[10px]">MENGERJAKAN</span>`;
-                    if (isLockedRow) {
-                        statusBadge = `<span class="px-2.5 py-1 bg-red-600 text-white rounded-lg font-extrabold text-[10px] animate-pulse">TERKUNCI (10X)</span>`;
-                    } else if (isUnlockedRow) {
-                        statusBadge = `<span class="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-lg font-extrabold text-[10px]">DIBUKA ADMIN</span>`;
-                    } else if (s.status === 'SELESAI') {
-                        statusBadge = `<span class="px-2.5 py-1 bg-slate-200 text-slate-700 rounded-lg font-extrabold text-[10px]">SELESAI</span>`;
+                    let statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">AKTIF</span>`;
+                    if (isLocked) {
+                        statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-red-100 text-red-700">TERKUNCI (10x)</span>`;
+                    } else if (s.status === 'DIBUKA ADMIN') {
+                        statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700">DIBUKA ADMIN</span>`;
+                    } else if (s.status === 'FINISHED') {
+                        statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-200 text-slate-700">SELESAI</span>`;
+                    } else if (viol > 0) {
+                        statusBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800">PERINGATAN</span>`;
                     }
 
                     return `
-                        <tr class="hover:bg-slate-50 transition ${isLockedRow ? 'bg-red-50/60' : ''}">
+                        <tr class="hover:bg-slate-50 transition">
                             <td class="py-3.5 px-4">
                                 <div class="font-extrabold text-slate-900">${escapeHTML(s.studentName)}</div>
-                                <div class="text-[11px] font-bold text-slate-500">${escapeHTML(s.studentClass)}</div>
+                                <div class="text-[11px] font-bold text-blue-600">${escapeHTML(s.studentClass)}</div>
                             </td>
-                            <td class="py-3.5 px-4 font-semibold text-slate-700">${escapeHTML(s.subjectTitle || '-')}</td>
+                            <td class="py-3.5 px-4 font-bold text-slate-700">${escapeHTML(s.subjectTitle || '-')}</td>
                             <td class="py-3.5 px-4">${statusBadge}</td>
-                            <td class="py-3.5 px-4">
-                                <span class="font-black ${viol >= MAX_VIOLATIONS ? 'text-red-600' : viol > 0 ? 'text-amber-600' : 'text-slate-700'}">
-                                    ${viol} / ${MAX_VIOLATIONS}
-                                </span>
+                            <td class="py-3.5 px-4 font-black ${viol >= MAX_VIOLATIONS ? 'text-red-600' : viol > 0 ? 'text-amber-600' : 'text-slate-700'}">
+                                ${viol} / ${MAX_VIOLATIONS}
                             </td>
                             <td class="py-3.5 px-4">
-                                <span class="px-2.5 py-1 rounded-lg font-bold text-[11px] ${awaySec > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">
-                                    ${escapeHTML(formatDurationHuman(awaySec))}
+                                <span class="px-2.5 py-1 rounded-lg font-extrabold text-[11px] ${awaySec > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">
+                                    ${formatDurationHuman(awaySec)}
                                 </span>
                             </td>
-                            <td class="py-3.5 px-4 max-w-xs">
-                                <p class="text-[11px] text-slate-700 font-medium truncate" title="${escapeHTML(cleanDisplayReason)}">${escapeHTML(cleanDisplayReason)}</p>
-                                <p class="text-[10px] text-slate-400 mt-0.5">${escapeHTML(s.lastUpdated || '')}</p>
+                            <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="${escapeHTML(cleanDisplayReason)}">
+                                ${escapeHTML(cleanDisplayReason || '-')}
                             </td>
                             <td class="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
-                                <button type="button"
-                                    data-action="unlock-session"
+                                <button type="button" data-action="unlock-session" data-idx="${idx}"
                                     data-sid="${escapeHTML(s.sessionId || '')}"
-                                    data-sclass="${escapeHTML(s.studentClass || '')}"
-                                    data-sname="${escapeHTML(s.studentName || '')}"
-                                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-extrabold rounded-xl transition cursor-pointer">
+                                    data-class="${escapeHTML(s.studentClass || '')}"
+                                    data-name="${escapeHTML(s.studentName || '')}"
+                                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[11px] rounded-xl transition cursor-pointer">
                                     Buka Kunci / Reset
                                 </button>
-                                <button type="button"
-                                    data-action="delete-session"
-                                    data-sid="${escapeHTML(s.sessionId || '')}"
-                                    class="px-2.5 py-1.5 bg-slate-200 hover:bg-red-600 hover:text-white text-slate-700 text-[11px] font-bold rounded-xl transition cursor-pointer">
+                                <button type="button" data-action="delete-session" data-sid="${escapeHTML(s.sessionId || '')}"
+                                    class="px-2.5 py-1.5 bg-slate-200 hover:bg-red-600 hover:text-white text-slate-700 font-bold text-[11px] rounded-xl transition cursor-pointer">
                                     Hapus
                                 </button>
                             </td>
@@ -1754,243 +1820,166 @@ function jsonResponse(obj) {
                 }).join('');
             }
 
-            if (el.adminMonitoringTbody) {
-                el.adminMonitoringTbody.addEventListener('click', async (e) => {
-                    const btn = e.target.closest('button[data-action]');
-                    if (!btn) return;
-                    const action = btn.dataset.action;
-                    const sid = btn.dataset.sid || '';
-                    const sClass = btn.dataset.sclass || '';
-                    const sName = btn.dataset.sname || '';
-
-                    if (action === 'unlock-session') {
-                        const origText = btn.textContent;
-                        btn.disabled = true;
-                        btn.textContent = 'Memproses...';
-
-                        try {
-                            // 1. Update tampilan lokal segera
-                            state.adminSessions = state.adminSessions.map((item) => {
-                                if ((sid && item.sessionId === sid) || (item.studentClass === sClass && item.studentName === sName)) {
-                                    return {
-                                        ...item,
-                                        status: 'DIBUKA ADMIN',
-                                        violations: 0,
-                                        maxViolations: MAX_VIOLATIONS,
-                                        unlockedByAdmin: true,
-                                        lastViolationReason: 'Kunci dibuka & pelanggaran direset oleh Admin'
-                                    };
-                                }
-                                return item;
-                            });
-                            renderAdminMonitoringTable();
-
-                            // 2. Update local mirror
-                            try {
-                                const locals = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
-                                const updated = locals.map((item) => {
-                                    if ((sid && item.sessionId === sid) || (item.studentClass === sClass && item.studentName === sName)) {
-                                        return { ...item, status: 'DIBUKA ADMIN', violations: 0, unlockedByAdmin: true };
-                                    }
-                                    return item;
-                                });
-                                localStorage.setItem(STORAGE_KEYS.LOCAL_SESSIONS, JSON.stringify(updated));
-                            } catch (err) {}
-
-                            // 3. Kirim perintah unlock ke Google Apps Script
-                            if (APPS_SCRIPT_WEB_APP_URL) {
-                                const params = new URLSearchParams({
-                                    action: 'unlock',
-                                    sessionId: sid,
-                                    studentClass: sClass,
-                                    studentName: sName,
-                                    t: String(Date.now())
-                                });
-                                const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`);
-                                const data = await res.json();
-                                if (data && data.status !== 'ok') {
-                                    if (el.adminSyncAlert) {
-                                        el.adminSyncAlert.textContent = 'Perhatian: Server Apps Script belum merespons aksi unlock. Pastikan kode Apps Script terbaru sudah di-deploy sebagai Versi Baru.';
-                                        el.adminSyncAlert.classList.remove('hidden');
-                                    }
-                                }
-                            }
-                        } catch (err) {
-                            console.warn('Error unlock session:', err);
-                        } finally {
-                            btn.disabled = false;
-                            btn.textContent = origText;
-                        }
-                    }
-
-                    if (action === 'delete-session') {
-                        state.adminSessions = state.adminSessions.filter((item) => item.sessionId !== sid);
-                        renderAdminMonitoringTable();
-                        try {
-                            const locals = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
-                            localStorage.setItem(STORAGE_KEYS.LOCAL_SESSIONS, JSON.stringify(locals.filter((i) => i.sessionId !== sid)));
-                        } catch (err) {}
-                        if (APPS_SCRIPT_WEB_APP_URL && sid) {
-                            fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=delete&sessionId=${encodeURIComponent(sid)}`, { mode: 'no-cors' }).catch(() => {});
-                        }
-                    }
-                });
-            }
-
             // =================================================================
-            // PEMULIHAN STATUS KUNCI SAAT HALAMAN DIMUAT ULANG
+            // EVENT LISTENERS UI
             // =================================================================
-            function restoreLockStateOnLoad() {
-                try {
-                    const lockedData = JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVE_LOCK) || 'null');
-                    if (lockedData && lockedData.studentName && lockedData.studentClass) {
-                        state.sessionId = lockedData.sessionId || '';
-                        state.studentClass = lockedData.studentClass;
-                        state.studentName = lockedData.studentName;
-                        state.violations = Number(lockedData.violations || MAX_VIOLATIONS);
-                        state.totalAwaySeconds = Number(lockedData.totalAwaySeconds || 0);
-                        state.lastViolationReason = lockedData.lastViolationReason || 'Ujian dikunci karena 10x pelanggaran';
-                        restoreAwayTracker();
-                        showLockScreenUI();
-                        checkAdminUnlockStatus(true);
-                    }
-                } catch (e) {}
-            }
+            el.studentClassSelect.addEventListener('change', (e) => {
+                populateStudentNameDropdown(e.target.value);
+            });
 
-            // =================================================================
-            // EVENT LISTENER TOMBOL UI
-            // =================================================================
-            const bindClick = (node, handler) => { if (node) node.addEventListener('click', handler); };
+            el.reloadStudentsBtn.addEventListener('click', loadStudentsFromSheet);
+            el.startExamBtn.addEventListener('click', enterExamPortal);
+            el.refreshSubjectsBtn.addEventListener('click', loadSubjectsFromSheet);
 
-            if (el.studentClassSelect) {
-                el.studentClassSelect.addEventListener('change', (e) => {
-                    populateStudentNameDropdown(e.target.value);
-                });
-            }
-
-            bindClick(el.reloadStudentsBtn, loadStudentsFromSheet);
-            bindClick(el.startExamBtn, enterExamPortal);
-            bindClick(el.refreshSubjectsBtn, loadSubjectsFromSheet);
-
-            if (el.subjectsGrid) {
-                el.subjectsGrid.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.open-subject-btn');
-                    if (!btn || btn.disabled) return;
-                    const idx = Number(btn.dataset.subjectIdx);
-                    if (!Number.isNaN(idx) && state.subjects[idx]) {
-                        openSubjectExam(state.subjects[idx]);
-                    }
-                });
-            }
-
-            bindClick(el.backToPortalBtn, () => {
-                finalizeReturnFromAway(true);
-                el.iframeExamView.classList.add('hidden');
-                el.examIframe.src = 'about:blank';
-                el.subjectPortalView.classList.remove('hidden');
-                el.backToPortalBtn.classList.add('hidden');
-                if (el.headerSubjectTitle) {
-                    el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
+            el.subjectsGrid.addEventListener('click', (e) => {
+                const btn = e.target.closest('.open-subject-btn');
+                if (!btn) return;
+                const idx = Number(btn.getAttribute('data-subject-idx'));
+                if (!Number.isNaN(idx) && state.subjects[idx]) {
+                    openSubjectExam(state.subjects[idx]);
                 }
             });
 
-            bindClick(el.resumeExamBtn, () => {
+            el.backToPortalBtn.addEventListener('click', returnToSubjectPortal);
+
+            el.resumeExamBtn.addEventListener('click', () => {
                 finalizeReturnFromAway(true);
-                if (el.violationOverlay) el.violationOverlay.classList.add('hidden');
+                el.violationOverlay.classList.add('hidden');
                 enterFullscreenSafe();
             });
 
-            bindClick(el.checkUnlockBtn, () => {
-                checkAdminUnlockStatus(false);
+            el.checkUnlockBtn.addEventListener('click', () => checkAdminUnlockStatus(false));
+
+            el.finishExamBtn.addEventListener('click', () => {
+                el.confirmFinishModal.classList.remove('hidden');
             });
 
-            bindClick(el.finishExamBtn, () => {
-                if (el.confirmFinishModal) el.confirmFinishModal.classList.remove('hidden');
+            el.cancelFinishBtn.addEventListener('click', () => {
+                el.confirmFinishModal.classList.add('hidden');
             });
 
-            bindClick(el.cancelFinishBtn, () => {
-                if (el.confirmFinishModal) el.confirmFinishModal.classList.add('hidden');
+            el.confirmFinishBtn.addEventListener('click', finishExamSession);
+
+            el.backToHomeBtn.addEventListener('click', () => {
+                el.summaryScreen.classList.add('hidden');
+                el.startScreen.classList.remove('hidden');
             });
 
-            bindClick(el.confirmFinishBtn, endExamSession);
-
-            bindClick(el.backToHomeBtn, () => {
-                if (el.summaryScreen) el.summaryScreen.classList.add('hidden');
-                if (el.startScreen) el.startScreen.classList.remove('hidden');
+            // Admin Events
+            el.openAdminBtn.addEventListener('click', openAdminModal);
+            el.cancelPinBtn.addEventListener('click', () => el.adminPinModal.classList.add('hidden'));
+            el.submitPinBtn.addEventListener('click', verifyAdminPin);
+            el.adminPinInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') verifyAdminPin();
             });
+            el.closeAdminBtn.addEventListener('click', closeAdminDashboard);
 
-            // Admin PIN & Dashboard Listeners
-            bindClick(el.openAdminBtn, () => {
-                el.adminPinInput.value = '';
-                el.adminPinError.classList.add('hidden');
-                el.adminPinModal.classList.remove('hidden');
-                setTimeout(() => el.adminPinInput.focus(), 100);
-            });
-
-            bindClick(el.cancelPinBtn, () => {
-                el.adminPinModal.classList.add('hidden');
-            });
-
-            function verifyAdminPin() {
-                if (el.adminPinInput.value.trim() === ADMIN_PIN) {
-                    el.adminPinModal.classList.add('hidden');
-                    el.adminDashboard.classList.remove('hidden');
-                    if (el.appsScriptCodeBox) {
-                        el.appsScriptCodeBox.value = APPS_SCRIPT_TEMPLATE;
-                    }
-                    fetchAdminMonitoringData();
-                    if (state.adminRefreshInterval) clearInterval(state.adminRefreshInterval);
-                    state.adminRefreshInterval = setInterval(fetchAdminMonitoringData, 5000);
-                } else {
-                    el.adminPinError.classList.remove('hidden');
-                }
-            }
-
-            bindClick(el.submitPinBtn, verifyAdminPin);
-            if (el.adminPinInput) {
-                el.adminPinInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') verifyAdminPin();
-                });
-            }
-
-            bindClick(el.closeAdminBtn, () => {
-                el.adminDashboard.classList.add('hidden');
-                if (state.adminRefreshInterval) clearInterval(state.adminRefreshInterval);
-            });
-
-            bindClick(el.tabBtnMonitoring, () => {
-                el.tabBtnMonitoring.className = 'py-3.5 px-4 text-xs font-extrabold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap cursor-pointer';
-                el.tabBtnScript.className = 'py-3.5 px-4 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap cursor-pointer';
+            el.tabBtnMonitoring.addEventListener('click', () => {
                 el.adminTabMonitoring.classList.remove('hidden');
                 el.adminTabScript.classList.add('hidden');
+                el.tabBtnMonitoring.className = 'py-3.5 px-4 text-xs font-extrabold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap cursor-pointer';
+                el.tabBtnScript.className = 'py-3.5 px-4 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap cursor-pointer';
             });
 
-            bindClick(el.tabBtnScript, () => {
-                el.tabBtnScript.className = 'py-3.5 px-4 text-xs font-extrabold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap cursor-pointer';
-                el.tabBtnMonitoring.className = 'py-3.5 px-4 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap cursor-pointer';
+            el.tabBtnScript.addEventListener('click', () => {
                 el.adminTabScript.classList.remove('hidden');
                 el.adminTabMonitoring.classList.add('hidden');
+                el.tabBtnScript.className = 'py-3.5 px-4 text-xs font-extrabold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap cursor-pointer';
+                el.tabBtnMonitoring.className = 'py-3.5 px-4 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap cursor-pointer';
             });
 
-            bindClick(el.adminRefreshBtn, fetchAdminMonitoringData);
-            if (el.adminSearchInput) el.adminSearchInput.addEventListener('input', renderAdminMonitoringTable);
-            if (el.adminClassFilter) el.adminClassFilter.addEventListener('change', renderAdminMonitoringTable);
+            el.adminSearchInput.addEventListener('input', renderAdminMonitoringTable);
+            el.adminClassFilter.addEventListener('change', renderAdminMonitoringTable);
+            el.adminRefreshBtn.addEventListener('click', fetchAdminMonitoringData);
 
-            bindClick(el.copyAppsScriptBtn, () => {
+            el.adminMonitoringTbody.addEventListener('click', async (e) => {
+                const btn = e.target.closest('button[data-action]');
+                if (!btn) return;
+                const action = btn.getAttribute('data-action');
+                const sid = btn.getAttribute('data-sid') || '';
+                const sClass = btn.getAttribute('data-class') || '';
+                const sName = btn.getAttribute('data-name') || '';
+
+                if (action === 'unlock-session') {
+                    const origText = btn.textContent;
+                    btn.disabled = true;
+                    btn.textContent = 'Memproses...';
+
+                    try {
+                        // Update langsung di state & local storage agar UI Admin instan merespon
+                        state.adminSessions.forEach((item) => {
+                            if ((sid && item.sessionId === sid) || (item.studentClass === sClass && item.studentName === sName)) {
+                                item.status = 'DIBUKA ADMIN';
+                                item.violations = 0;
+                                item.maxViolations = MAX_VIOLATIONS;
+                                item.unlockedByAdmin = true;
+                                item.lastViolationReason = 'Kunci dibuka & pelanggaran direset oleh Admin';
+                            }
+                        });
+                        renderAdminMonitoringTable();
+
+                        try {
+                            const locals = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
+                            locals.forEach((item) => {
+                                if ((sid && item.sessionId === sid) || (item.studentClass === sClass && item.studentName === sName)) {
+                                    item.status = 'DIBUKA ADMIN';
+                                    item.violations = 0;
+                                    item.unlockedByAdmin = true;
+                                    item.lastViolationReason = 'Kunci dibuka & pelanggaran direset oleh Admin';
+                                }
+                            });
+                            localStorage.setItem(STORAGE_KEYS.LOCAL_SESSIONS, JSON.stringify(locals));
+                        } catch (err) {}
+
+                        if (APPS_SCRIPT_WEB_APP_URL) {
+                            const params = new URLSearchParams({
+                                action: 'unlock',
+                                sessionId: sid,
+                                studentClass: sClass,
+                                studentName: sName
+                            });
+                            const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`);
+                            const data = await res.json();
+                            if (!data || data.unlocked !== true) {
+                                el.adminSyncAlert.textContent = 'Perhatian: Server Apps Script belum menjalankan versi terbaru. Pastikan Anda sudah melakukan Deploy -> Kelola deployment -> Edit -> Versi baru di Google Apps Script.';
+                                el.adminSyncAlert.classList.remove('hidden');
+                            } else {
+                                el.adminSyncAlert.classList.add('hidden');
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('Unlock request fallback:', err);
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = origText;
+                    }
+                } else if (action === 'delete-session') {
+                    state.adminSessions = state.adminSessions.filter((item) => item.sessionId !== sid);
+                    renderAdminMonitoringTable();
+                    try {
+                        const locals = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
+                        localStorage.setItem(STORAGE_KEYS.LOCAL_SESSIONS, JSON.stringify(locals.filter((item) => item.sessionId !== sid)));
+                    } catch (err) {}
+                    if (APPS_SCRIPT_WEB_APP_URL && sid) {
+                        fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=delete&sessionId=${encodeURIComponent(sid)}`, { mode: 'no-cors' }).catch(() => {});
+                    }
+                }
+            });
+
+            el.copyAppsScriptBtn.addEventListener('click', () => {
                 el.appsScriptCodeBox.select();
                 document.execCommand('copy');
-                const orig = el.copyAppsScriptBtn.textContent;
                 el.copyAppsScriptBtn.textContent = 'Tersalin!';
                 setTimeout(() => {
-                    el.copyAppsScriptBtn.textContent = orig;
+                    el.copyAppsScriptBtn.textContent = 'Salin Kode Script';
                 }, 2000);
             });
 
             // =================================================================
             // INISIALISASI AWAL
             // =================================================================
-            restoreLockStateOnLoad();
             loadStudentsFromSheet();
+            restoreLockStateOnLoad();
         })();
     </script>
 </body>
