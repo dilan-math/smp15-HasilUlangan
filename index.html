@@ -976,15 +976,51 @@
 
                     state.subjects.forEach(sub => {
                         const match = mySessions.find(s => String(s.subjectTitle || '').trim().toLowerCase() === sub.title.toLowerCase());
+                        const existingLocal = getSavedActiveSession(state.studentClass, state.studentName, sub.title);
+
                         if (!match) {
-                            setExamAttempted(state.studentClass, state.studentName, sub.title, false);
-                            clearSavedActiveSession(state.studentClass, state.studentName, sub.title);
+                            // Jangan hapus sesi aktif lokal yang sedang berjalan jika server belum sempat menerima sync
+                            if (!existingLocal) {
+                                setExamAttempted(state.studentClass, state.studentName, sub.title, false);
+                            }
                         } else if (match.status === 'DIBUKA ADMIN' || match.unlockedByAdmin) {
                             setExamAttempted(state.studentClass, state.studentName, sub.title, false);
                             clearSavedActiveSession(state.studentClass, state.studentName, sub.title);
                         } else if (match.status === 'FINISHED') {
                             setExamAttempted(state.studentClass, state.studentName, sub.title, true);
                             clearSavedActiveSession(state.studentClass, state.studentName, sub.title);
+                        } else if (match.status === 'ACTIVE' || match.status === 'LOCKED') {
+                            // Gabungkan data pelanggaran tertinggi antara lokal & server agar tidak reset saat refresh
+                            const serverViol = Number(match.violations || 0);
+                            const serverAway = Number(match.awaySeconds || 0);
+                            const startedIso = match.startedAt || (existingLocal && existingLocal.examStartedAt) || new Date().toISOString();
+                            const startedMs = new Date(startedIso).getTime();
+                            const fallbackEndTime = (!isNaN(startedMs) && startedMs > 0)
+                                ? (startedMs + sub.durationMinutes * 60 * 1000)
+                                : (Date.now() + sub.durationMinutes * 60 * 1000);
+
+                            const mergedSession = {
+                                sessionId: (existingLocal && existingLocal.sessionId) || match.sessionId || ('SES_' + Date.now()),
+                                studentClass: state.studentClass,
+                                studentName: state.studentName,
+                                subjectTitle: sub.title,
+                                subjectUrl: sub.url,
+                                durationMinutes: sub.durationMinutes,
+                                examStartedAt: startedIso,
+                                examEndTime: (existingLocal && existingLocal.examEndTime) ? existingLocal.examEndTime : fallbackEndTime,
+                                violations: Math.max(serverViol, existingLocal ? Number(existingLocal.violations || 0) : 0),
+                                totalAwaySeconds: Math.max(serverAway, existingLocal ? Number(existingLocal.totalAwaySeconds || 0) : 0),
+                                violationDurations: (existingLocal && Array.isArray(existingLocal.violationDurations)) ? existingLocal.violationDurations : [],
+                                lastViolationReason: (existingLocal && existingLocal.lastViolationReason && existingLocal.lastViolationReason !== '-')
+                                    ? existingLocal.lastViolationReason
+                                    : (match.lastViolationReason || '-')
+                            };
+
+                            try {
+                                const map = getActiveExamSessionsMap();
+                                map[getStudentSubjectKey(state.studentClass, state.studentName, sub.title)] = mergedSession;
+                                localStorage.setItem(STORAGE_KEYS.ACTIVE_EXAM_SESSION, JSON.stringify(map));
+                            } catch (_) {}
                         }
                     });
                 } catch (_) {}
@@ -1057,9 +1093,8 @@
                     state.examEndTime = savedActive.examEndTime;
                     state.violations = Number(savedActive.violations || 0);
                     state.violationDurations = Array.isArray(savedActive.violationDurations) ? savedActive.violationDurations : [];
-                    state.totalAwaySeconds = state.violationDurations.length > 0
-                        ? state.violationDurations.reduce((sum, val) => sum + (Number(val) || 0), 0)
-                        : Number(savedActive.totalAwaySeconds || 0);
+                    const sumDur = state.violationDurations.reduce((sum, val) => sum + (Number(val) || 0), 0);
+                    state.totalAwaySeconds = Math.max(sumDur, Number(savedActive.totalAwaySeconds || 0));
                     state.lastViolationReason = savedActive.lastViolationReason || '-';
                 } else {
                     // Sesi baru
@@ -1604,6 +1639,32 @@
                         el.examContainer.classList.remove('hidden');
                         showLockedModal();
                         syncSessionToServer('LOCKED');
+                        return;
+                    }
+
+                    // Pulihkan otomatis sesi ujian yang sedang berjalan jika halaman ter-reload / refresh
+                    const activeMap = getActiveExamSessionsMap();
+                    const keys = Object.keys(activeMap);
+                    for (let i = 0; i < keys.length; i++) {
+                        const s = activeMap[keys[i]];
+                        if (s && s.studentClass && s.studentName && s.subjectTitle && s.subjectUrl && s.examEndTime && s.examEndTime > Date.now()) {
+                            if (isExamAttempted(s.studentClass, s.studentName, s.subjectTitle)) continue;
+
+                            state.studentClass = s.studentClass;
+                            state.studentName = s.studentName;
+                            el.headerStudentName.textContent = s.studentName;
+                            el.headerStudentClass.textContent = s.studentClass;
+
+                            el.startScreen.classList.add('hidden');
+                            el.examContainer.classList.remove('hidden');
+
+                            openSubjectExam({
+                                title: s.subjectTitle,
+                                url: s.subjectUrl,
+                                durationMinutes: Number(s.durationMinutes || DEFAULT_EXAM_DURATION_MINUTES)
+                            });
+                            break;
+                        }
                     }
                 } catch (_) {}
             }
