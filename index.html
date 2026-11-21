@@ -517,7 +517,6 @@
                 SUBJECTS_CACHE: 'cbt_smp15_subjects_cache_v2',
                 ACTIVE_LOCK: 'cbt_smp15_locked_session_v2',
                 AWAY_TRACKER: 'cbt_smp15_away_tracker_v2',
-                LOCAL_SESSIONS: 'cbt_smp15_local_sessions_v2',
                 EXAM_END_TIME: 'cbt_smp15_exam_end_time_v2',
                 ATTEMPTED_EXAMS: 'cbt_smp15_attempted_exams_v1'
             };
@@ -528,7 +527,7 @@
                 '  var sheet = ss.getSheetByName("MONITORING");',
                 '  if (!sheet) {',
                 '    sheet = ss.insertSheet("MONITORING");',
-                '    sheet.appendRow(["sessionId", "studentClass", "studentName", "subjectTitle", "status", "violations", "maxViolations", "lastViolationReason", "lastUpdated", "baseKey", "unlockedByAdmin", "awaySeconds"]);',
+                '    sheet.appendRow(["sessionId", "studentClass", "studentName", "subjectTitle", "status", "violations", "maxViolations", "lastViolationReason", "lastUpdated", "baseKey", "unlockedByAdmin", "awaySeconds", "startedAt"]);',
                 '  }',
                 '  var p = (e && e.parameter) ? e.parameter : {};',
                 '  var action = String(p.action || "get");',
@@ -545,6 +544,7 @@
                 '    var reason = String(p.lastViolationReason || "-");',
                 '    var baseKey = String(p.baseKey || (sClass + "_" + sName));',
                 '    var awaySec = Number(p.awaySeconds || 0);',
+                '    var startedAt = String(p.startedAt || new Date().toISOString());',
                 '    var nowIso = new Date().toISOString();',
                 '    var foundRow = -1;',
                 '    for (var i = 1; i < data.length; i++) {',
@@ -556,9 +556,10 @@
                 '      if (curStatus === "DIBUKA ADMIN" && unlockedFlag === "TRUE" && status === "LOCKED") {',
                 '        return ContentService.createTextOutput(JSON.stringify({ status: "unlocked" })).setMimeType(ContentService.MimeType.JSON);',
                 '      }',
-                '      sheet.getRange(foundRow, 2, 1, 11).setValues([[sClass, sName, sSub, status, viol, maxV, reason, nowIso, baseKey, "FALSE", awaySec]]);',
+                '      var keepStartedAt = data[foundRow - 1][12] ? String(data[foundRow - 1][12]) : startedAt;',
+                '      sheet.getRange(foundRow, 2, 1, 12).setValues([[sClass, sName, sSub, status, viol, maxV, reason, nowIso, baseKey, "FALSE", awaySec, keepStartedAt]]);',
                 '    } else {',
-                '      sheet.appendRow([sid, sClass, sName, sSub, status, viol, maxV, reason, nowIso, baseKey, "FALSE", awaySec]);',
+                '      sheet.appendRow([sid, sClass, sName, sSub, status, viol, maxV, reason, nowIso, baseKey, "FALSE", awaySec, startedAt]);',
                 '    }',
                 '    return ContentService.createTextOutput(JSON.stringify({ status: "ok" })).setMimeType(ContentService.MimeType.JSON);',
                 '  }',
@@ -602,7 +603,8 @@
                 '      lastUpdated: String(data[k][8] || ""),',
                 '      baseKey: String(data[k][9] || ""),',
                 '      unlockedByAdmin: String(data[k][10] || "") === "TRUE",',
-                '      awaySeconds: Number(data[k][11] || 0)',
+                '      awaySeconds: Number(data[k][11] || 0),',
+                '      startedAt: String(data[k][12] || "")',
                 '    });',
                 '  }',
                 '  return ContentService.createTextOutput(JSON.stringify({ sessions: sessions })).setMimeType(ContentService.MimeType.JSON);',
@@ -610,7 +612,7 @@
             ].join('\n');
 
             // =================================================================
-            // STATE APLIKASI
+            // STATE & REFERENSI ELEMEN DOM (el)
             // =================================================================
             const state = {
                 studentsByClass: {},
@@ -620,6 +622,11 @@
                 currentSubject: null,
                 sessionId: '',
                 examStartedAt: '',
+                examEndTime: null,
+                timerInterval: null,
+                heartbeatTimer: null,
+                unlockPollInterval: null,
+                adminRefreshInterval: null,
                 isExamActive: false,
                 isLocked: false,
                 violations: 0,
@@ -628,25 +635,17 @@
                 awayStartTime: null,
                 lastBlurTime: 0,
                 pendingBlurTimer: null,
-                lastViolationTimestamp: 0,
-                timerInterval: null,
-                examEndTime: null,
-                heartbeatTimer: null,
-                unlockPollInterval: null,
-                adminRefreshInterval: null,
-                adminSessions: [],
                 touchStartTime: 0,
-                isPointerInsideIframe: false
+                isPointerInsideIframe: false,
+                adminSessions: []
             };
 
-            // =================================================================
-            // REFERENSI ELEMEN DOM
-            // =================================================================
             const el = {
                 startScreen: document.getElementById('start-screen'),
+                openAdminPinBtn: document.getElementById('open-admin-pin-btn'),
+                reloadStudentsBtn: document.getElementById('reload-students-btn'),
                 studentClassSelect: document.getElementById('student-class-select'),
                 studentNameSelect: document.getElementById('student-name-select'),
-                reloadStudentsBtn: document.getElementById('reload-students-btn'),
                 startErrorMsg: document.getElementById('start-error-msg'),
                 startExamBtn: document.getElementById('start-exam-btn'),
 
@@ -691,7 +690,6 @@
                 cancelFinishBtn: document.getElementById('cancel-finish-btn'),
                 confirmFinishBtn: document.getElementById('confirm-finish-btn'),
 
-                openAdminPinBtn: document.getElementById('open-admin-pin-btn'),
                 adminPinModal: document.getElementById('admin-pin-modal'),
                 adminPinInput: document.getElementById('admin-pin-input'),
                 adminPinError: document.getElementById('admin-pin-error'),
@@ -704,25 +702,22 @@
                 tabAppsScriptBtn: document.getElementById('tab-appsscript-btn'),
                 adminPanelMonitoring: document.getElementById('admin-panel-monitoring'),
                 adminPanelAppsScript: document.getElementById('admin-panel-appsscript'),
-
                 statTotal: document.getElementById('stat-total'),
                 statActive: document.getElementById('stat-active'),
                 statWarned: document.getElementById('stat-warned'),
                 statLocked: document.getElementById('stat-locked'),
-
                 adminSearchInput: document.getElementById('admin-search-input'),
                 adminSubjectFilter: document.getElementById('admin-subject-filter'),
                 adminClassFilter: document.getElementById('admin-class-filter'),
                 adminRefreshBtn: document.getElementById('admin-refresh-btn'),
                 adminSyncAlert: document.getElementById('admin-sync-alert'),
                 adminMonitoringTbody: document.getElementById('admin-monitoring-tbody'),
-
-                appsScriptCodeBox: document.getElementById('apps-script-code-box'),
-                copyAppsScriptBtn: document.getElementById('copy-apps-script-btn')
+                copyAppsScriptBtn: document.getElementById('copy-apps-script-btn'),
+                appsScriptCodeBox: document.getElementById('apps-script-code-box')
             };
 
             // =================================================================
-            // UTILITAS UMUM
+            // FUNGSI UTILITAS & PARSING SPREADSHEET
             // =================================================================
             function escapeHTML(str) {
                 return String(str || '')
@@ -733,64 +728,54 @@
                     .replace(/'/g, '&#39;');
             }
 
-            function formatDurationHuman(totalSeconds) {
-                const sec = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+            function parseGvizJson(rawText) {
+                const startIdx = rawText.indexOf('{');
+                const endIdx = rawText.lastIndexOf('}');
+                if (startIdx === -1 || endIdx === -1) throw new Error('Format gviz tidak valid');
+                return JSON.parse(rawText.slice(startIdx, endIdx + 1));
+            }
+
+            function formatDurationHuman(totalSec) {
+                const sec = Math.max(0, Math.floor(Number(totalSec || 0)));
                 if (sec < 60) return `${sec} detik`;
                 const mins = Math.floor(sec / 60);
                 const remSec = sec % 60;
                 return remSec > 0 ? `${mins} menit ${remSec} detik` : `${mins} menit`;
             }
 
-            function formatHMS(totalSeconds) {
-                const sec = Math.max(0, Math.floor(Number(totalSeconds) || 0));
-                const h = String(Math.floor(sec / 3600)).padStart(2, '0');
-                const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
-                const s = String(sec % 60).padStart(2, '0');
-                return `${h}:${m}:${s}`;
+            function extractAwaySecondsFromLogText(reasonText) {
+                const m = String(reasonText || '').match(/\[TotalKeluar:(\d+)\]/i);
+                return m ? Number(m[1]) : 0;
             }
 
-            function formatStartClockWIB(rawDateInput, sessionIdFallback = '') {
+            function formatStartClockWIB(startedAtIso, sessionId) {
                 let d = null;
-                if (rawDateInput) {
-                    const parsed = new Date(rawDateInput);
-                    if (!Number.isNaN(parsed.getTime())) d = parsed;
+                if (startedAtIso) {
+                    const parsed = Date.parse(startedAtIso);
+                    if (!Number.isNaN(parsed)) d = new Date(parsed);
                 }
-                if (!d && sessionIdFallback) {
-                    const parts = String(sessionIdFallback).split('_');
+                if (!d && sessionId) {
+                    const parts = String(sessionId).split('_');
                     const lastPart = Number(parts[parts.length - 1]);
-                    if (lastPart > 1700000000000) {
-                        const parsedSid = new Date(lastPart);
-                        if (!Number.isNaN(parsedSid.getTime())) d = parsedSid;
+                    if (!Number.isNaN(lastPart) && lastPart > 1700000000000) {
+                        d = new Date(lastPart);
                     }
                 }
                 if (!d) return '-';
-                const hh = String(d.getHours()).padStart(2, '0');
-                const mm = String(d.getMinutes()).padStart(2, '0');
-                const ss = String(d.getSeconds()).padStart(2, '0');
-                return `Pukul ${hh}:${mm}:${ss}`;
-            }
-
-            function extractAwaySecondsFromLogText(logText) {
-                const txt = String(logText || '');
-                const mTag = txt.match(/\[TotalKeluar:(\d+)\]/i);
-                if (mTag) return Number(mTag[1]) || 0;
-                const mText = txt.match(/keluar\s+(\d+)\s*detik/i);
-                if (mText) return Number(mText[1]) || 0;
-                return 0;
-            }
-
-            function parseGvizJson(rawText) {
-                const start = rawText.indexOf('{');
-                const end = rawText.lastIndexOf('}');
-                if (start === -1 || end === -1) throw new Error('Format gviz tidak valid');
-                return JSON.parse(rawText.slice(start, end + 1));
+                try {
+                    return 'Pukul ' + d.toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).replace(/\./g, ':');
+                } catch (e) {
+                    return '-';
+                }
             }
 
             function normalizeExamUrl(rawUrl) {
-                const url = String(rawUrl || '').trim();
-                if (!url) return 'about:blank';
-                if (/^https?:\/\//i.test(url)) return url;
-                return 'https://' + url;
+                return String(rawUrl || '').trim();
             }
 
             function enterFullscreenSafe() {
@@ -802,27 +787,47 @@
                 } catch (e) {}
             }
 
-            // =================================================================
-            // PELACAKAN PERCOBAAN 1X PER MATA PELAJARAN (WAJIB RESET ADMIN)
-            // =================================================================
-            function getAttemptKey(studentClass, studentName, subjectTitle) {
-                return `${String(studentClass || '').trim().toLowerCase()}||${String(studentName || '').trim().toLowerCase()}||${String(subjectTitle || '').trim().toLowerCase()}`;
+            function renderExamWatermark() {
+                if (!el.examWatermarkLayer) return;
+                const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(/\./g, ':');
+                const label = `${state.studentName || 'PESERTA'} • ${state.studentClass || 'SMPN 15'} • ${timeStr}`;
+                el.examWatermarkLayer.innerHTML = Array.from({ length: 18 }, () =>
+                    `<div class="watermark-item">${escapeHTML(label)}</div>`
+                ).join('');
             }
 
-            function getAttemptedExamsMap() {
+            function triggerAntiCaptureShield(durationMs = 1600) {
+                if (!el.examContainer) return;
+                el.examContainer.classList.add('anti-capture-blur');
+                setTimeout(() => {
+                    if (el.examContainer) el.examContainer.classList.remove('anti-capture-blur');
+                }, durationMs);
+            }
+
+            // =================================================================
+            // ATURAN 1 KALI PERCOBAAN PER MATA PELAJARAN
+            // =================================================================
+            function buildAttemptKey(sClass, sName, sSub) {
+                return `${String(sClass || '').trim().toLowerCase()}||${String(sName || '').trim().toLowerCase()}||${String(sSub || '').trim().toLowerCase()}`;
+            }
+
+            function getAttemptedMap() {
                 try {
-                    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTED_EXAMS) || '{}');
+                    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTED_EXAMS) || '{}') || {};
                 } catch (e) {
                     return {};
                 }
             }
 
-            function markExamAttemptedLocal(studentClass, studentName, subjectTitle, sessionId) {
-                if (!studentClass || !studentName || !subjectTitle) return;
+            function isExamAttemptedLocal(sClass, sName, sSub) {
+                const map = getAttemptedMap();
+                return Boolean(map[buildAttemptKey(sClass, sName, sSub)]);
+            }
+
+            function markExamAttemptedLocal(sClass, sName, sSub, sessionId) {
                 try {
-                    const map = getAttemptedExamsMap();
-                    const key = getAttemptKey(studentClass, studentName, subjectTitle);
-                    map[key] = {
+                    const map = getAttemptedMap();
+                    map[buildAttemptKey(sClass, sName, sSub)] = {
                         sessionId: sessionId || '',
                         attemptedAt: new Date().toISOString()
                     };
@@ -830,40 +835,40 @@
                 } catch (e) {}
             }
 
-            function clearExamAttemptedLocal(studentClass, studentName, subjectTitle) {
+            function clearExamAttemptedLocal(sClass, sName, sSub) {
                 try {
-                    const map = getAttemptedExamsMap();
-                    const key = getAttemptKey(studentClass, studentName, subjectTitle);
-                    if (map[key]) {
-                        delete map[key];
-                        localStorage.setItem(STORAGE_KEYS.ATTEMPTED_EXAMS, JSON.stringify(map));
-                    }
+                    const map = getAttemptedMap();
+                    delete map[buildAttemptKey(sClass, sName, sSub)];
+                    localStorage.setItem(STORAGE_KEYS.ATTEMPTED_EXAMS, JSON.stringify(map));
                 } catch (e) {}
             }
 
-            function isExamAttemptedLocal(studentClass, studentName, subjectTitle) {
-                const map = getAttemptedExamsMap();
-                const key = getAttemptKey(studentClass, studentName, subjectTitle);
-                return Boolean(map[key]);
-            }
-
             async function syncAttemptedStatusWithServer() {
-                if (!state.studentClass || !state.studentName) return;
-                const targetClass = state.studentClass.trim().toLowerCase();
+                if (!state.studentName) return;
                 const targetName = state.studentName.trim().toLowerCase();
-                const serverLatestBySubject = new Map();
+                const targetClass = state.studentClass.trim().toLowerCase();
 
-                const applyRows = (rowsList) => {
-                    rowsList.forEach((s) => {
-                        if (!s) return;
-                        const sClass = String(s.studentClass || '').trim().toLowerCase();
-                        const sName = String(s.studentName || '').trim().toLowerCase();
-                        const sSub = String(s.subjectTitle || '').trim();
-                        if (!sSub || sSub.toLowerCase() === 'portal jadwal') return;
-                        if (sClass === targetClass && sName === targetName) {
-                            serverLatestBySubject.set(sSub.toLowerCase(), s);
+                const applyServerRows = (rows) => {
+                    let changed = false;
+                    rows.forEach((s) => {
+                        if (String(s.studentName || '').trim().toLowerCase() !== targetName) return;
+                        if (targetClass && String(s.studentClass || '').trim().toLowerCase() !== targetClass) return;
+                        const subTitle = String(s.subjectTitle || '').trim();
+                        if (!subTitle || subTitle.toLowerCase() === 'portal jadwal') return;
+
+                        if (s.status === 'DIBUKA ADMIN' || s.unlockedByAdmin === true) {
+                            if (isExamAttemptedLocal(state.studentClass, state.studentName, subTitle)) {
+                                clearExamAttemptedLocal(state.studentClass, state.studentName, subTitle);
+                                changed = true;
+                            }
+                        } else if (s.status === 'ACTIVE' || s.status === 'FINISHED' || s.status === 'LOCKED') {
+                            if (!isExamAttemptedLocal(state.studentClass, state.studentName, subTitle)) {
+                                markExamAttemptedLocal(state.studentClass, state.studentName, subTitle, s.sessionId);
+                                changed = true;
+                            }
                         }
                     });
+                    if (changed) renderSubjectsPortal();
                 };
 
                 if (APPS_SCRIPT_WEB_APP_URL) {
@@ -871,7 +876,8 @@
                         const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`, { cache: 'no-store' });
                         const data = await res.json();
                         if (data && Array.isArray(data.sessions)) {
-                            applyRows(data.sessions);
+                            applyServerRows(data.sessions);
+                            return;
                         }
                     } catch (e) {}
                 }
@@ -882,38 +888,39 @@
                     const txtSheet = await resSheet.text();
                     const jsonSheet = parseGvizJson(txtSheet);
                     const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
-                    const parsedRows = rows.map((row, idx) => {
-                        const c = row.c || [];
-                        const sid = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
-                        if (!sid || (idx === 0 && sid.toLowerCase() === 'sessionid')) return null;
+                    const parsed = rows.map((r) => {
+                        const c = r.c || [];
                         return {
-                            sessionId: sid,
+                            sessionId: c[0] && c[0].v != null ? String(c[0].v).trim() : '',
                             studentClass: c[1] && c[1].v != null ? String(c[1].v).trim() : '',
                             studentName: c[2] && c[2].v != null ? String(c[2].v).trim() : '',
                             subjectTitle: c[3] && c[3].v != null ? String(c[3].v).trim() : '',
                             status: c[4] && c[4].v != null ? String(c[4].v).trim() : '',
                             unlockedByAdmin: (c[10] && String(c[10].v).trim() === 'TRUE')
                         };
-                    }).filter(Boolean);
-                    applyRows(parsedRows);
+                    });
+                    applyServerRows(parsed);
                 } catch (e2) {}
-
-                serverLatestBySubject.forEach((rec) => {
-                    if (rec.status === 'DIBUKA ADMIN' || rec.unlockedByAdmin === true) {
-                        clearExamAttemptedLocal(state.studentClass, state.studentName, rec.subjectTitle);
-                    } else if (rec.status === 'ACTIVE' || rec.status === 'FINISHED' || rec.status === 'LOCKED') {
-                        markExamAttemptedLocal(state.studentClass, state.studentName, rec.subjectTitle, rec.sessionId);
-                    }
-                });
-
-                renderSubjectsPortal();
             }
 
             // =================================================================
-            // MEMUAT DATA SISWA (SHEET "SISWA") & MATA PELAJARAN (SHEET "Sheet1")
+            // MUAT DATA SISWA (SHEET SISWA) & JADWAL UJIAN (Sheet1)
             // =================================================================
+            function populateClassDropdown() {
+                if (!el.studentClassSelect) return;
+                const classes = Object.keys(state.studentsByClass).sort((a, b) => a.localeCompare(b, 'id', { numeric: true }));
+                if (classes.length === 0) {
+                    el.studentClassSelect.innerHTML = '<option value="">Data kelas kosong / gagal dimuat</option>';
+                    return;
+                }
+                el.studentClassSelect.innerHTML = '<option value="">-- Pilih Kelas Anda --</option>' +
+                    classes.map((cls) => `<option value="${escapeHTML(cls)}">${escapeHTML(cls)}</option>`).join('');
+            }
+
             async function loadStudentsFromSheet() {
-                el.studentClassSelect.innerHTML = '<option value="">Memuat daftar kelas...</option>';
+                if (el.studentClassSelect) {
+                    el.studentClassSelect.innerHTML = '<option value="">Memuat daftar kelas...</option>';
+                }
                 try {
                     const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=SISWA&t=${Date.now()}`;
                     const res = await fetch(url, { cache: 'no-store' });
@@ -924,41 +931,37 @@
                     const grouped = {};
                     rows.forEach((r, idx) => {
                         const c = r.c || [];
-                        const colA = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
-                        const colB = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
-                        if (!colA || !colB) return;
-                        if (idx === 0 && (colA.toLowerCase() === 'kelas' || colB.toLowerCase() === 'nama')) return;
-                        if (!grouped[colA]) grouped[colA] = [];
-                        if (!grouped[colA].includes(colB)) grouped[colA].push(colB);
+                        const col0 = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+                        const col1 = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
+                        if (!col0 || !col1) return;
+                        if (idx === 0 && (col0.toLowerCase().includes('kelas') || col1.toLowerCase().includes('nama'))) return;
+
+                        let cls = col0;
+                        let name = col1;
+                        if (col1.length <= 8 && col0.length > 8) {
+                            cls = col1;
+                            name = col0;
+                        }
+                        if (!grouped[cls]) grouped[cls] = [];
+                        if (!grouped[cls].includes(name)) grouped[cls].push(name);
                     });
 
-                    Object.keys(grouped).forEach((cls) => grouped[cls].sort());
+                    Object.keys(grouped).forEach((k) => grouped[k].sort((a, b) => a.localeCompare(b, 'id')));
                     if (Object.keys(grouped).length > 0) {
                         state.studentsByClass = grouped;
-                        try {
-                            localStorage.setItem(STORAGE_KEYS.STUDENTS_CACHE, JSON.stringify(grouped));
-                        } catch (e) {}
+                        try { localStorage.setItem(STORAGE_KEYS.STUDENTS_CACHE, JSON.stringify(grouped)); } catch (e) {}
                     }
-                } catch (err) {
+                } catch (e) {
                     try {
                         const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDENTS_CACHE) || '{}');
                         if (Object.keys(cached).length > 0) state.studentsByClass = cached;
-                    } catch (e) {}
+                    } catch (err) {}
                 }
-
-                const classes = Object.keys(state.studentsByClass).sort();
-                if (classes.length === 0) {
-                    el.studentClassSelect.innerHTML = '<option value="">Gagal memuat kelas (Periksa koneksi)</option>';
-                    return;
-                }
-
-                el.studentClassSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>' +
-                    classes.map((c) => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
+                populateClassDropdown();
             }
 
             async function loadSubjectsFromSheet() {
                 try {
-                    // Sheet1: Kolom A = Nama Ujian, Kolom B = Link Ujian, Kolom C = Durasi Ujian (menit)
                     const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1&t=${Date.now()}`;
                     const res = await fetch(url, { cache: 'no-store' });
                     const text = await res.text();
@@ -970,80 +973,56 @@
                         const c = r.c || [];
                         const title = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
                         const link = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
-                        const durRaw = c[2] && c[2].v != null ? Number(c[2].v) : DEFAULT_EXAM_DURATION_MINUTES;
-                        const statusRaw = c[3] && c[3].v != null ? String(c[3].v).trim() : 'AKTIF';
-
+                        const rawDur = c[2] && c[2].v != null ? Number(c[2].v) : NaN;
                         if (!title || !link) return;
                         if (idx === 0 && (title.toLowerCase().includes('nama ujian') || link.toLowerCase().includes('link'))) return;
-
                         list.push({
                             title: title,
                             url: link,
-                            durationMinutes: durRaw > 0 ? durRaw : DEFAULT_EXAM_DURATION_MINUTES,
-                            status: statusRaw || 'AKTIF'
+                            durationMinutes: (!Number.isNaN(rawDur) && rawDur > 0) ? Math.round(rawDur) : DEFAULT_EXAM_DURATION_MINUTES
                         });
                     });
 
                     if (list.length > 0) {
                         state.subjects = list;
-                        try {
-                            localStorage.setItem(STORAGE_KEYS.SUBJECTS_CACHE, JSON.stringify(list));
-                        } catch (e) {}
+                        try { localStorage.setItem(STORAGE_KEYS.SUBJECTS_CACHE, JSON.stringify(list)); } catch (e) {}
                     }
-                } catch (err) {
+                } catch (e) {
                     try {
                         const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBJECTS_CACHE) || '[]');
-                        if (cached.length > 0) state.subjects = cached;
-                    } catch (e) {}
+                        if (Array.isArray(cached) && cached.length > 0) state.subjects = cached;
+                    } catch (err) {}
                 }
-
                 renderSubjectsPortal();
-                populateAdminFilters();
             }
 
             function renderSubjectsPortal() {
                 if (!el.subjectsGrid) return;
                 if (!state.subjects || state.subjects.length === 0) {
-                    el.subjectsGrid.innerHTML = '<div class="col-span-full bg-white p-8 rounded-3xl text-center text-sm font-bold text-slate-400 border border-slate-200">Belum ada jadwal mata pelajaran aktif di Sheet1.</div>';
+                    el.subjectsGrid.innerHTML = '<div class="col-span-full bg-white p-8 rounded-3xl text-center text-sm font-bold text-slate-400 border border-slate-200">Belum ada jadwal ujian aktif pada Sheet1.</div>';
                     return;
                 }
 
                 el.subjectsGrid.innerHTML = state.subjects.map((sub, idx) => {
-                    const isClosed = String(sub.status || '').toUpperCase().includes('TUTUP') || String(sub.status || '').toUpperCase().includes('NONAKTIF');
-                    const alreadyAttempted = isExamAttemptedLocal(state.studentClass, state.studentName, sub.title);
-                    const isDisabled = isClosed || alreadyAttempted;
-
-                    let badgeClass = 'bg-emerald-100 text-emerald-700';
-                    let badgeText = `AKTIF • ${sub.durationMinutes || 90} MENIT`;
-                    let btnClass = 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer';
-                    let btnText = 'Kerjakan Soal Sekarang (1x Kesempatan)';
-
-                    if (isClosed) {
-                        badgeClass = 'bg-slate-100 text-slate-500';
-                        badgeText = 'DITUTUP';
-                        btnClass = 'bg-slate-200 text-slate-400 cursor-not-allowed';
-                        btnText = 'Ujian Belum Dibuka';
-                    } else if (alreadyAttempted) {
-                        badgeClass = 'bg-amber-100 text-amber-800';
-                        badgeText = 'SUDAH PERNAH DICOBA (1/1)';
-                        btnClass = 'bg-slate-200 text-slate-500 cursor-not-allowed';
-                        btnText = 'Terkunci • Minta Reset ke Admin';
-                    }
-
+                    const attempted = isExamAttemptedLocal(state.studentClass, state.studentName, sub.title);
                     return `
-                        <div class="bg-white rounded-3xl p-5 border ${alreadyAttempted ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200'} shadow-sm flex flex-col justify-between gap-4">
-                            <div>
-                                <div class="flex items-center justify-between gap-2 mb-2">
-                                    <span class="px-2.5 py-1 ${badgeClass} text-[10px] font-black uppercase rounded-lg">
-                                        ${badgeText}
+                        <div class="bg-white rounded-3xl p-5 border ${attempted ? 'border-slate-200 bg-slate-50/70' : 'border-slate-200 hover:border-blue-400'} shadow-sm flex flex-col justify-between gap-4 transition">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="px-2.5 py-1 rounded-lg ${attempted ? 'bg-slate-200 text-slate-600' : 'bg-blue-50 text-blue-700'} text-[10px] font-black uppercase tracking-wider">
+                                        Durasi: ${sub.durationMinutes} Menit
+                                    </span>
+                                    <span class="text-[11px] font-extrabold ${attempted ? 'text-red-600' : 'text-emerald-600'}">
+                                        ${attempted ? 'Terkunci (1/1 Percobaan)' : 'Tersedia'}
                                     </span>
                                 </div>
-                                <h3 class="text-base font-extrabold text-slate-900">${escapeHTML(sub.title)}</h3>
-                                ${alreadyAttempted ? '<p class="text-[11px] font-semibold text-amber-700 mt-1.5">Anda sudah menggunakan 1 kali kesempatan ujian untuk mapel ini. Hubungi Pengawas/Admin jika perlu mengulang dari awal.</p>' : ''}
+                                <h3 class="text-base sm:text-lg font-black text-slate-900">${escapeHTML(sub.title)}</h3>
                             </div>
-                            <button type="button" data-sub-index="${idx}" ${isDisabled ? 'disabled' : ''}
-                                class="open-subject-btn w-full py-3 px-4 ${btnClass} font-extrabold text-xs rounded-2xl transition">
-                                ${btnText}
+                            <button type="button" data-sub-index="${idx}" ${attempted ? 'disabled' : ''}
+                                class="open-subject-btn w-full py-3.5 px-4 rounded-2xl font-black text-xs transition ${attempted
+                                    ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 cursor-pointer'}">
+                                ${attempted ? 'Sudah Pernah Dicoba • Minta Reset Admin' : 'Kerjakan Soal Sekarang'}
                             </button>
                         </div>
                     `;
@@ -1051,48 +1030,31 @@
             }
 
             // =================================================================
-            // WATERMARK & ANTI-CAPTURE SHIELD
-            // =================================================================
-            function renderExamWatermark() {
-                if (!el.examWatermarkLayer) return;
-                const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-                const label = `${state.studentName || 'PESERTA'} • ${state.studentClass || 'SMPN 15'} • ${nowStr}`;
-                const items = Array.from({ length: 18 }, () => `<div class="watermark-item">${escapeHTML(label)}</div>`).join('');
-                el.examWatermarkLayer.innerHTML = items;
-            }
-
-            function triggerAntiCaptureShield(durationMs = 1800) {
-                if (!el.examContainer) return;
-                el.examContainer.classList.add('anti-capture-blur');
-                setTimeout(() => {
-                    if (el.examContainer) el.examContainer.classList.remove('anti-capture-blur');
-                }, durationMs);
-            }
-
-            // =================================================================
-            // TIMER HITUNG MUNDUR (BERJALAN SETELAH MEMILIH UJIAN)
+            // TIMER MUNDUR UJIAN (BERJALAN SETELAH MAPEL DIPILIH)
             // =================================================================
             function startExamTimer(durationMinutes) {
                 if (state.timerInterval) clearInterval(state.timerInterval);
-                const mins = Number(durationMinutes) > 0 ? Number(durationMinutes) : DEFAULT_EXAM_DURATION_MINUTES;
-                state.examEndTime = Date.now() + mins * 60 * 1000;
+                const totalMs = Math.max(1, Number(durationMinutes || DEFAULT_EXAM_DURATION_MINUTES)) * 60 * 1000;
+                state.examEndTime = Date.now() + totalMs;
 
                 const tick = () => {
                     if (!state.examEndTime) return;
-                    const remainingSec = Math.max(0, Math.ceil((state.examEndTime - Date.now()) / 1000));
-                    if (el.examTimer) el.examTimer.textContent = formatHMS(remainingSec);
+                    const remMs = Math.max(0, state.examEndTime - Date.now());
+                    const totalSec = Math.floor(remMs / 1000);
+                    const hrs = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+                    const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+                    const secs = String(totalSec % 60).padStart(2, '0');
 
+                    if (el.examTimer) el.examTimer.textContent = `${hrs}:${mins}:${secs}`;
                     if (el.examTimerBadge) {
-                        if (remainingSec <= 300) {
-                            el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-red-600/20 border border-red-500 rounded-xl text-[11px] sm:text-xs font-mono font-black text-red-300 items-center gap-1.5 animate-pulse';
-                        } else if (remainingSec <= 900) {
-                            el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-amber-500/20 border border-amber-500 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-amber-300 items-center gap-1.5';
-                        } else {
-                            el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-slate-200 items-center gap-1.5';
+                        if (totalSec <= 300) {
+                            el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-red-600/25 border border-red-500 rounded-xl text-[11px] sm:text-xs font-mono font-black text-red-200 items-center gap-1.5 animate-pulse';
+                        } else if (totalSec <= 900) {
+                            el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-amber-500/20 border border-amber-400/50 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-amber-200 items-center gap-1.5';
                         }
                     }
 
-                    if (remainingSec <= 0) {
+                    if (remMs <= 0) {
                         clearInterval(state.timerInterval);
                         endExam('Waktu pengerjaan ujian telah habis.');
                     }
@@ -1103,60 +1065,44 @@
             }
 
             // =================================================================
-            // PELACAKAN WAKTU KELUAR & PENANGANAN PELANGGARAN
+            // SISTEM PELANGGARAN, WAKTU KELUAR & KUNCI PERMANEN
             // =================================================================
             function updateViolationUI() {
-                const countText = `${state.violations}/${MAX_VIOLATIONS}`;
-                if (el.violationCountText) el.violationCountText.textContent = countText;
-                if (el.modalViolationCounter) el.modalViolationCounter.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
-                if (el.modalAwayDuration) el.modalAwayDuration.textContent = `Total Waktu Keluar: ${formatDurationHuman(state.totalAwaySeconds)}`;
-
+                if (el.violationCountText) {
+                    el.violationCountText.textContent = `${state.violations}/${MAX_VIOLATIONS}`;
+                }
                 if (el.violationBadge) {
                     if (state.violations >= MAX_VIOLATIONS) {
                         el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-red-600/30 border border-red-500 text-red-200 text-[11px] font-black';
                     } else if (state.violations > 0) {
-                        el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-amber-500/25 border border-amber-500/50 text-amber-300 text-[11px] font-extrabold';
+                        el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-amber-500/25 border border-amber-400/50 text-amber-200 text-[11px] font-extrabold';
                     } else {
                         el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] font-extrabold';
                     }
                 }
             }
 
-            function persistAwayTracker() {
-                try {
-                    const data = {
-                        sessionId: state.sessionId,
-                        studentClass: state.studentClass,
-                        studentName: state.studentName,
-                        subjectTitle: state.currentSubject ? state.currentSubject.title : '',
-                        awayStartTime: state.awayStartTime,
-                        totalAwaySeconds: state.totalAwaySeconds,
-                        violations: state.violations,
-                        lastViolationReason: state.lastViolationReason
-                    };
-                    localStorage.setItem(STORAGE_KEYS.AWAY_TRACKER, JSON.stringify(data));
-                } catch (e) {}
-            }
-
-            function finalizeReturnFromAway(shouldSync = true) {
+            function finalizeReturnFromAway(syncAfter = true) {
                 if (state.awayStartTime) {
-                    const elapsedSec = Math.max(1, Math.round((Date.now() - state.awayStartTime) / 1000));
-                    state.totalAwaySeconds += elapsedSec;
+                    const deltaSec = Math.max(1, Math.round((Date.now() - state.awayStartTime) / 1000));
+                    state.totalAwaySeconds += deltaSec;
                     state.awayStartTime = null;
-                    persistAwayTracker();
-                    updateViolationUI();
-                    if (shouldSync) syncSessionToServer();
+                    if (el.modalAwayDuration) {
+                        el.modalAwayDuration.textContent = `Total Waktu Keluar: ${formatDurationHuman(state.totalAwaySeconds)}`;
+                    }
+                    if (syncAfter && state.currentSubject) {
+                        syncSessionToServer(state.isLocked ? 'LOCKED' : 'ACTIVE');
+                    }
                 }
             }
 
-            function saveLocalLockState() {
+            function persistLocalLockState() {
                 try {
                     localStorage.setItem(STORAGE_KEYS.ACTIVE_LOCK, JSON.stringify({
-                        sessionId: state.sessionId,
                         studentClass: state.studentClass,
                         studentName: state.studentName,
+                        sessionId: state.sessionId,
                         subjectTitle: state.currentSubject ? state.currentSubject.title : '',
-                        violations: state.violations,
                         totalAwaySeconds: state.totalAwaySeconds,
                         lastViolationReason: state.lastViolationReason
                     }));
@@ -1169,60 +1115,48 @@
                 } catch (e) {}
             }
 
-            function recordViolation(reasonText, startAwayClock = false) {
-                if (!state.isExamActive || state.isLocked) return;
+            function recordViolation(reasonText, startAwayTimer = false) {
+                if (!state.isExamActive || !state.currentSubject) return;
+                if (state.isLocked) return;
 
-                const now = Date.now();
-                if (now - state.lastViolationTimestamp < 1200) return;
-                state.lastViolationTimestamp = now;
-
-                if (startAwayClock && !state.awayStartTime) {
-                    state.awayStartTime = now;
+                if (startAwayTimer && !state.awayStartTime) {
+                    state.awayStartTime = Date.now();
                 }
 
                 state.violations = Math.min(MAX_VIOLATIONS, state.violations + 1);
-                state.lastViolationReason = reasonText;
-                persistAwayTracker();
+                state.lastViolationReason = reasonText || 'Terdeteksi pelanggaran aturan ujian.';
                 updateViolationUI();
-                triggerAntiCaptureShield(2200);
 
-                if (el.violationModalDesc) el.violationModalDesc.textContent = reasonText;
-                if (el.violationOverlay) el.violationOverlay.classList.remove('hidden');
+                if (el.modalViolationCounter) {
+                    el.modalViolationCounter.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
+                }
+                if (el.modalAwayDuration) {
+                    el.modalAwayDuration.textContent = `Total Waktu Keluar: ${formatDurationHuman(state.totalAwaySeconds)}`;
+                }
 
                 if (state.violations >= MAX_VIOLATIONS) {
-                    finalizeReturnFromAway(false);
                     state.isLocked = true;
-                    saveLocalLockState();
+                    persistLocalLockState();
                     if (el.violationModalTitle) el.violationModalTitle.textContent = 'AKUN UJIAN TERKUNCI PERMANEN!';
+                    if (el.violationModalDesc) el.violationModalDesc.textContent = state.lastViolationReason;
                     if (el.resumeExamBtn) el.resumeExamBtn.classList.add('hidden');
                     if (el.lockedAccountNotice) el.lockedAccountNotice.classList.remove('hidden');
-                    startUnlockPolling();
+                    if (el.violationOverlay) el.violationOverlay.classList.remove('hidden');
                     syncSessionToServer('LOCKED');
+                    startUnlockPolling();
                 } else {
                     if (el.violationModalTitle) el.violationModalTitle.textContent = 'Peringatan Pelanggaran Terdeteksi!';
+                    if (el.violationModalDesc) el.violationModalDesc.textContent = state.lastViolationReason;
                     if (el.resumeExamBtn) el.resumeExamBtn.classList.remove('hidden');
                     if (el.lockedAccountNotice) el.lockedAccountNotice.classList.add('hidden');
+                    if (el.violationOverlay) el.violationOverlay.classList.remove('hidden');
                     syncSessionToServer('ACTIVE');
                 }
             }
 
             // =================================================================
-            // SINKRONISASI SERVER (FETCH + IMAGE BEACON) & CEK BUKA KUNCI ADMIN
+            // SINKRONISASI SERVER (100% DATABASE SPREADSHEET) & CEK BUKA KUNCI
             // =================================================================
-            function saveLocalSessionMirror(payload) {
-                try {
-                    const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
-                    const idx = list.findIndex((item) => item.sessionId === payload.sessionId);
-                    const record = {
-                        ...payload,
-                        lastUpdated: new Date().toISOString()
-                    };
-                    if (idx >= 0) list[idx] = record;
-                    else list.unshift(record);
-                    localStorage.setItem(STORAGE_KEYS.LOCAL_SESSIONS, JSON.stringify(list.slice(0, 120)));
-                } catch (e) {}
-            }
-
             async function syncSessionToServer(forcedStatus = null) {
                 if (!state.studentName || !state.sessionId) return;
                 if (!state.currentSubject || !state.currentSubject.title) return;
@@ -1233,38 +1167,23 @@
                     ? `${state.lastViolationReason} [TotalKeluar:${state.totalAwaySeconds}]`
                     : state.lastViolationReason;
 
-                const payload = {
-                    action: 'sync',
-                    sessionId: state.sessionId,
-                    studentClass: state.studentClass,
-                    studentName: state.studentName,
-                    subjectTitle: state.currentSubject.title,
-                    startedAt: state.examStartedAt || new Date().toISOString(),
-                    status: currentStatus,
-                    violations: state.violations,
-                    maxViolations: MAX_VIOLATIONS,
-                    lastViolationReason: taggedReason,
-                    baseKey: baseKey,
-                    awaySeconds: state.totalAwaySeconds
-                };
-
-                saveLocalSessionMirror(payload);
+                const startedAtIso = state.examStartedAt || new Date().toISOString();
 
                 if (!APPS_SCRIPT_WEB_APP_URL) return;
 
                 const params = new URLSearchParams({
                     action: 'sync',
-                    sessionId: payload.sessionId,
-                    studentClass: payload.studentClass,
-                    studentName: payload.studentName,
-                    subjectTitle: payload.subjectTitle,
-                    startedAt: payload.startedAt,
-                    status: payload.status,
-                    violations: String(payload.violations),
-                    maxViolations: String(payload.maxViolations),
-                    lastViolationReason: payload.lastViolationReason,
-                    baseKey: payload.baseKey,
-                    awaySeconds: String(payload.awaySeconds),
+                    sessionId: state.sessionId,
+                    studentClass: state.studentClass,
+                    studentName: state.studentName,
+                    subjectTitle: state.currentSubject.title,
+                    startedAt: startedAtIso,
+                    status: currentStatus,
+                    violations: String(state.violations),
+                    maxViolations: String(MAX_VIOLATIONS),
+                    lastViolationReason: taggedReason,
+                    baseKey: baseKey,
+                    awaySeconds: String(state.totalAwaySeconds),
                     t: String(Date.now())
                 });
 
@@ -1666,7 +1585,11 @@
             }
 
             async function fetchAdminMonitoringData() {
+                // Bersihkan sisa cache sesi lokal lama agar 100% terpusat pada database Google Sheet
+                try { localStorage.removeItem('cbt_smp15_local_sessions_v2'); } catch (e) {}
+
                 const mergedMap = new Map();
+                let connectedToCloud = false;
 
                 const upsertSession = (item) => {
                     if (!item || !item.studentName) return;
@@ -1681,36 +1604,33 @@
                             mergedMap.set(key, {
                                 ...existing,
                                 ...item,
+                                startedAt: item.startedAt || existing.startedAt || '',
                                 awaySeconds: Math.max(Number(existing.awaySeconds || 0), Number(item.awaySeconds || 0))
                             });
                         }
                     }
                 };
 
-                // 1. Baca dari sesi lokal browser ini
-                try {
-                    const localList = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
-                    localList.forEach(upsertSession);
-                } catch (e) {}
-
-                // 2. Baca dari Google Apps Script
+                // 1. Baca langsung dari Google Apps Script Web App
                 if (APPS_SCRIPT_WEB_APP_URL) {
                     try {
                         const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`, { cache: 'no-store' });
                         const data = await res.json();
                         if (data && Array.isArray(data.sessions)) {
+                            connectedToCloud = true;
                             data.sessions.forEach(upsertSession);
                         }
                     } catch (e) {}
                 }
 
-                // 3. Baca langsung dari sheet MONITORING di Google Spreadsheet
+                // 2. Baca langsung dari tab MONITORING di Google Spreadsheet (Single Source of Truth)
                 try {
                     const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&t=${Date.now()}`;
                     const resSheet = await fetch(sheetUrl, { cache: 'no-store' });
                     const txtSheet = await resSheet.text();
                     const jsonSheet = parseGvizJson(txtSheet);
                     const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
+                    connectedToCloud = true;
                     rows.forEach((row, idx) => {
                         const c = row.c || [];
                         const sid = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
@@ -1727,10 +1647,16 @@
                             lastUpdated: c[8] && c[8].v != null ? String(c[8].v).trim() : '',
                             baseKey: c[9] && c[9].v != null ? String(c[9].v).trim() : '',
                             unlockedByAdmin: (c[10] && String(c[10].v).trim() === 'TRUE'),
-                            awaySeconds: c[11] && c[11].v != null ? Number(c[11].v) : 0
+                            awaySeconds: c[11] && c[11].v != null ? Number(c[11].v) : 0,
+                            startedAt: c[12] && c[12].v != null ? String(c[12].v).trim() : ''
                         });
                     });
                 } catch (e) {}
+
+                if (!connectedToCloud && el.adminSyncAlert) {
+                    el.adminSyncAlert.textContent = 'Gagal terhubung ke database Google Spreadsheet. Periksa koneksi internet perangkat ini.';
+                    el.adminSyncAlert.classList.remove('hidden');
+                }
 
                 state.adminSessions = Array.from(mergedMap.values())
                     .filter((s) => s.subjectTitle && s.subjectTitle.trim().toLowerCase() !== 'portal jadwal' && s.subjectTitle.trim() !== '-')
@@ -1894,20 +1820,6 @@
                         }
                     });
                     renderAdminMonitoringTable();
-
-                    try {
-                        const localList = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
-                        localList.forEach((s) => {
-                            const matchRow = (sid && s.sessionId === sid) ||
-                                (sname && s.studentName === sname && s.studentClass === sclass && (!ssub || s.subjectTitle === ssub));
-                            if (matchRow) {
-                                s.status = 'DIBUKA ADMIN';
-                                s.violations = 0;
-                                s.lastViolationReason = 'Kunci dibuka & direset oleh Pengawas';
-                            }
-                        });
-                        localStorage.setItem(STORAGE_KEYS.LOCAL_SESSIONS, JSON.stringify(localList));
-                    } catch (e) {}
 
                     if (APPS_SCRIPT_WEB_APP_URL) {
                         const params = new URLSearchParams({
