@@ -58,37 +58,6 @@
             border: 0;
             background: #ffffff;
         }
-        .anti-capture-blur {
-            filter: blur(22px) brightness(0.75) !important;
-            transition: filter 0.08s ease-out;
-        }
-        .watermark-grid {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 15;
-            overflow: hidden;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 28px 12px;
-            padding: 24px 12px;
-            opacity: 0.13;
-        }
-        @media (min-width: 640px) {
-            .watermark-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 42px 24px;
-            }
-        }
-        .watermark-item {
-            transform: rotate(-22deg);
-            font-size: 11px;
-            font-weight: 900;
-            letter-spacing: 0.04em;
-            color: #0f172a;
-            text-align: center;
-            white-space: nowrap;
-        }
         @media print {
             body {
                 display: none !important;
@@ -205,11 +174,6 @@
                     <span id="exam-timer">--:--:--</span>
                 </div>
 
-                <button id="back-to-portal-btn" type="button"
-                    class="hidden px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[11px] transition cursor-pointer">
-                    Daftar Soal
-                </button>
-
                 <button id="finish-exam-btn" type="button"
                     class="px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-[11px] transition cursor-pointer">
                     Selesai
@@ -247,7 +211,6 @@
                 <p class="text-sm font-extrabold text-slate-700">Memuat Lembar Soal Ujian...</p>
                 <p class="text-xs text-slate-400 mt-1">Pastikan koneksi internet stabil.</p>
             </div>
-            <div id="exam-watermark-layer" class="watermark-grid"></div>
             <iframe id="exam-iframe" title="Lembar Soal Ujian" allow="fullscreen"></iframe>
         </section>
     </div>
@@ -431,16 +394,22 @@
                             <option value="ALL">Semua Kelas</option>
                         </select>
                     </div>
-                    <button id="admin-refresh-btn" type="button"
-                        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl transition cursor-pointer">
-                        Refresh Data Sekarang
-                    </button>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="admin-export-excel-btn" type="button"
+                            class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl transition cursor-pointer">
+                            Export Excel
+                        </button>
+                        <button id="admin-refresh-btn" type="button"
+                            class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl transition cursor-pointer">
+                            Refresh Data Sekarang
+                        </button>
+                    </div>
                 </div>
 
                 <div id="admin-sync-alert" class="hidden p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800"></div>
 
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-[920px]">
+                    <table class="w-full text-left border-collapse min-w-[960px]">
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-500">
                                 <th class="py-3.5 px-4">Peserta &amp; Kelas</th>
@@ -448,7 +417,7 @@
                                 <th class="py-3.5 px-4">Mulai Mengerjakan</th>
                                 <th class="py-3.5 px-4">Status</th>
                                 <th class="py-3.5 px-4">Pelanggaran</th>
-                                <th class="py-3.5 px-4">Total Waktu Keluar</th>
+                                <th class="py-3.5 px-4">Kalkulasi Durasi Pelanggaran</th>
                                 <th class="py-3.5 px-4">Log Kecurangan Terakhir</th>
                                 <th class="py-3.5 px-4 text-right">Kontrol Pengawas</th>
                             </tr>
@@ -627,6 +596,7 @@
                 violations: 0,
                 lastViolationReason: '-',
                 totalAwaySeconds: 0,
+                violationDurations: [],
                 awayStartTime: null,
                 lastBlurTime: 0,
                 pendingBlurTimer: null,
@@ -654,7 +624,6 @@
                 violationCountText: document.getElementById('violation-count-text'),
                 examTimerBadge: document.getElementById('exam-timer-badge'),
                 examTimer: document.getElementById('exam-timer'),
-                backToPortalBtn: document.getElementById('back-to-portal-btn'),
                 finishExamBtn: document.getElementById('finish-exam-btn'),
 
                 subjectPortalView: document.getElementById('subject-portal-view'),
@@ -663,7 +632,6 @@
 
                 iframeExamView: document.getElementById('iframe-exam-view'),
                 iframeLoader: document.getElementById('iframe-loader'),
-                examWatermarkLayer: document.getElementById('exam-watermark-layer'),
                 examIframe: document.getElementById('exam-iframe'),
 
                 violationOverlay: document.getElementById('violation-overlay'),
@@ -707,6 +675,7 @@
                 adminSearchInput: document.getElementById('admin-search-input'),
                 adminSubjectFilter: document.getElementById('admin-subject-filter'),
                 adminClassFilter: document.getElementById('admin-class-filter'),
+                adminExportExcelBtn: document.getElementById('admin-export-excel-btn'),
                 adminRefreshBtn: document.getElementById('admin-refresh-btn'),
                 adminSyncAlert: document.getElementById('admin-sync-alert'),
                 adminMonitoringTbody: document.getElementById('admin-monitoring-tbody'),
@@ -726,6 +695,35 @@
                     .replace(/>/g, '&gt;')
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#39;');
+            }
+
+            function formatSeconds(sec) {
+                const s = Math.max(0, Math.floor(Number(sec) || 0));
+                if (s < 60) return s + ' detik';
+                const m = Math.floor(s / 60);
+                const rem = s % 60;
+                return rem > 0 ? (m + ' menit ' + rem + ' detik') : (m + ' menit');
+            }
+
+            function formatViolationDurationBreakdown(durationsArr) {
+                if (!Array.isArray(durationsArr) || durationsArr.length === 0) return '';
+                return durationsArr.map((sec, i) => '#' + (i + 1) + ': ' + Math.max(0, Math.round(Number(sec) || 0)) + ' dtk').join(', ');
+            }
+
+            function extractViolationBreakdownFromText(reasonText) {
+                const str = String(reasonText || '');
+                const match = str.match(/\[Durasi:\s*([^\]]+)\]/i);
+                return match ? match[1].trim() : '';
+            }
+
+            function stripDurationTagFromReason(reasonText) {
+                return String(reasonText || '-').replace(/\s*\[Durasi:\s*[^\]]+\]/gi, '').trim() || '-';
+            }
+
+            function buildReasonWithBreakdown() {
+                const base = stripDurationTagFromReason(state.lastViolationReason || '-');
+                const breakdown = formatViolationDurationBreakdown(state.violationDurations);
+                return breakdown ? (base + ' [Durasi: ' + breakdown + ']') : base;
             }
 
             function formatSeconds(sec) {
@@ -819,6 +817,7 @@
                         examEndTime: state.examEndTime,
                         violations: state.violations,
                         totalAwaySeconds: state.totalAwaySeconds,
+                        violationDurations: state.violationDurations,
                         lastViolationReason: state.lastViolationReason
                     };
                     localStorage.setItem(STORAGE_KEYS.ACTIVE_EXAM_SESSION, JSON.stringify(map));
@@ -1040,7 +1039,10 @@
                     state.examStartedAt = savedActive.examStartedAt || new Date().toISOString();
                     state.examEndTime = savedActive.examEndTime;
                     state.violations = Number(savedActive.violations || 0);
-                    state.totalAwaySeconds = Number(savedActive.totalAwaySeconds || 0);
+                    state.violationDurations = Array.isArray(savedActive.violationDurations) ? savedActive.violationDurations : [];
+                    state.totalAwaySeconds = state.violationDurations.length > 0
+                        ? state.violationDurations.reduce((sum, val) => sum + (Number(val) || 0), 0)
+                        : Number(savedActive.totalAwaySeconds || 0);
                     state.lastViolationReason = savedActive.lastViolationReason || '-';
                 } else {
                     // Sesi baru
@@ -1048,18 +1050,17 @@
                     state.examStartedAt = new Date().toISOString();
                     state.examEndTime = Date.now() + (sub.durationMinutes * 60 * 1000);
                     state.violations = 0;
+                    state.violationDurations = [];
                     state.totalAwaySeconds = 0;
                     state.lastViolationReason = '-';
                 }
 
                 persistActiveExamSession();
                 updateViolationUI();
-                renderExamWatermark();
 
                 el.headerSubjectTitle.textContent = sub.title;
                 el.subjectPortalView.classList.add('hidden');
                 el.iframeExamView.classList.remove('hidden');
-                el.backToPortalBtn.classList.remove('hidden');
                 el.iframeLoader.classList.remove('hidden');
 
                 // Muat URL asli Google Form tanpa memaksa parameter yang memotong tampilan
@@ -1129,7 +1130,6 @@
                 state.isExamActive = false;
                 el.examIframe.src = 'about:blank';
                 el.iframeExamView.classList.add('hidden');
-                el.backToPortalBtn.classList.add('hidden');
                 el.examContainer.classList.add('hidden');
 
                 el.sumName.textContent = state.studentName;
@@ -1148,6 +1148,11 @@
             function syncSessionToServer(statusOverride) {
                 if (!state.studentName || !state.studentClass || !state.currentSubject) return;
                 const status = statusOverride || (state.isLocked ? 'LOCKED' : 'ACTIVE');
+                const computedTotalSec = state.violationDurations.length > 0
+                    ? state.violationDurations.reduce((acc, v) => acc + (Number(v) || 0), 0)
+                    : state.totalAwaySeconds;
+                state.totalAwaySeconds = computedTotalSec;
+
                 const params = new URLSearchParams({
                     action: 'sync',
                     sessionId: state.sessionId,
@@ -1157,9 +1162,9 @@
                     status: status,
                     violations: String(state.violations),
                     maxViolations: String(MAX_VIOLATIONS),
-                    lastViolationReason: state.lastViolationReason || '-',
+                    lastViolationReason: buildReasonWithBreakdown(),
                     baseKey: state.studentClass + '_' + state.studentName,
-                    awaySeconds: String(state.totalAwaySeconds),
+                    awaySeconds: String(computedTotalSec),
                     startedAt: state.examStartedAt || new Date().toISOString(),
                     _ts: String(Date.now())
                 });
@@ -1197,23 +1202,6 @@
                 } else {
                     el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-red-600/35 border border-red-500 text-red-200 text-[11px] font-black animate-pulse';
                 }
-            }
-
-            function renderExamWatermark() {
-                if (!el.examWatermarkLayer) return;
-                const timeTag = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-                const label = (state.studentName || 'PESERTA') + ' • ' + (state.studentClass || 'SMPN 15') + ' • ' + timeTag;
-                el.examWatermarkLayer.innerHTML = Array.from({ length: 18 }, () =>
-                    '<div class="watermark-item">' + escapeHtml(label) + '</div>'
-                ).join('');
-            }
-
-            function triggerAntiCaptureShield(durationMs = 1800) {
-                if (!el.examContainer) return;
-                el.examContainer.classList.add('anti-capture-blur');
-                setTimeout(() => {
-                    if (el.examContainer) el.examContainer.classList.remove('anti-capture-blur');
-                }, durationMs);
             }
 
             function showWarningModal(reasonText) {
@@ -1265,6 +1253,7 @@
                         clearInterval(state.unlockPollInterval);
                         state.isLocked = false;
                         state.violations = 0;
+                        state.violationDurations = [];
                         state.totalAwaySeconds = 0;
                         state.lastViolationReason = 'Kunci dibuka & direset oleh Pengawas';
                         clearLockedSession();
@@ -1297,6 +1286,7 @@
                 }
 
                 state.violations = Math.min(MAX_VIOLATIONS, state.violations + 1);
+                state.violationDurations.push(0);
                 state.lastViolationReason = reasonText;
 
                 updateViolationUI();
@@ -1316,7 +1306,13 @@
             function finalizeAwayDuration() {
                 if (state.awayStartTime) {
                     const diffSec = Math.max(1, Math.round((Date.now() - state.awayStartTime) / 1000));
-                    state.totalAwaySeconds += diffSec;
+                    if (state.violationDurations.length > 0) {
+                        const lastIdx = state.violationDurations.length - 1;
+                        state.violationDurations[lastIdx] = (Number(state.violationDurations[lastIdx]) || 0) + diffSec;
+                        state.totalAwaySeconds = state.violationDurations.reduce((acc, v) => acc + (Number(v) || 0), 0);
+                    } else {
+                        state.totalAwaySeconds += diffSec;
+                    }
                     state.awayStartTime = null;
                     el.modalAwayDuration.textContent = 'Total Waktu Keluar: ' + formatSeconds(state.totalAwaySeconds);
                     persistActiveExamSession();
@@ -1344,7 +1340,6 @@
                 if (!state.isExamActive || !state.currentSubject) return;
                 if (document.hidden) {
                     if (state.pendingBlurTimer) clearTimeout(state.pendingBlurTimer);
-                    triggerAntiCaptureShield(2200);
                     recordViolation('Keluar dari browser / menekan tombol Home HP / berpindah tab.', true);
                 } else {
                     finalizeAwayDuration();
@@ -1362,7 +1357,6 @@
                 state.lastBlurTime = Date.now();
                 if (state.isPointerInsideIframe) return;
 
-                triggerAntiCaptureShield(1800);
                 if (state.pendingBlurTimer) clearTimeout(state.pendingBlurTimer);
                 state.pendingBlurTimer = setTimeout(() => {
                     if (document.activeElement !== el.examIframe && state.isExamActive && state.currentSubject) {
@@ -1387,7 +1381,6 @@
                 state.lastViewportWidth = window.innerWidth;
                 state.lastViewportHeight = window.innerHeight;
                 if (wDiff > 90 || hDiff > 160) {
-                    triggerAntiCaptureShield(1800);
                     recordViolation('Perubahan ukuran layar terdeteksi (Split Screen / Screenshot / Floating App).', false);
                 }
             });
@@ -1404,7 +1397,6 @@
                 const sel = window.getSelection ? window.getSelection() : null;
                 if (sel && sel.toString().trim().length > 0) {
                     try { sel.removeAllRanges(); } catch (_) {}
-                    triggerAntiCaptureShield(1400);
                     recordViolation('Terdeteksi upaya memblokir teks soal untuk menyalin/menerjemahkan.', false);
                 }
             });
@@ -1432,7 +1424,6 @@
             // Deteksi long-press di iOS Safari / Android sebelum menu Copy/Translate muncul
             document.addEventListener('touchstart', (e) => {
                 if (e.touches && e.touches.length > 1 && state.isExamActive && state.currentSubject) {
-                    triggerAntiCaptureShield(1600);
                     recordViolation('Gestur multi-sentuh / tangkapan layar terdeteksi.', false);
                 }
                 state.touchStartTime = Date.now();
@@ -1454,7 +1445,6 @@
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'PrintScreen') {
                     e.preventDefault();
-                    triggerAntiCaptureShield(2500);
                     recordViolation('Tombol PrintScreen / Screenshot terdeteksi.', false);
                 }
                 if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'a', 'u', 's', 'p'].includes(String(e.key || '').toLowerCase())) {
@@ -1470,7 +1460,6 @@
 
             document.addEventListener('keyup', (e) => {
                 if (e.key === 'PrintScreen') {
-                    triggerAntiCaptureShield(2500);
                     recordViolation('Tombol PrintScreen / Screenshot terdeteksi.', false);
                 }
             });
@@ -1515,7 +1504,6 @@
                 el.examContainer.classList.remove('hidden');
                 el.subjectPortalView.classList.remove('hidden');
                 el.iframeExamView.classList.add('hidden');
-                el.backToPortalBtn.classList.add('hidden');
 
                 await loadSubjectsFromSheet();
             });
@@ -1524,26 +1512,7 @@
                 loadSubjectsFromSheet();
             });
 
-            el.backToPortalBtn.addEventListener('click', () => {
-                stopExamTimer();
-                if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
-                state.isExamActive = false;
-                state.currentSubject = null;
-                el.examIframe.src = 'about:blank';
-                el.iframeExamView.classList.add('hidden');
-                el.backToPortalBtn.classList.add('hidden');
-                el.subjectPortalView.classList.remove('hidden');
-                el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
-                renderSubjectsGrid();
-            });
-
             el.finishExamBtn.addEventListener('click', () => {
-                if (!state.currentSubject) {
-                    // Kembali ke halaman login jika masih di portal jadwal
-                    el.examContainer.classList.add('hidden');
-                    el.startScreen.classList.remove('hidden');
-                    return;
-                }
                 el.confirmFinishModal.classList.remove('hidden');
             });
 
@@ -1762,12 +1731,12 @@
                 if (prevCls && (prevCls === 'ALL' || clsSet.has(prevCls))) el.adminClassFilter.value = prevCls;
             }
 
-            function renderAdminTable() {
+            function getFilteredAdminSessions() {
                 const query = el.adminSearchInput.value.trim().toLowerCase();
                 const subFilter = el.adminSubjectFilter.value;
                 const clsFilter = el.adminClassFilter.value;
 
-                const filtered = state.adminSessions.filter(s => {
+                return state.adminSessions.filter(s => {
                     const matchQuery = !query ||
                         s.studentName.toLowerCase().includes(query) ||
                         s.subjectTitle.toLowerCase().includes(query) ||
@@ -1776,6 +1745,10 @@
                     const matchCls = clsFilter === 'ALL' || s.studentClass === clsFilter;
                     return matchQuery && matchSub && matchCls;
                 });
+            }
+
+            function renderAdminTable() {
+                const filtered = getFilteredAdminSessions();
 
                 el.statTotal.textContent = String(state.adminSessions.length);
                 el.statActive.textContent = String(state.adminSessions.filter(s => s.status === 'ACTIVE').length);
@@ -1797,6 +1770,12 @@
                         badge = '<span class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-700 font-black text-[10px]">DIRESET ADMIN</span>';
                     }
 
+                    const breakdownText = extractViolationBreakdownFromText(s.lastViolationReason);
+                    const cleanReasonText = stripDurationTagFromReason(s.lastViolationReason);
+                    const durationDetailHtml = breakdownText
+                        ? '<p class="text-[10px] font-semibold text-amber-700 mt-0.5">' + escapeHtml(breakdownText) + '</p>'
+                        : (s.violations > 0 ? '<p class="text-[10px] text-slate-400 mt-0.5">Akumulasi dari ' + s.violations + 'x pelanggaran</p>' : '');
+
                     return [
                         '<tr class="hover:bg-slate-50/80 transition">',
                         '  <td class="py-3.5 px-4">',
@@ -1807,8 +1786,11 @@
                         '  <td class="py-3.5 px-4 font-mono font-bold text-slate-600">' + escapeHtml(formatClock(s.startedAt)) + '</td>',
                         '  <td class="py-3.5 px-4">' + badge + '</td>',
                         '  <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-lg bg-slate-100 font-black text-slate-800">' + s.violations + ' / ' + MAX_VIOLATIONS + '</span></td>',
-                        '  <td class="py-3.5 px-4 font-bold text-slate-700">' + escapeHtml(formatSeconds(s.awaySeconds)) + '</td>',
-                        '  <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="' + escapeHtml(s.lastViolationReason) + '">' + escapeHtml(s.lastViolationReason) + '</td>',
+                        '  <td class="py-3.5 px-4">',
+                        '    <p class="font-extrabold text-slate-800">Total: ' + escapeHtml(formatSeconds(s.awaySeconds)) + '</p>',
+                        '    ' + durationDetailHtml,
+                        '  </td>',
+                        '  <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="' + escapeHtml(cleanReasonText) + '">' + escapeHtml(cleanReasonText) + '</td>',
                         '  <td class="py-3.5 px-4 text-right">',
                         '    <button type="button" data-row-idx="' + idx + '" class="admin-unlock-btn px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[11px] transition cursor-pointer">',
                         '      Buka Kunci / Reset',
@@ -1825,6 +1807,76 @@
                         if (target) unlockStudentSessionFromAdmin(target);
                     });
                 });
+            }
+
+            function exportAdminMonitoringToExcel() {
+                const rowsData = getFilteredAdminSessions();
+                if (rowsData.length === 0) {
+                    el.adminSyncAlert.textContent = 'Tidak ada data monitoring untuk di-export ke Excel.';
+                    el.adminSyncAlert.classList.remove('hidden');
+                    return;
+                }
+
+                const tableRowsHtml = rowsData.map((s, i) => {
+                    const statusLabel = (s.status === 'LOCKED' || s.violations >= MAX_VIOLATIONS)
+                        ? 'TERKUNCI (10X)'
+                        : (s.status === 'FINISHED' ? 'SELESAI' : (s.status === 'DIBUKA ADMIN' ? 'DIRESET ADMIN' : 'MENGERJAKAN'));
+                    const breakdownText = extractViolationBreakdownFromText(s.lastViolationReason) || '-';
+                    const cleanReasonText = stripDurationTagFromReason(s.lastViolationReason);
+
+                    return [
+                        '<tr>',
+                        '  <td>' + (i + 1) + '</td>',
+                        '  <td>' + escapeHtml(s.studentClass) + '</td>',
+                        '  <td>' + escapeHtml(s.studentName) + '</td>',
+                        '  <td>' + escapeHtml(s.subjectTitle) + '</td>',
+                        '  <td>' + escapeHtml(formatClock(s.startedAt)) + '</td>',
+                        '  <td>' + escapeHtml(statusLabel) + '</td>',
+                        '  <td>' + s.violations + ' / ' + MAX_VIOLATIONS + '</td>',
+                        '  <td>' + escapeHtml(formatSeconds(s.awaySeconds)) + ' (' + s.awaySeconds + ' detik)</td>',
+                        '  <td>' + escapeHtml(breakdownText) + '</td>',
+                        '  <td>' + escapeHtml(cleanReasonText) + '</td>',
+                        '</tr>'
+                    ].join('');
+                }).join('');
+
+                const excelHtml = [
+                    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">',
+                    '<head><meta charset="UTF-8"></head>',
+                    '<body>',
+                    '  <h3>LAPORAN MONITORING CBT ANTI-CURANG — SMP NEGERI 15 BANJARBARU</h3>',
+                    '  <p>Waktu Unduh: ' + escapeHtml(new Date().toLocaleString('id-ID')) + '</p>',
+                    '  <table border="1" cellspacing="0" cellpadding="6">',
+                    '    <thead>',
+                    '      <tr style="background-color:#1e293b;color:#ffffff;font-weight:bold;">',
+                    '        <th>No</th>',
+                    '        <th>Kelas</th>',
+                    '        <th>Nama Siswa</th>',
+                    '        <th>Mata Pelajaran</th>',
+                    '        <th>Mulai Mengerjakan</th>',
+                    '        <th>Status</th>',
+                    '        <th>Jumlah Pelanggaran</th>',
+                    '        <th>Total Durasi Keluar</th>',
+                    '        <th>Rincian Durasi per Pelanggaran</th>',
+                    '        <th>Log Kecurangan Terakhir</th>',
+                    '      </tr>',
+                    '    </thead>',
+                    '    <tbody>' + tableRowsHtml + '</tbody>',
+                    '  </table>',
+                    '</body>',
+                    '</html>'
+                ].join('');
+
+                const blob = new Blob(['\ufeff', excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                const dateStamp = new Date().toISOString().slice(0, 10);
+                link.href = url;
+                link.download = 'Monitoring_CBT_SMPN15_' + dateStamp + '.xls';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
             }
 
             async function unlockStudentSessionFromAdmin(sessionObj) {
@@ -1852,6 +1904,7 @@
             el.adminSearchInput.addEventListener('input', renderAdminTable);
             el.adminSubjectFilter.addEventListener('change', renderAdminTable);
             el.adminClassFilter.addEventListener('change', renderAdminTable);
+            el.adminExportExcelBtn.addEventListener('click', exportAdminMonitoringToExcel);
             el.adminRefreshBtn.addEventListener('click', fetchAdminMonitoringData);
 
             el.copyAppsScriptBtn.addEventListener('click', () => {
