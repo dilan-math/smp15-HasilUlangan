@@ -600,6 +600,8 @@
                 awayStartTime: null,
                 lastBlurTime: 0,
                 pendingBlurTimer: null,
+                pendingVisibilityTimer: null,
+                screenOffSuspected: false,
                 lastViolationTimestamp: 0,
                 lastViewportWidth: window.innerWidth,
                 lastViewportHeight: window.innerHeight,
@@ -1305,49 +1307,68 @@
 
             function finalizeAwayDuration() {
                 if (state.awayStartTime) {
-                    const diffSec = Math.max(1, Math.round((Date.now() - state.awayStartTime) / 1000));
+                    const elapsedSec = Math.max(1, Math.round((Date.now() - state.awayStartTime) / 1000));
                     if (state.violationDurations.length > 0) {
                         const lastIdx = state.violationDurations.length - 1;
-                        state.violationDurations[lastIdx] = (Number(state.violationDurations[lastIdx]) || 0) + diffSec;
-                        state.totalAwaySeconds = state.violationDurations.reduce((acc, v) => acc + (Number(v) || 0), 0);
+                        state.violationDurations[lastIdx] = (Number(state.violationDurations[lastIdx]) || 0) + elapsedSec;
+                        state.totalAwaySeconds = state.violationDurations.reduce((sum, val) => sum + (Number(val) || 0), 0);
                     } else {
-                        state.totalAwaySeconds += diffSec;
+                        state.totalAwaySeconds += elapsedSec;
                     }
                     state.awayStartTime = null;
                     el.modalAwayDuration.textContent = 'Total Waktu Keluar: ' + formatSeconds(state.totalAwaySeconds);
                     persistActiveExamSession();
+                    if (state.isLocked) persistLockedSession();
                     syncSessionToServer(state.isLocked ? 'LOCKED' : 'ACTIVE');
                 }
             }
 
-            // =================================================================
-            // LISTENER ANTI-CURANG (ANDROID, IOS & DESKTOP)
-            // =================================================================
-            if (el.examIframe) {
-                el.examIframe.addEventListener('load', () => {
-                    el.iframeLoader.classList.add('hidden');
-                });
-                el.examIframe.addEventListener('pointerenter', () => {
-                    state.isPointerInsideIframe = true;
-                });
-                el.examIframe.addEventListener('pointerleave', () => {
-                    state.isPointerInsideIframe = false;
-                });
-            }
+            el.examIframe.addEventListener('load', () => {
+                el.iframeLoader.classList.add('hidden');
+            });
 
-            // 1. Keluar browser / tekan tombol Home HP / pindah tab
+            el.examIframe.addEventListener('mouseenter', () => { state.isPointerInsideIframe = true; });
+            el.examIframe.addEventListener('mouseleave', () => { state.isPointerInsideIframe = false; });
+            el.examIframe.addEventListener('touchstart', () => { state.isPointerInsideIframe = true; }, { passive: true });
+
+            // 1. Keluar browser / tekan tombol Home HP / pindah tab (toleransi layar HP mati otomatis)
             document.addEventListener('visibilitychange', () => {
                 if (!state.isExamActive || !state.currentSubject) return;
                 if (document.hidden) {
-                    if (state.pendingBlurTimer) clearTimeout(state.pendingBlurTimer);
-                    recordViolation('Keluar dari browser / menekan tombol Home HP / berpindah tab.', true);
+                    if (state.pendingBlurTimer) {
+                        clearTimeout(state.pendingBlurTimer);
+                        state.pendingBlurTimer = null;
+                    }
+                    const sinceBlurMs = Date.now() - (state.lastBlurTime || 0);
+                    // Pola layar HP mati/terkunci otomatis (screen off): blur & hidden terjadi hampir bersamaan (<= 150ms)
+                    // atau hidden terjadi tanpa blur terpisah. Tunda 1.2 detik untuk memastikan bukan perpindahan aplikasi.
+                    if (sinceBlurMs <= 150) {
+                        state.screenOffSuspected = true;
+                        if (state.pendingVisibilityTimer) clearTimeout(state.pendingVisibilityTimer);
+                        state.pendingVisibilityTimer = setTimeout(() => {
+                            state.pendingVisibilityTimer = null;
+                        }, 1200);
+                    } else {
+                        state.screenOffSuspected = false;
+                        recordViolation('Keluar dari browser / menekan tombol Home HP / berpindah tab.', true);
+                    }
                 } else {
+                    if (state.pendingVisibilityTimer) {
+                        clearTimeout(state.pendingVisibilityTimer);
+                        state.pendingVisibilityTimer = null;
+                    }
+                    state.screenOffSuspected = false;
                     finalizeAwayDuration();
                 }
             });
 
             window.addEventListener('pagehide', () => {
                 if (!state.isExamActive || !state.currentSubject) return;
+                if (state.pendingVisibilityTimer) {
+                    clearTimeout(state.pendingVisibilityTimer);
+                    state.pendingVisibilityTimer = null;
+                }
+                state.screenOffSuspected = false;
                 recordViolation('Meninggalkan halaman ujian (Home / Recent Apps).', true);
             });
 
@@ -1359,10 +1380,10 @@
 
                 if (state.pendingBlurTimer) clearTimeout(state.pendingBlurTimer);
                 state.pendingBlurTimer = setTimeout(() => {
-                    if (document.activeElement !== el.examIframe && state.isExamActive && state.currentSubject) {
+                    if (!document.hidden && !state.screenOffSuspected && document.activeElement !== el.examIframe && state.isExamActive && state.currentSubject) {
                         recordViolation('Terdeteksi keluar fokus layar (Screenshot / Panel Notifikasi / Split Screen).', true);
                     }
-                }, 420);
+                }, 450);
             });
 
             window.addEventListener('focus', () => {
@@ -1370,6 +1391,11 @@
                     clearTimeout(state.pendingBlurTimer);
                     state.pendingBlurTimer = null;
                 }
+                if (state.pendingVisibilityTimer) {
+                    clearTimeout(state.pendingVisibilityTimer);
+                    state.pendingVisibilityTimer = null;
+                }
+                state.screenOffSuspected = false;
                 finalizeAwayDuration();
             });
 
