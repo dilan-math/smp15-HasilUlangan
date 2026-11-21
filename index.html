@@ -38,6 +38,44 @@
         .animate-pulse-alert {
             animation: pulseAlert 1s infinite ease-in-out;
         }
+        #exam-container {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            z-index: 30;
+            background-color: #f1f5f9;
+            display: flex;
+            flex-direction: column;
+        }
+        #exam-container.hidden {
+            display: none !important;
+        }
+        #iframe-exam-view {
+            position: fixed;
+            top: 54px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: calc(100vh - 54px);
+            height: calc(100dvh - 54px);
+            background-color: #ffffff;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        #iframe-exam-view.hidden {
+            display: none !important;
+        }
+        #exam-iframe {
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            border: 0;
+            display: block;
+            pointer-events: auto !important;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col overflow-x-hidden notranslate" translate="no">
@@ -151,9 +189,9 @@
     <!-- =====================================================================
          2. AREA UJIAN UTAMA (PORTAL MATA PELAJARAN & IFRAME SOAL)
     ====================================================================== -->
-    <div id="exam-container" class="hidden flex-1 flex flex-col h-screen overflow-hidden">
+    <div id="exam-container" class="hidden flex flex-col overflow-hidden">
         <!-- Top Bar Pengawasan -->
-        <header class="bg-slate-900 text-white px-3 sm:px-5 py-2.5 flex items-center justify-between gap-2 border-b border-slate-800 shrink-0 z-30">
+        <header id="exam-topbar" class="bg-slate-900 text-white px-3 sm:px-5 h-[54px] flex items-center justify-between gap-2 border-b border-slate-800 shrink-0 z-30">
             <div class="flex items-center gap-2.5 min-w-0">
                 <img src="https://raw.githubusercontent.com/dilan-math/smp15-HasilUlangan/282e19d087819a7a0ee87a2ea514b509cad6b85c/Logo%20SMP15BJB%20(1).png"
                      alt="Logo"
@@ -220,94 +258,76 @@
         </div>
 
         <!-- Sub-view B: Iframe Lembar Soal -->
-        <div id="iframe-exam-view" class="hidden flex-1 relative bg-white w-full h-full overflow-hidden">
+        <div id="iframe-exam-view" class="hidden">
             <div id="iframe-loader" class="absolute inset-0 bg-white flex flex-col items-center justify-center gap-3 z-10">
                 <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                 <p class="text-sm font-bold text-slate-600">Memuat lembar soal ujian...</p>
             </div>
             <!-- Watermark Dinamis Identitas Peserta -->
-            <div id="exam-watermark-layer" aria-hidden="true" class="pointer-events-none select-none fixed inset-0 z-20 overflow-hidden opacity-[0.07] flex flex-wrap items-center justify-center gap-10 p-6"></div>
-            <iframe id="exam-iframe" class="w-full h-full border-0 notranslate" translate="no" allow="fullscreen; camera; microphone" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <div id="exam-watermark-layer" aria-hidden="true" class="pointer-events-none select-none fixed inset-x-0 top-[54px] bottom-0 z-20 overflow-hidden opacity-[0.06] flex flex-wrap items-center justify-center gap-10 p-6"></div>
+            <iframe id="exam-iframe" scrolling="yes" class="notranslate" translate="no" allow="fullscreen; camera; microphone" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
     </div>
 
     <!-- =====================================================================
-         3. OVERLAY PERINGATAN PELANGGARAN & KUNCI PERMANEN (10X)
+         3. MODAL PERINGATAN PELANGGARAN & KUNCI PERMANEN (10X)
     ====================================================================== -->
-    <div id="violation-overlay" class="hidden fixed inset-0 z-50 bg-red-950/95 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border-4 border-red-600 p-6 sm:p-7 text-center space-y-5 animate-pulse-alert">
-            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto">
-                <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-            </div>
-
-            <div>
-                <span id="overlay-status-badge" class="inline-block px-3 py-1 bg-red-600 text-white text-xs font-black uppercase tracking-wider rounded-full mb-2">
-                    PERINGATAN PELANGGARAN
-                </span>
-                <h2 id="overlay-title" class="text-xl sm:text-2xl font-black text-slate-900">
-                    Terdeteksi Aktivitas Terlarang!
-                </h2>
-                <p id="overlay-reason" class="text-xs sm:text-sm font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl p-3 mt-3">
-                    Meninggalkan layar ujian
-                </p>
-            </div>
-
-            <div class="bg-slate-100 rounded-2xl p-4 flex items-center justify-around">
+    <div id="violation-overlay" class="hidden fixed inset-0 z-50 bg-red-950/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 text-center shadow-2xl border-2 border-red-600 space-y-4 animate-pulse-alert">
+            <span id="overlay-status-badge" class="inline-block px-3 py-1 bg-red-100 text-red-700 text-[11px] font-black uppercase tracking-wider rounded-full">
+                PERINGATAN PELANGGARAN
+            </span>
+            <h3 id="overlay-title" class="text-xl font-black text-slate-900">Terdeteksi Aktivitas Terlarang!</h3>
+            <div class="bg-red-50 border border-red-200 rounded-2xl p-4 text-left text-xs space-y-2">
                 <div>
-                    <p class="text-[11px] font-bold text-slate-500 uppercase">Jumlah Pelanggaran</p>
-                    <p id="overlay-count" class="text-2xl font-black text-red-600">1 / 10</p>
+                    <span class="text-slate-500 font-semibold">Jenis Pelanggaran:</span>
+                    <p id="overlay-reason" class="font-extrabold text-red-700 mt-0.5">-</p>
                 </div>
-                <div class="h-10 w-px bg-slate-300"></div>
-                <div>
-                    <p class="text-[11px] font-bold text-slate-500 uppercase">Total Waktu Keluar</p>
-                    <p id="overlay-away-time" class="text-base font-black text-slate-800">0 detik</p>
+                <div class="flex justify-between pt-1 border-t border-red-100">
+                    <span class="text-slate-500 font-semibold">Hitungan Pelanggaran:</span>
+                    <span id="overlay-count" class="font-black text-red-700">1 / 10</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500 font-semibold">Akumulasi Waktu Keluar:</span>
+                    <span id="overlay-away-time" class="font-extrabold text-slate-800">0 detik</span>
                 </div>
             </div>
-
             <p id="overlay-instruction" class="text-xs text-slate-600 leading-relaxed">
-                Aktivitas ini telah dilaporkan secara otomatis ke layar Pengawas / Admin. Jika mencapai <strong>10 kali pelanggaran</strong>, ujian Anda akan dikunci permanen.
+                Segera kembali ke lembar ujian. Jika mencapai <strong>10 kali</strong> pelanggaran, akun ujian akan terkunci permanen.
             </p>
-
-            <!-- Tombol Kembali (Saat belum 10x) -->
             <button id="resume-exam-btn" type="button"
                 class="w-full py-3.5 px-6 bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm rounded-2xl shadow-lg transition cursor-pointer">
-                Saya Mengerti &amp; Kembali ke Ujian
+                Kembali ke Ujian
             </button>
-
-            <!-- Panel Terkunci Permanen (Saat mencapai 10x) -->
             <div id="locked-panel" class="hidden space-y-3 pt-2 border-t border-slate-200">
-                <div class="bg-red-100 border border-red-300 text-red-900 p-3.5 rounded-2xl text-xs font-bold">
-                    UJIAN DIKUNCI PERMANEN! Anda telah mencapai batas maksimal 10x pelanggaran. Silakan lapor kepada Pengawas Ujian untuk membuka kunci.
-                </div>
+                <p class="text-xs font-bold text-red-700">
+                    Ujian dikunci permanen. Hubungi Pengawas / Admin untuk membuka kunci dari Dashboard Monitoring.
+                </p>
                 <button id="check-unlock-btn" type="button"
-                    class="w-full py-3.5 px-5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs sm:text-sm rounded-2xl transition cursor-pointer">
+                    class="w-full py-3 px-5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl transition cursor-pointer">
                     Cek Status Buka Kunci dari Admin
                 </button>
-                <p id="unlock-check-status" class="text-[11px] font-semibold text-slate-500">
-                    Menunggu konfirmasi buka kunci dari Admin...
-                </p>
+                <p id="unlock-check-status" class="text-[11px] font-semibold text-slate-500"></p>
             </div>
         </div>
     </div>
 
     <!-- =====================================================================
-         4. MODAL KONFIRMASI SELESAI & LAYAR RINGKASAN AKHIR
+         4. MODAL KONFIRMASI SELESAI UJIAN
     ====================================================================== -->
     <div id="confirm-finish-modal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+        <div class="w-full max-w-sm bg-white rounded-3xl p-6 text-center shadow-2xl space-y-4">
             <h3 class="text-lg font-black text-slate-900">Akhiri Sesi Ujian?</h3>
             <p class="text-xs text-slate-600 leading-relaxed">
-                Pastikan Anda sudah menekan tombol <strong>Kirim / Submit</strong> di dalam lembar soal sebelum mengakhiri ujian ini.
+                Pastikan Anda sudah menekan tombol <strong>Kirim / Submit</strong> di dalam lembar soal Google Form sebelum mengakhiri sesi ini.
             </p>
-            <div class="grid grid-cols-2 gap-3 pt-2">
+            <div class="grid grid-cols-2 gap-2.5 pt-2">
                 <button id="cancel-finish-btn" type="button"
-                    class="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl cursor-pointer">
+                    class="py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl cursor-pointer">
                     Batal
                 </button>
                 <button id="confirm-finish-btn" type="button"
-                    class="py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-2xl cursor-pointer">
+                    class="py-3 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-2xl cursor-pointer">
                     Ya, Selesai
                 </button>
             </div>
@@ -823,9 +843,6 @@ function jsonResponse(obj) {
             function normalizeExamUrl(rawUrl) {
                 const trimmed = String(rawUrl || '').trim();
                 if (!trimmed) return '';
-                if (trimmed.includes('docs.google.com/forms') && !trimmed.includes('embedded=true')) {
-                    return trimmed + (trimmed.includes('?') ? '&embedded=true' : '?embedded=true');
-                }
                 return trimmed;
             }
 
@@ -1085,11 +1102,29 @@ function jsonResponse(obj) {
             // =================================================================
             // ALUR MASUK, PILIH MAPEL, PELANGGARAN & KUNCI PERMANEN (10X)
             // =================================================================
+            function isCurrentlyFullscreen() {
+                return Boolean(
+                    document.fullscreenElement ||
+                    document.webkitFullscreenElement ||
+                    document.mozFullScreenElement ||
+                    document.msFullscreenElement
+                );
+            }
+
             function enterFullscreenSafe() {
                 try {
                     const docEl = document.documentElement;
-                    if (docEl.requestFullscreen && !document.fullscreenElement) {
-                        docEl.requestFullscreen().catch(() => {});
+                    if (!isCurrentlyFullscreen()) {
+                        const req = docEl.requestFullscreen ||
+                            docEl.webkitRequestFullscreen ||
+                            docEl.mozRequestFullScreen ||
+                            docEl.msRequestFullscreen;
+                        if (req) {
+                            const promise = req.call(docEl, { navigationUI: 'hide' });
+                            if (promise && typeof promise.catch === 'function') {
+                                promise.catch(() => {});
+                            }
+                        }
                     }
                 } catch (e) {}
             }
@@ -1098,21 +1133,19 @@ function jsonResponse(obj) {
                 if (el.violationCounter) {
                     el.violationCounter.textContent = `${state.violations}/${MAX_VIOLATIONS}`;
                 }
-                if (el.violationBadge) {
-                    if (state.violations === 0) {
-                        el.violationBadge.className = 'px-2.5 py-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 rounded-xl text-xs font-extrabold flex items-center gap-1.5';
-                    } else if (state.violations < 7) {
-                        el.violationBadge.className = 'px-2.5 py-1.5 bg-amber-500/20 border border-amber-400/40 text-amber-300 rounded-xl text-xs font-extrabold flex items-center gap-1.5';
-                    } else {
-                        el.violationBadge.className = 'px-2.5 py-1.5 bg-red-600/30 border border-red-400 text-red-200 rounded-xl text-xs font-extrabold flex items-center gap-1.5 animate-pulse';
-                    }
+                if (!el.violationBadge) return;
+                if (state.violations >= MAX_VIOLATIONS) {
+                    el.violationBadge.className = 'px-2.5 py-1.5 bg-red-600/30 border border-red-400/50 text-red-200 rounded-xl text-xs font-extrabold flex items-center gap-1.5';
+                } else if (state.violations > 0) {
+                    el.violationBadge.className = 'px-2.5 py-1.5 bg-amber-500/20 border border-amber-400/40 text-amber-200 rounded-xl text-xs font-extrabold flex items-center gap-1.5';
+                } else {
+                    el.violationBadge.className = 'px-2.5 py-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 rounded-xl text-xs font-extrabold flex items-center gap-1.5';
                 }
             }
 
             function persistAwayTracker() {
                 try {
                     localStorage.setItem(STORAGE_KEYS.AWAY_TRACKER, JSON.stringify({
-                        sessionId: state.sessionId,
                         awayStartTime: state.awayStartTime,
                         totalAwaySeconds: state.totalAwaySeconds
                     }));
@@ -1122,11 +1155,11 @@ function jsonResponse(obj) {
             function restoreAwayTracker() {
                 try {
                     const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.AWAY_TRACKER) || 'null');
-                    if (saved && saved.sessionId === state.sessionId) {
-                        state.totalAwaySeconds = Number(saved.totalAwaySeconds || 0);
+                    if (saved) {
+                        state.totalAwaySeconds = Math.max(state.totalAwaySeconds, Number(saved.totalAwaySeconds || 0));
                         if (saved.awayStartTime) {
-                            const elapsed = Math.max(1, Math.round((Date.now() - Number(saved.awayStartTime)) / 1000));
-                            state.totalAwaySeconds += elapsed;
+                            const extra = Math.max(1, Math.round((Date.now() - Number(saved.awayStartTime)) / 1000));
+                            state.totalAwaySeconds += extra;
                             state.awayStartTime = null;
                             persistAwayTracker();
                         }
@@ -1531,9 +1564,18 @@ function jsonResponse(obj) {
 
             document.addEventListener('fullscreenchange', () => {
                 if (!state.isExamActive || state.isLocked) return;
-                if (!document.fullscreenElement) {
-                    recordViolation('Keluar dari mode layar penuh (Fullscreen)');
+                if (!isCurrentlyFullscreen()) {
+                    recordViolation('Keluar dari mode layar penuh (Fullscreen / ESC)');
                 }
+            });
+
+            ['webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach((fsEvt) => {
+                document.addEventListener(fsEvt, () => {
+                    if (!state.isExamActive || state.isLocked) return;
+                    if (!isCurrentlyFullscreen()) {
+                        recordViolation('Keluar dari mode layar penuh (Fullscreen)');
+                    }
+                });
             });
 
             document.addEventListener('contextmenu', (e) => {
@@ -1818,24 +1860,30 @@ function jsonResponse(obj) {
             // =================================================================
             // EVENT LISTENER TOMBOL UI
             // =================================================================
-            el.studentClassSelect.addEventListener('change', (e) => {
-                populateStudentNameDropdown(e.target.value);
-            });
+            const bindClick = (node, handler) => { if (node) node.addEventListener('click', handler); };
 
-            el.reloadStudentsBtn.addEventListener('click', loadStudentsFromSheet);
-            el.startExamBtn.addEventListener('click', enterExamPortal);
-            el.refreshSubjectsBtn.addEventListener('click', loadSubjectsFromSheet);
+            if (el.studentClassSelect) {
+                el.studentClassSelect.addEventListener('change', (e) => {
+                    populateStudentNameDropdown(e.target.value);
+                });
+            }
 
-            el.subjectsGrid.addEventListener('click', (e) => {
-                const btn = e.target.closest('.open-subject-btn');
-                if (!btn || btn.disabled) return;
-                const idx = Number(btn.dataset.subjectIdx);
-                if (!Number.isNaN(idx) && state.subjects[idx]) {
-                    openSubjectExam(state.subjects[idx]);
-                }
-            });
+            bindClick(el.reloadStudentsBtn, loadStudentsFromSheet);
+            bindClick(el.startExamBtn, enterExamPortal);
+            bindClick(el.refreshSubjectsBtn, loadSubjectsFromSheet);
 
-            el.backToPortalBtn.addEventListener('click', () => {
+            if (el.subjectsGrid) {
+                el.subjectsGrid.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.open-subject-btn');
+                    if (!btn || btn.disabled) return;
+                    const idx = Number(btn.dataset.subjectIdx);
+                    if (!Number.isNaN(idx) && state.subjects[idx]) {
+                        openSubjectExam(state.subjects[idx]);
+                    }
+                });
+            }
+
+            bindClick(el.backToPortalBtn, () => {
                 finalizeReturnFromAway(true);
                 el.iframeExamView.classList.add('hidden');
                 el.examIframe.src = 'about:blank';
@@ -1846,40 +1894,40 @@ function jsonResponse(obj) {
                 }
             });
 
-            el.resumeExamBtn.addEventListener('click', () => {
+            bindClick(el.resumeExamBtn, () => {
                 finalizeReturnFromAway(true);
-                el.violationOverlay.classList.add('hidden');
+                if (el.violationOverlay) el.violationOverlay.classList.add('hidden');
                 enterFullscreenSafe();
             });
 
-            el.checkUnlockBtn.addEventListener('click', () => {
+            bindClick(el.checkUnlockBtn, () => {
                 checkAdminUnlockStatus(false);
             });
 
-            el.finishExamBtn.addEventListener('click', () => {
-                el.confirmFinishModal.classList.remove('hidden');
+            bindClick(el.finishExamBtn, () => {
+                if (el.confirmFinishModal) el.confirmFinishModal.classList.remove('hidden');
             });
 
-            el.cancelFinishBtn.addEventListener('click', () => {
-                el.confirmFinishModal.classList.add('hidden');
+            bindClick(el.cancelFinishBtn, () => {
+                if (el.confirmFinishModal) el.confirmFinishModal.classList.add('hidden');
             });
 
-            el.confirmFinishBtn.addEventListener('click', endExamSession);
+            bindClick(el.confirmFinishBtn, endExamSession);
 
-            el.backToHomeBtn.addEventListener('click', () => {
-                el.summaryScreen.classList.add('hidden');
-                el.startScreen.classList.remove('hidden');
+            bindClick(el.backToHomeBtn, () => {
+                if (el.summaryScreen) el.summaryScreen.classList.add('hidden');
+                if (el.startScreen) el.startScreen.classList.remove('hidden');
             });
 
             // Admin PIN & Dashboard Listeners
-            el.openAdminBtn.addEventListener('click', () => {
+            bindClick(el.openAdminBtn, () => {
                 el.adminPinInput.value = '';
                 el.adminPinError.classList.add('hidden');
                 el.adminPinModal.classList.remove('hidden');
                 setTimeout(() => el.adminPinInput.focus(), 100);
             });
 
-            el.cancelPinBtn.addEventListener('click', () => {
+            bindClick(el.cancelPinBtn, () => {
                 el.adminPinModal.classList.add('hidden');
             });
 
@@ -1898,35 +1946,37 @@ function jsonResponse(obj) {
                 }
             }
 
-            el.submitPinBtn.addEventListener('click', verifyAdminPin);
-            el.adminPinInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') verifyAdminPin();
-            });
+            bindClick(el.submitPinBtn, verifyAdminPin);
+            if (el.adminPinInput) {
+                el.adminPinInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') verifyAdminPin();
+                });
+            }
 
-            el.closeAdminBtn.addEventListener('click', () => {
+            bindClick(el.closeAdminBtn, () => {
                 el.adminDashboard.classList.add('hidden');
                 if (state.adminRefreshInterval) clearInterval(state.adminRefreshInterval);
             });
 
-            el.tabBtnMonitoring.addEventListener('click', () => {
+            bindClick(el.tabBtnMonitoring, () => {
                 el.tabBtnMonitoring.className = 'py-3.5 px-4 text-xs font-extrabold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap cursor-pointer';
                 el.tabBtnScript.className = 'py-3.5 px-4 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap cursor-pointer';
                 el.adminTabMonitoring.classList.remove('hidden');
                 el.adminTabScript.classList.add('hidden');
             });
 
-            el.tabBtnScript.addEventListener('click', () => {
+            bindClick(el.tabBtnScript, () => {
                 el.tabBtnScript.className = 'py-3.5 px-4 text-xs font-extrabold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap cursor-pointer';
                 el.tabBtnMonitoring.className = 'py-3.5 px-4 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap cursor-pointer';
                 el.adminTabScript.classList.remove('hidden');
                 el.adminTabMonitoring.classList.add('hidden');
             });
 
-            el.adminRefreshBtn.addEventListener('click', fetchAdminMonitoringData);
-            el.adminSearchInput.addEventListener('input', renderAdminMonitoringTable);
-            el.adminClassFilter.addEventListener('change', renderAdminMonitoringTable);
+            bindClick(el.adminRefreshBtn, fetchAdminMonitoringData);
+            if (el.adminSearchInput) el.adminSearchInput.addEventListener('input', renderAdminMonitoringTable);
+            if (el.adminClassFilter) el.adminClassFilter.addEventListener('change', renderAdminMonitoringTable);
 
-            el.copyAppsScriptBtn.addEventListener('click', () => {
+            bindClick(el.copyAppsScriptBtn, () => {
                 el.appsScriptCodeBox.select();
                 document.execCommand('copy');
                 const orig = el.copyAppsScriptBtn.textContent;
