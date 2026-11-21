@@ -600,7 +600,6 @@
                 awayStartTime: null,
                 lastBlurTime: 0,
                 pendingBlurTimer: null,
-                pendingVisibilityTimer: null,
                 screenOffSuspected: false,
                 lastViolationTimestamp: 0,
                 lastViewportWidth: window.innerWidth,
@@ -840,8 +839,7 @@
                         sessionId: state.sessionId,
                         studentClass: state.studentClass,
                         studentName: state.studentName,
-                        subjectTitle: state.currentSubject ? state.currentSubject.title : '',
-                        violations: state.violations,
+                        subjectTitle: state.currentSubject ? state.currentSubject.title : 'Ujian Terkunci',
                         totalAwaySeconds: state.totalAwaySeconds,
                         lastViolationReason: state.lastViolationReason,
                         examStartedAt: state.examStartedAt
@@ -856,13 +854,13 @@
             }
 
             // =================================================================
-            // MUAT DATA SISWA (SHEET "SISWA") & JADWAL UJIAN ("Sheet1")
+            // PEMUATAN DATA SISWA & JADWAL UJIAN DARI GOOGLE SPREADSHEET
             // =================================================================
-            async function loadStudentsFromSheet(forceRefresh = false) {
-                if (!forceRefresh) {
+            async function loadStudentsFromSheet(forceReload) {
+                if (!forceReload) {
                     try {
-                        const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDENTS_CACHE) || 'null');
-                        if (cached && Object.keys(cached).length > 0) {
+                        const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDENTS_CACHE) || '{}');
+                        if (Object.keys(cached).length > 0) {
                             state.studentsByClass = cached;
                             populateClassDropdown();
                         }
@@ -870,28 +868,45 @@
                 }
 
                 try {
-                    const url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent('SISWA') + '&_ts=' + Date.now();
-                    const res = await fetch(url);
-                    const text = await res.text();
-                    const json = parseGvizJson(text);
-                    const rows = (json.table && json.table.rows) ? json.table.rows : [];
-                    const grouped = {};
+                    const sheetCandidates = ['DATA SISWA', 'SISWA', 'Sheet2'];
+                    let grouped = {};
 
-                    rows.forEach((r, idx) => {
-                        const c = r.c || [];
-                        const rawClass = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
-                        const rawName = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
-                        if (!rawClass || !rawName) return;
-                        if (idx === 0 && (rawClass.toLowerCase() === 'kelas' || rawName.toLowerCase().includes('nama'))) return;
-                        if (!grouped[rawClass]) grouped[rawClass] = [];
-                        if (!grouped[rawClass].includes(rawName)) grouped[rawClass].push(rawName);
-                    });
+                    for (let i = 0; i < sheetCandidates.length; i++) {
+                        const sheetName = sheetCandidates[i];
+                        try {
+                            const url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(sheetName) + '&_ts=' + Date.now();
+                            const res = await fetch(url);
+                            const text = await res.text();
+                            const json = parseGvizJson(text);
+                            const rows = (json.table && json.table.rows) ? json.table.rows : [];
+                            const temp = {};
+
+                            rows.forEach((r, idx) => {
+                                const c = r.c || [];
+                                const colA = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+                                const colB = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
+                                if (!colA || !colB) return;
+                                if (idx === 0 && (colA.toLowerCase().includes('kelas') || colB.toLowerCase().includes('nama'))) return;
+                                if (colB.startsWith('http://') || colB.startsWith('https://')) return;
+
+                                if (!temp[colA]) temp[colA] = [];
+                                if (!temp[colA].includes(colB)) temp[colA].push(colB);
+                            });
+
+                            if (Object.keys(temp).length > 0) {
+                                grouped = temp;
+                                break;
+                            }
+                        } catch (_) {}
+                    }
 
                     if (Object.keys(grouped).length > 0) {
                         Object.keys(grouped).forEach(k => grouped[k].sort((a, b) => a.localeCompare(b)));
                         state.studentsByClass = grouped;
                         localStorage.setItem(STORAGE_KEYS.STUDENTS_CACHE, JSON.stringify(grouped));
                         populateClassDropdown();
+                    } else if (Object.keys(state.studentsByClass).length === 0) {
+                        el.studentClassSelect.innerHTML = '<option value="">Data siswa tidak ditemukan di Spreadsheet.</option>';
                     }
                 } catch (err) {
                     if (Object.keys(state.studentsByClass).length === 0) {
