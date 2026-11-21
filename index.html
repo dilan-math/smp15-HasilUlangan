@@ -520,6 +520,9 @@
                 '      if (curStatus === "DIBUKA ADMIN" && unlockedFlag === "TRUE" && status === "LOCKED") {',
                 '        return ContentService.createTextOutput(JSON.stringify({ status: "unlocked" })).setMimeType(ContentService.MimeType.JSON);',
                 '      }',
+                '      if ((curStatus === "FINISHED" || curStatus === "LOCKED") && status === "ACTIVE" && unlockedFlag !== "TRUE") {',
+                '        return ContentService.createTextOutput(JSON.stringify({ status: curStatus })).setMimeType(ContentService.MimeType.JSON);',
+                '      }',
                 '      var keepStartedAt = (curStatus === "DIBUKA ADMIN") ? startedAt : (data[foundRow - 1][12] ? String(data[foundRow - 1][12]) : startedAt);',
                 '      sheet.getRange(foundRow, 1, 1, 13).setValues([[sid || String(data[foundRow - 1][0]), sClass, sName, sSub, status, viol, maxV, reason, nowIso, baseKey, "FALSE", awaySec, keepStartedAt]]);',
                 '    } else {',
@@ -890,7 +893,6 @@
                                 if (!colA || !colB) return;
                                 if (idx === 0 && (colA.toLowerCase().includes('kelas') || colB.toLowerCase().includes('nama'))) return;
                                 if (colB.startsWith('http://') || colB.startsWith('https://')) return;
-
                                 if (!temp[colA]) temp[colA] = [];
                                 if (!temp[colA].includes(colB)) temp[colA].push(colB);
                             });
@@ -903,25 +905,33 @@
                     }
 
                     if (Object.keys(grouped).length > 0) {
-                        Object.keys(grouped).forEach(k => grouped[k].sort((a, b) => a.localeCompare(b)));
+                        Object.keys(grouped).forEach(cls => {
+                            grouped[cls].sort((a, b) => a.localeCompare(b));
+                        });
                         state.studentsByClass = grouped;
-                        localStorage.setItem(STORAGE_KEYS.STUDENTS_CACHE, JSON.stringify(grouped));
+                        try {
+                            localStorage.setItem(STORAGE_KEYS.STUDENTS_CACHE, JSON.stringify(grouped));
+                        } catch (_) {}
                         populateClassDropdown();
                     } else if (Object.keys(state.studentsByClass).length === 0) {
-                        el.studentClassSelect.innerHTML = '<option value="">Data siswa tidak ditemukan di Spreadsheet.</option>';
+                        el.studentClassSelect.innerHTML = '<option value="">Gagal memuat data siswa</option>';
                     }
-                } catch (err) {
+                } catch (_) {
                     if (Object.keys(state.studentsByClass).length === 0) {
-                        el.studentClassSelect.innerHTML = '<option value="">Gagal memuat data siswa. Periksa internet.</option>';
+                        el.studentClassSelect.innerHTML = '<option value="">Gagal memuat data siswa</option>';
                     }
                 }
             }
 
             function populateClassDropdown() {
-                const classes = Object.keys(state.studentsByClass).sort((a, b) => a.localeCompare(b));
                 const prevClass = el.studentClassSelect.value;
-                el.studentClassSelect.innerHTML = '<option value="">-- Pilih Kelas Anda --</option>' +
-                    classes.map(cls => '<option value="' + escapeHtml(cls) + '">' + escapeHtml(cls) + '</option>').join('');
+                const classes = Object.keys(state.studentsByClass).sort((a, b) => a.localeCompare(b));
+                if (classes.length === 0) {
+                    el.studentClassSelect.innerHTML = '<option value="">Tidak ada data kelas</option>';
+                    return;
+                }
+                el.studentClassSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>' +
+                    classes.map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join('');
                 if (prevClass && state.studentsByClass[prevClass]) {
                     el.studentClassSelect.value = prevClass;
                 }
@@ -929,70 +939,155 @@
 
             async function loadSubjectsFromSheet() {
                 try {
+                    const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBJECTS_CACHE) || '[]');
+                    if (Array.isArray(cached) && cached.length > 0 && state.subjects.length === 0) {
+                        state.subjects = cached;
+                    }
+                } catch (_) {}
+
+                try {
                     const url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent('Sheet1') + '&_ts=' + Date.now();
                     const res = await fetch(url);
                     const text = await res.text();
                     const json = parseGvizJson(text);
                     const rows = (json.table && json.table.rows) ? json.table.rows : [];
-                    const list = [];
+                    const parsedSubjects = [];
 
                     rows.forEach((r, idx) => {
                         const c = r.c || [];
                         const title = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
                         const link = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
-                        const durVal = c[2] && c[2].v != null ? Number(c[2].v) : DEFAULT_EXAM_DURATION_MINUTES;
+                        const durRaw = c[2] && c[2].v != null ? Number(c[2].v) : DEFAULT_EXAM_DURATION_MINUTES;
+
                         if (!title || !link) return;
-                        if (idx === 0 && (title.toLowerCase().includes('nama ujian') || link.toLowerCase().includes('link'))) return;
-                        list.push({
+                        if (idx === 0 && (title.toLowerCase().includes('mata pelajaran') || title.toLowerCase().includes('mapel') || title.toLowerCase().includes('ujian'))) return;
+                        if (!link.startsWith('http://') && !link.startsWith('https://')) return;
+
+                        const durationMinutes = (!isNaN(durRaw) && durRaw > 0) ? Math.round(durRaw) : DEFAULT_EXAM_DURATION_MINUTES;
+                        parsedSubjects.push({
                             title: title,
                             url: link,
-                            durationMinutes: (!isNaN(durVal) && durVal > 0) ? durVal : DEFAULT_EXAM_DURATION_MINUTES
+                            durationMinutes: durationMinutes
                         });
                     });
 
-                    if (list.length > 0) {
-                        state.subjects = list;
-                        localStorage.setItem(STORAGE_KEYS.SUBJECTS_CACHE, JSON.stringify(list));
+                    if (parsedSubjects.length > 0) {
+                        state.subjects = parsedSubjects;
+                        try {
+                            localStorage.setItem(STORAGE_KEYS.SUBJECTS_CACHE, JSON.stringify(parsedSubjects));
+                        } catch (_) {}
                     }
-                } catch (_) {
-                    try {
-                        const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBJECTS_CACHE) || '[]');
-                        if (cached.length > 0) state.subjects = cached;
-                    } catch (__) {}
+                } catch (_) {}
+
+                if (state.studentClass && state.studentName) {
+                    await syncAttemptedStatusWithServer();
+                    renderSubjectsGrid();
                 }
-                await syncAttemptedStatusWithServer();
-                renderSubjectsGrid();
             }
 
-            // Sinkronisasi status percobaan & buka kunci Admin dari Spreadsheet
-            async function syncAttemptedStatusWithServer() {
-                if (!state.studentClass || !state.studentName) return;
+            // Sinkronisasi status percobaan & buka kunci Admin dari Spreadsheet (Apps Script + gviz MONITORING)
+            async function fetchSessionsFromServerDual() {
+                const map = new Map();
+                const pushItem = (s) => {
+                    const key = getStudentSubjectKey(s.studentClass, s.studentName, s.subjectTitle);
+                    if (!s.studentName || !s.subjectTitle) return;
+                    const prev = map.get(key);
+                    const tNew = new Date(s.lastUpdated || 0).getTime() || 0;
+                    const tOld = prev ? (new Date(prev.lastUpdated || 0).getTime() || 0) : -1;
+                    if (!prev || tNew >= tOld) {
+                        map.set(key, s);
+                    }
+                };
+
                 try {
                     const res = await fetch(APPS_SCRIPT_WEB_APP_URL + '?action=get&_ts=' + Date.now());
                     const data = await res.json();
-                    const sessions = Array.isArray(data.sessions) ? data.sessions : [];
+                    if (Array.isArray(data.sessions)) data.sessions.forEach(pushItem);
+                } catch (_) {}
+
+                try {
+                    const gvizUrl = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent('MONITORING') + '&_ts=' + Date.now();
+                    const gRes = await fetch(gvizUrl);
+                    const gText = await gRes.text();
+                    const gJson = parseGvizJson(gText);
+                    const rows = (gJson.table && gJson.table.rows) ? gJson.table.rows : [];
+                    rows.forEach((r, idx) => {
+                        const c = r.c || [];
+                        const sid = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+                        if (!sid || (idx === 0 && sid.toLowerCase() === 'sessionid')) return;
+                        pushItem({
+                            sessionId: sid,
+                            studentClass: c[1] && c[1].v != null ? String(c[1].v) : '',
+                            studentName: c[2] && c[2].v != null ? String(c[2].v) : '',
+                            subjectTitle: c[3] && c[3].v != null ? String(c[3].v) : '',
+                            status: c[4] && c[4].v != null ? String(c[4].v) : 'ACTIVE',
+                            violations: c[5] && c[5].v != null ? Number(c[5].v) : 0,
+                            maxViolations: c[6] && c[6].v != null ? Number(c[6].v) : 10,
+                            lastViolationReason: c[7] && c[7].v != null ? String(c[7].v) : '-',
+                            lastUpdated: c[8] && c[8].v != null ? String(c[8].v) : '',
+                            unlockedByAdmin: (c[10] && String(c[10].v).toUpperCase() === 'TRUE'),
+                            awaySeconds: c[11] && c[11].v != null ? Number(c[11].v) : 0,
+                            startedAt: c[12] && c[12].v != null ? String(c[12].v) : ''
+                        });
+                    });
+                } catch (_) {}
+
+                return Array.from(map.values());
+            }
+
+            async function syncAttemptedStatusWithServer() {
+                if (!state.studentClass || !state.studentName) return;
+                try {
+                    const sessions = await fetchSessionsFromServerDual();
                     const mySessions = sessions.filter(s =>
                         String(s.studentClass || '').trim().toLowerCase() === state.studentClass.toLowerCase() &&
                         String(s.studentName || '').trim().toLowerCase() === state.studentName.toLowerCase()
                     );
+
+                    // Cek jika siswa memiliki sesi LOCKED (10/10 pelanggaran) yang belum di-reset Admin
+                    const lockedMatch = mySessions.find(s =>
+                        (s.status === 'LOCKED' || Number(s.violations || 0) >= MAX_VIOLATIONS) &&
+                        s.status !== 'DIBUKA ADMIN' && !s.unlockedByAdmin
+                    );
+                    if (lockedMatch) {
+                        state.sessionId = lockedMatch.sessionId || ('SES_' + Date.now());
+                        state.currentSubject = {
+                            title: lockedMatch.subjectTitle || 'Ujian Terkunci',
+                            url: '',
+                            durationMinutes: DEFAULT_EXAM_DURATION_MINUTES
+                        };
+                        state.violations = MAX_VIOLATIONS;
+                        state.totalAwaySeconds = Number(lockedMatch.awaySeconds || 0);
+                        state.lastViolationReason = stripDurationTagFromReason(lockedMatch.lastViolationReason || 'Batas 10x pelanggaran tercapai');
+                        state.examStartedAt = lockedMatch.startedAt || new Date().toISOString();
+                        state.isLocked = true;
+                        state.isExamActive = true;
+                        setExamAttempted(state.studentClass, state.studentName, state.currentSubject.title, true);
+                        clearSavedActiveSession(state.studentClass, state.studentName, state.currentSubject.title);
+                        persistLockedSession();
+                        el.headerSubjectTitle.textContent = state.currentSubject.title;
+                        updateViolationUI();
+                        showLockedModal();
+                        return;
+                    }
 
                     state.subjects.forEach(sub => {
                         const match = mySessions.find(s => String(s.subjectTitle || '').trim().toLowerCase() === sub.title.toLowerCase());
                         const existingLocal = getSavedActiveSession(state.studentClass, state.studentName, sub.title);
 
                         if (!match) {
-                            // Jangan hapus sesi aktif lokal yang sedang berjalan jika server belum sempat menerima sync
-                            if (!existingLocal) {
+                            // Pertahankan kunci lokal jika ujian sudah ditandai selesai di perangkat ini
+                            if (!existingLocal && !isExamAttempted(state.studentClass, state.studentName, sub.title)) {
                                 setExamAttempted(state.studentClass, state.studentName, sub.title, false);
                             }
                         } else if (match.status === 'DIBUKA ADMIN' || match.unlockedByAdmin) {
                             setExamAttempted(state.studentClass, state.studentName, sub.title, false);
                             clearSavedActiveSession(state.studentClass, state.studentName, sub.title);
-                        } else if (match.status === 'FINISHED') {
+                        } else if (match.status === 'FINISHED' || match.status === 'LOCKED' || Number(match.violations || 0) >= MAX_VIOLATIONS) {
                             setExamAttempted(state.studentClass, state.studentName, sub.title, true);
                             clearSavedActiveSession(state.studentClass, state.studentName, sub.title);
-                        } else if (match.status === 'ACTIVE' || match.status === 'LOCKED') {
-                            // Gabungkan data pelanggaran tertinggi antara lokal & server agar tidak reset saat refresh
+                        } else if (match.status === 'ACTIVE') {
+                            if (isExamAttempted(state.studentClass, state.studentName, sub.title)) return;
                             const serverViol = Number(match.violations || 0);
                             const serverAway = Number(match.awaySeconds || 0);
                             const startedIso = match.startedAt || (existingLocal && existingLocal.examStartedAt) || new Date().toISOString();
@@ -1077,8 +1172,15 @@
             // =================================================================
             // MEMULAI / MENYAMBUNG UJIAN & TIMER MUNDUR
             // =================================================================
-            function openSubjectExam(sub) {
-                if (isExamAttempted(state.studentClass, state.studentName, sub.title)) {
+            async function openSubjectExam(sub) {
+                if (state.isLocked || isExamAttempted(state.studentClass, state.studentName, sub.title)) {
+                    renderSubjectsGrid();
+                    return;
+                }
+
+                // Verifikasi langsung ke server sebelum membuka soal agar sesi FINISHED/LOCKED tidak bisa dibuka ulang
+                await syncAttemptedStatusWithServer();
+                if (state.isLocked || isExamAttempted(state.studentClass, state.studentName, sub.title)) {
                     renderSubjectsGrid();
                     return;
                 }
@@ -1191,8 +1293,8 @@
                 el.sumViolations.textContent = state.violations + ' / ' + MAX_VIOLATIONS;
                 el.sumAway.textContent = formatSeconds(state.totalAwaySeconds);
                 el.summarySubtitle.textContent = isTimeUp
-                    ? 'Waktu pengerjaan ujian telah habis dan sesi Anda telah dikunci.'
-                    : 'Jawaban Anda telah dikunci. Hubungi Pengawas jika memerlukan reset.';
+                    ? 'Waktu pengerjaan ujian telah habis dan sesi Anda telah dikunci permanen. Hubungi Admin jika perlu reset.'
+                    : 'Ujian telah selesai dan akun Anda terkunci untuk mapel ini. Hanya Admin yang dapat melakukan reset.';
                 el.summaryScreen.classList.remove('hidden');
             }
 
@@ -1287,9 +1389,7 @@
             async function checkServerForUnlock() {
                 if (!state.isLocked) return;
                 try {
-                    const res = await fetch(APPS_SCRIPT_WEB_APP_URL + '?action=get&_ts=' + Date.now());
-                    const data = await res.json();
-                    const sessions = Array.isArray(data.sessions) ? data.sessions : [];
+                    const sessions = await fetchSessionsFromServerDual();
                     const match = sessions.find(s =>
                         (state.sessionId && s.sessionId === state.sessionId) ||
                         (String(s.studentName || '').trim().toLowerCase() === state.studentName.toLowerCase() &&
@@ -1317,7 +1417,13 @@
                         }
                         updateViolationUI();
                         el.violationOverlay.classList.add('hidden');
-                        syncSessionToServer('ACTIVE');
+                        el.iframeExamView.classList.add('hidden');
+                        el.subjectPortalView.classList.remove('hidden');
+                        el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
+                        stopExamTimer();
+                        state.currentSubject = null;
+                        state.isExamActive = false;
+                        renderSubjectsGrid();
                     }
                 } catch (_) {}
             }
@@ -1348,6 +1454,8 @@
 
                 if (state.violations >= MAX_VIOLATIONS) {
                     state.isLocked = true;
+                    setExamAttempted(state.studentClass, state.studentName, state.currentSubject.title, true);
+                    clearSavedActiveSession(state.studentClass, state.studentName, state.currentSubject.title);
                     persistLockedSession();
                     syncSessionToServer('LOCKED');
                     showLockedModal();
