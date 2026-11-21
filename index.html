@@ -2,390 +2,382 @@
 <html lang="id" translate="no" class="notranslate">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>CBT Anti-Curang - SMP Negeri 15</title>
+    <title>CBT Anti-Curang — SMP Negeri 15 Banjarbaru</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        * {
-            user-select: none !important;
-            -webkit-user-select: none !important;
-            -moz-user-select: none !important;
-            -ms-user-select: none !important;
-            -webkit-touch-callout: none !important;
+        html, body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-touch-callout: none;
+            overscroll-behavior: none;
+            background-color: #f8fafc;
         }
         input, select, textarea {
             user-select: text !important;
             -webkit-user-select: text !important;
         }
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        @media print {
-            body {
-                display: none !important;
-            }
-        }
-        .anti-capture-blur {
-            filter: blur(22px) brightness(0.25) !important;
-            transition: none !important;
-        }
-        @keyframes pulseAlert {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-        }
-        .animate-pulse-alert {
-            animation: pulseAlert 1s infinite ease-in-out;
-        }
         #exam-container {
             position: fixed;
             inset: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
             height: 100dvh;
-            z-index: 30;
-            background-color: #f1f5f9;
             display: flex;
             flex-direction: column;
+            background: #f8fafc;
+            z-index: 30;
+            overflow: hidden;
         }
         #exam-container.hidden {
             display: none !important;
         }
         #iframe-exam-view {
-            position: fixed;
-            top: 54px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100vw;
-            height: calc(100vh - 54px);
-            height: calc(100dvh - 54px);
-            background-color: #ffffff;
-            overflow-y: auto;
+            position: relative;
+            flex: 1 1 auto;
+            width: 100%;
+            min-height: 0;
+            height: calc(100dvh - 56px);
+            background: #ffffff;
+            overflow: hidden;
             -webkit-overflow-scrolling: touch;
         }
         #iframe-exam-view.hidden {
             display: none !important;
         }
         #exam-iframe {
+            display: block;
             width: 100%;
             height: 100%;
-            min-height: 100%;
             border: 0;
-            display: block;
-            pointer-events: auto !important;
+            background: #ffffff;
+        }
+        .anti-capture-blur {
+            filter: blur(22px) brightness(0.75) !important;
+            transition: filter 0.08s ease-out;
+        }
+        .watermark-grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 15;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 28px 12px;
+            padding: 24px 12px;
+            opacity: 0.13;
+        }
+        @media (min-width: 640px) {
+            .watermark-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 42px 24px;
+            }
+        }
+        .watermark-item {
+            transform: rotate(-22deg);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            color: #0f172a;
+            text-align: center;
+            white-space: nowrap;
+        }
+        @media print {
+            body {
+                display: none !important;
+            }
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col overflow-x-hidden notranslate" translate="no">
+<body class="min-h-screen text-slate-800 antialiased selection:bg-transparent">
 
-    <!-- =====================================================================
-         1. HALAMAN AWAL (IDENTITAS PESERTA DARI SHEET SISWA & PERATURAN)
-    ====================================================================== -->
-    <div id="start-screen" class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
-        <div class="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-            <!-- Header Sekolah -->
-            <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 px-6 py-7 text-white relative overflow-hidden">
-                <div class="flex items-center justify-between gap-4 relative z-10">
-                    <div class="flex items-center gap-3.5">
-                        <img src="https://raw.githubusercontent.com/dilan-math/smp15-HasilUlangan/282e19d087819a7a0ee87a2ea514b509cad6b85c/Logo%20SMP15BJB%20(1).png"
-                             alt="Logo SMPN 15"
-                             onerror="this.style.display='none'"
-                             class="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-2xl bg-white/10 p-1.5 border border-white/20 shrink-0 shadow-md">
-                        <div>
-                            <span class="inline-block px-2.5 py-0.5 bg-blue-500/30 border border-blue-300/30 rounded-full text-[11px] font-bold tracking-wider uppercase mb-1">
-                                Portal Ujian Resmi
-                            </span>
-                            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight">
-                                CBT SMP NEGERI 15
-                            </h1>
-                            <p class="text-xs sm:text-sm text-blue-200 font-medium mt-0.5">
-                                Sistem Ujian Berbasis Komputer &amp; Pengawasan Real-Time
-                            </p>
-                        </div>
-                    </div>
-                    <button id="open-admin-btn" type="button" title="Dashboard Pengawas / Admin"
-                        class="p-3 bg-white/10 hover:bg-white/20 active:bg-white/30 border border-white/20 rounded-2xl text-white transition flex flex-col items-center justify-center gap-1 shrink-0 cursor-pointer">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Admin</span>
-                    </button>
+    <!-- =================================================================== -->
+    <!-- 1. HALAMAN AWAL / LOGIN PESERTA UJIAN                               -->
+    <!-- =================================================================== -->
+    <div id="start-screen" class="min-h-screen flex flex-col justify-between bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-4 sm:p-6">
+        <!-- Header Sekolah -->
+        <header class="max-w-4xl w-full mx-auto flex items-center justify-between gap-3 pt-1">
+            <div class="flex items-center gap-3">
+                <img src="https://raw.githubusercontent.com/dilan-math/smp15-HasilUlangan/282e19d087819a7a0ee87a2ea514b509cad6b85c/Logo%20SMP15BJB%20(1).png"
+                     alt="Logo SMPN 15 Banjarbaru"
+                     onerror="this.onerror=null;this.src='https://placehold.co/80x80/1e3a8a/ffffff?text=SMP15';"
+                     class="w-11 h-11 sm:w-12 sm:h-12 object-contain rounded-xl bg-white/10 p-1 border border-white/15 shadow">
+                <div>
+                    <p class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-blue-300">Computer Based Test</p>
+                    <h1 class="text-sm sm:text-lg font-black tracking-tight text-white">SMP NEGERI 15 BANJARBARU</h1>
                 </div>
             </div>
+            <button id="open-admin-pin-btn" type="button"
+                class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] sm:text-xs font-extrabold text-blue-100 transition cursor-pointer">
+                Admin / Pengawas
+            </button>
+        </header>
 
-            <!-- Form Identitas Peserta -->
-            <div class="p-6 sm:p-8 space-y-5">
-                <!-- Status Koneksi Data Siswa -->
-                <div id="student-db-banner" class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-2xl text-xs font-medium flex items-center justify-between gap-2">
-                    <span id="student-db-status">Memuat daftar kelas &amp; nama siswa dari database...</span>
-                    <button id="reload-students-btn" type="button" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[11px] shrink-0 cursor-pointer">
+        <!-- Kartu Masuk Peserta -->
+        <main class="max-w-xl w-full mx-auto my-6">
+            <div class="bg-white text-slate-800 rounded-3xl shadow-2xl border border-slate-200/80 p-6 sm:p-8">
+                <div class="flex items-center justify-between gap-2 mb-5">
+                    <div>
+                        <span class="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-wider mb-1.5">
+                            Mode Ujian Aman (Anti-Curang)
+                        </span>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-900">Identitas Peserta Ujian</h2>
+                    </div>
+                    <button id="reload-students-btn" type="button" title="Muat Ulang Data Siswa"
+                        class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition cursor-pointer">
                         Muat Ulang
                     </button>
                 </div>
 
-                <!-- Pilih Kelas -->
-                <div>
-                    <label for="student-class" class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-2">
-                        1. Pilih Kelas Anda
-                    </label>
-                    <select id="student-class"
-                        class="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-200 focus:border-blue-600 focus:bg-white rounded-2xl text-sm font-bold text-slate-800 outline-none transition">
-                        <option value="">-- Memuat Daftar Kelas... --</option>
-                    </select>
-                </div>
-
-                <!-- Pilih Nama Siswa -->
-                <div>
-                    <label for="student-name" class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-2">
-                        2. Pilih Nama Lengkap Anda
-                    </label>
-                    <select id="student-name" disabled
-                        class="w-full px-4 py-3.5 bg-slate-100 border-2 border-slate-200 focus:border-blue-600 focus:bg-white rounded-2xl text-sm font-bold text-slate-800 outline-none transition disabled:opacity-60">
-                        <option value="">-- Pilih Kelas Terlebih Dahulu --</option>
-                    </select>
-                </div>
-
-                <!-- Tata Tertib Anti-Curang -->
-                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-2.5">
-                    <div class="flex items-center gap-2 text-amber-800 font-extrabold text-xs uppercase tracking-wider">
-                        <svg class="w-4 h-4 shrink-0 text-amber-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                        <span>Tata Tertib Pengawasan Ujian</span>
+                <div class="space-y-4">
+                    <div>
+                        <label for="student-class-select" class="block text-xs font-extrabold text-slate-700 uppercase tracking-wide mb-1.5">
+                            Pilih Kelas
+                        </label>
+                        <select id="student-class-select"
+                            class="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-300 text-sm font-bold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                            <option value="">Memuat daftar kelas...</option>
+                        </select>
                     </div>
-                    <div class="text-xs text-slate-700 space-y-1.5 leading-relaxed">
-                        <div class="flex items-start gap-2.5">
-                            <span class="font-black text-amber-600 mt-0.5">01.</span>
-                            <p>Sistem akan mengaktifkan mode layar penuh &amp; pengawasan otomatis begitu ujian dimulai.</p>
-                        </div>
-                        <div class="flex items-start gap-2.5">
-                            <span class="font-black text-amber-600 mt-0.5">02.</span>
-                            <p><strong>Dilarang keluar dari browser</strong>, mengambil <strong>Screenshot / Rekam Layar</strong>, memblokir/menyalin teks soal, membuka aplikasi lain (WhatsApp/Google/Terjemahan), atau menggunakan fitur <em>Split Screen</em>.</p>
-                        </div>
-                        <div class="flex items-start gap-2.5">
-                            <span class="font-black text-red-600 mt-0.5">03.</span>
-                            <p>Batas maksimal pelanggaran adalah <strong>10 kali</strong>. Jika mencapai 10 kali, ujian <strong>dikunci permanen</strong> dan hanya bisa dibuka oleh Pengawas/Admin.</p>
-                        </div>
+
+                    <div>
+                        <label for="student-name-select" class="block text-xs font-extrabold text-slate-700 uppercase tracking-wide mb-1.5">
+                            Pilih Nama Lengkap Siswa
+                        </label>
+                        <select id="student-name-select" disabled
+                            class="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-300 text-sm font-bold text-slate-800 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition disabled:opacity-60">
+                            <option value="">-- Pilih Kelas Terlebih Dahulu --</option>
+                        </select>
                     </div>
+
+                    <div id="start-error-msg" class="hidden p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs font-bold text-red-700"></div>
+
+                    <button id="start-exam-btn" type="button"
+                        class="w-full py-4 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-black text-sm tracking-wide shadow-lg shadow-blue-600/25 transition cursor-pointer">
+                        Masuk &amp; Buka Jadwal Ujian
+                    </button>
                 </div>
 
-                <!-- Pesan Validasi -->
-                <div id="start-error-msg" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-xs font-bold"></div>
-
-                <!-- Tombol Masuk -->
-                <button id="start-exam-btn" type="button"
-                    class="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2 cursor-pointer">
-                    <span>Masuk &amp; Buka Jadwal Ujian</span>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                    </svg>
-                </button>
+                <!-- Tata Tertib Singkat -->
+                <div class="mt-6 pt-5 border-t border-slate-100 space-y-2 text-xs text-slate-600">
+                    <p class="font-extrabold text-slate-800 uppercase tracking-wider text-[11px]">Peraturan Ujian Online:</p>
+                    <p><span class="font-black text-blue-600">01.</span> Setiap mata pelajaran hanya dapat dikerjakan <strong>1 kali percobaan</strong>. Jika ingin mengulang, wajib meminta <strong>Reset</strong> kepada Pengawas/Admin.</p>
+                    <p><span class="font-black text-blue-600">02.</span> Dilarang keluar aplikasi, pindah tab, mengambil <strong>Screenshot / Rekam Layar</strong>, menyalin/menerjemahkan teks, atau menggunakan <em>Split Screen</em>.</p>
+                    <p><span class="font-black text-blue-600">03.</span> Pelanggaran otomatis tercatat ke server Pengawas (maksimal <strong>10 kali</strong> sebelum akun dikunci permanen).</p>
+                </div>
             </div>
-        </div>
+        </main>
+
+        <footer class="max-w-4xl w-full mx-auto text-center text-[11px] text-slate-400 pb-2">
+            Sistem CBT Pengawasan Real-Time &bull; SMP Negeri 15 Banjarbaru
+        </footer>
     </div>
 
-    <!-- =====================================================================
-         2. AREA UJIAN UTAMA (PORTAL MATA PELAJARAN & IFRAME SOAL)
-    ====================================================================== -->
-    <div id="exam-container" class="hidden flex flex-col overflow-hidden">
-        <!-- Top Bar Pengawasan -->
-        <header id="exam-topbar" class="bg-slate-900 text-white px-3 sm:px-5 h-[54px] flex items-center justify-between gap-2 border-b border-slate-800 shrink-0 z-30">
+    <!-- =================================================================== -->
+    <!-- 2. KONTAINER UTAMA UJIAN (PORTAL MATA PELAJARAN & IFRAME SOAL)      -->
+    <!-- =================================================================== -->
+    <div id="exam-container" class="hidden">
+        <!-- Topbar Ujian -->
+        <header class="h-14 shrink-0 bg-slate-900 text-white px-3 sm:px-5 flex items-center justify-between gap-2 border-b border-slate-800 shadow-md z-20">
             <div class="flex items-center gap-2.5 min-w-0">
                 <img src="https://raw.githubusercontent.com/dilan-math/smp15-HasilUlangan/282e19d087819a7a0ee87a2ea514b509cad6b85c/Logo%20SMP15BJB%20(1).png"
                      alt="Logo"
                      onerror="this.style.display='none'"
-                     class="w-8 h-8 object-contain rounded-lg bg-white/10 p-1 shrink-0">
+                     class="w-8 h-8 object-contain rounded-lg bg-white/10 p-0.5 shrink-0">
                 <div class="min-w-0">
-                    <div class="flex items-center gap-2">
-                        <span id="header-student-name" class="font-extrabold text-xs sm:text-sm truncate">PESERTA</span>
-                        <span id="header-student-class" class="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-extrabold rounded-md shrink-0">KELAS</span>
+                    <div class="flex items-center gap-1.5">
+                        <span id="header-student-name" class="text-xs sm:text-sm font-extrabold truncate text-white">Siswa</span>
+                        <span id="header-student-class" class="px-1.5 py-0.5 rounded bg-blue-600 text-[10px] font-black shrink-0">Kelas</span>
                     </div>
-                    <p id="header-subject-title" class="text-[11px] text-slate-300 font-medium truncate">Pilih Mata Pelajaran Ujian</p>
+                    <p id="header-subject-title" class="text-[11px] text-slate-300 font-semibold truncate">Pilih Mata Pelajaran Ujian</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
                 <!-- Indikator Pelanggaran -->
-                <div id="violation-badge" class="px-2.5 py-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 rounded-xl text-xs font-extrabold flex items-center gap-1.5">
-                    <span>Pelanggaran:</span>
-                    <span id="violation-counter">0/10</span>
+                <div id="violation-badge" class="px-2.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] font-extrabold">
+                    Pelanggaran: <span id="violation-count-text">0/10</span>
                 </div>
 
-                <!-- Timer Ujian (Hitung Mundur Sesuai Sheet1 Kolom C) -->
+                <!-- Timer Mundur -->
                 <div id="exam-timer-badge" class="flex px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-slate-200 items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
                     <span id="exam-timer">--:--:--</span>
                 </div>
 
-                <!-- Tombol Kembali ke Daftar Mapel -->
+                <!-- Tombol Kembali ke Daftar Soal -->
                 <button id="back-to-portal-btn" type="button"
-                    class="hidden px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition cursor-pointer">
+                    class="hidden px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[11px] transition cursor-pointer">
                     Daftar Soal
                 </button>
 
-                <!-- Tombol Selesai Ujian -->
+                <!-- Tombol Selesai / Keluar -->
                 <button id="finish-exam-btn" type="button"
-                    class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold rounded-xl transition cursor-pointer">
+                    class="px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-[11px] transition cursor-pointer">
                     Selesai
                 </button>
             </div>
         </header>
 
-        <!-- Sub-view A: Portal Jadwal Mata Pelajaran -->
-        <div id="subject-portal-view" class="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100">
+        <!-- Sub-Tampilan A: Portal Pemilihan Mata Pelajaran (Dari Sheet1) -->
+        <section id="subject-portal-view" class="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50">
             <div class="max-w-4xl mx-auto space-y-5">
-                <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-lg sm:text-xl font-extrabold text-slate-800">Daftar Mata Pelajaran Ujian</h2>
-                        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
-                            Pilih mata pelajaran yang sedang diujikan. Pengawasan anti-curang aktif selama sesi ini.
-                        </p>
+                        <span class="inline-block px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-wider mb-1">
+                            Jadwal Ujian Aktif
+                        </span>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900">Pilih Mata Pelajaran Ujian</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Waktu hitung mundur akan berjalan otomatis setelah Anda menekan tombol <strong>Kerjakan Soal Sekarang</strong>.</p>
                     </div>
                     <button id="refresh-subjects-btn" type="button"
-                        class="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl border border-blue-200 transition self-start sm:self-auto cursor-pointer">
+                        class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold transition cursor-pointer self-start sm:self-auto">
                         Segarkan Jadwal
                     </button>
                 </div>
 
-                <div id="subjects-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Kartu Mata Pelajaran dirender via JS -->
+                <div id="subjects-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="col-span-full bg-white p-8 rounded-3xl text-center text-sm font-bold text-slate-400 border border-slate-200">
+                        Memuat daftar mata pelajaran...
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Sub-view B: Iframe Lembar Soal -->
-        <div id="iframe-exam-view" class="hidden">
-            <div id="iframe-loader" class="absolute inset-0 bg-white flex flex-col items-center justify-center gap-3 z-10">
-                <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <p class="text-sm font-bold text-slate-600">Memuat lembar soal ujian...</p>
+        <!-- Sub-Tampilan B: Lembar Soal Iframe + Watermark Identitas -->
+        <section id="iframe-exam-view" class="hidden">
+            <div id="iframe-loader" class="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 p-6 text-center">
+                <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+                <p class="text-sm font-extrabold text-slate-700">Memuat Lembar Soal Ujian...</p>
+                <p class="text-xs text-slate-400 mt-1">Pastikan koneksi internet stabil.</p>
             </div>
-            <!-- Watermark Dinamis Identitas Peserta -->
-            <div id="exam-watermark-layer" aria-hidden="true" class="pointer-events-none select-none fixed inset-x-0 top-[54px] bottom-0 z-20 overflow-hidden opacity-[0.06] flex flex-wrap items-center justify-center gap-10 p-6"></div>
-            <iframe id="exam-iframe" scrolling="yes" class="notranslate" translate="no" allow="fullscreen; camera; microphone" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        </div>
+            <div id="exam-watermark-layer" class="watermark-grid"></div>
+            <iframe id="exam-iframe" title="Lembar Soal Ujian" allow="fullscreen"></iframe>
+        </section>
     </div>
 
-    <!-- =====================================================================
-         3. MODAL PERINGATAN PELANGGARAN & KUNCI PERMANEN (10X)
-    ====================================================================== -->
-    <div id="violation-overlay" class="hidden fixed inset-0 z-50 bg-red-950/90 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 text-center shadow-2xl border-2 border-red-600 space-y-4 animate-pulse-alert">
-            <span id="overlay-status-badge" class="inline-block px-3 py-1 bg-red-100 text-red-700 text-[11px] font-black uppercase tracking-wider rounded-full">
-                PERINGATAN PELANGGARAN
-            </span>
-            <h3 id="overlay-title" class="text-xl font-black text-slate-900">Terdeteksi Aktivitas Terlarang!</h3>
-            <div class="bg-red-50 border border-red-200 rounded-2xl p-4 text-left text-xs space-y-2">
-                <div>
-                    <span class="text-slate-500 font-semibold">Jenis Pelanggaran:</span>
-                    <p id="overlay-reason" class="font-extrabold text-red-700 mt-0.5">-</p>
-                </div>
-                <div class="flex justify-between pt-1 border-t border-red-100">
-                    <span class="text-slate-500 font-semibold">Hitungan Pelanggaran:</span>
-                    <span id="overlay-count" class="font-black text-red-700">1 / 10</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-500 font-semibold">Akumulasi Waktu Keluar:</span>
-                    <span id="overlay-away-time" class="font-extrabold text-slate-800">0 detik</span>
-                </div>
+    <!-- =================================================================== -->
+    <!-- 3. MODAL PERINGATAN PELANGGARAN & KUNCI PERMANEN                    -->
+    <!-- =================================================================== -->
+    <div id="violation-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border-2 border-red-500 text-center space-y-4">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-red-100 text-red-600 flex items-center justify-center text-2xl font-black">
+                !
             </div>
-            <p id="overlay-instruction" class="text-xs text-slate-600 leading-relaxed">
-                Segera kembali ke lembar ujian. Jika mencapai <strong>10 kali</strong> pelanggaran, akun ujian akan terkunci permanen.
+            <h3 id="violation-modal-title" class="text-lg sm:text-xl font-black text-slate-900">
+                Peringatan Pelanggaran Terdeteksi!
+            </h3>
+            <p id="violation-modal-desc" class="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                Anda terdeteksi meninggalkan layar ujian.
             </p>
-            <button id="resume-exam-btn" type="button"
-                class="w-full py-3.5 px-6 bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm rounded-2xl shadow-lg transition cursor-pointer">
-                Kembali ke Ujian
-            </button>
-            <div id="locked-panel" class="hidden space-y-3 pt-2 border-t border-slate-200">
-                <p class="text-xs font-bold text-red-700">
-                    Ujian dikunci permanen. Hubungi Pengawas / Admin untuk membuka kunci dari Dashboard Monitoring.
+            <div class="p-3.5 rounded-2xl bg-red-50 border border-red-200 space-y-1">
+                <p class="text-xs font-black text-red-700">
+                    Jumlah Pelanggaran: <span id="modal-violation-counter">1 / 10</span>
                 </p>
-                <button id="check-unlock-btn" type="button"
-                    class="w-full py-3 px-5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl transition cursor-pointer">
-                    Cek Status Buka Kunci dari Admin
+                <p id="modal-away-duration" class="text-[11px] font-bold text-slate-600">
+                    Total Waktu Keluar: 0 detik
+                </p>
+            </div>
+
+            <button id="resume-exam-btn" type="button"
+                class="w-full py-3.5 px-5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs sm:text-sm transition cursor-pointer">
+                Saya Mengerti &amp; Kembali ke Ujian
+            </button>
+
+            <div id="locked-account-notice" class="hidden space-y-3 pt-2">
+                <div class="p-3.5 rounded-2xl bg-slate-900 text-white text-xs font-bold leading-relaxed">
+                    Akun ujian Anda telah <strong>DIKUNCI PERMANEN</strong> karena mencapai batas maksimal 10 kali pelanggaran. Silakan lapor kepada Pengawas Ruangan untuk membuka kunci.
+                </div>
+                <button id="check-unlock-now-btn" type="button"
+                    class="w-full py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs transition cursor-pointer">
+                    Cek Status Buka Kunci dari Pengawas
                 </button>
-                <p id="unlock-check-status" class="text-[11px] font-semibold text-slate-500"></p>
             </div>
         </div>
     </div>
 
-    <!-- =====================================================================
-         4. MODAL KONFIRMASI SELESAI UJIAN
-    ====================================================================== -->
-    <div id="confirm-finish-modal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="w-full max-w-sm bg-white rounded-3xl p-6 text-center shadow-2xl space-y-4">
+    <!-- =================================================================== -->
+    <!-- 4. HALAMAN RINGKASAN SELESAI UJIAN                                  -->
+    <!-- =================================================================== -->
+    <div id="summary-screen" class="hidden fixed inset-0 z-40 bg-slate-900 text-white flex items-center justify-center p-4 overflow-y-auto">
+        <div class="max-w-md w-full bg-white text-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5">
+            <div class="w-16 h-16 mx-auto rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl font-black">
+                ✓
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-slate-900">Sesi Ujian Berakhir</h2>
+                <p id="summary-subtitle" class="text-xs text-slate-500 mt-1">Terima kasih telah mengikuti ujian dengan tertib.</p>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-left space-y-2 text-xs">
+                <div class="flex justify-between"><span class="text-slate-500">Nama Peserta:</span><span id="sum-name" class="font-extrabold text-slate-900">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Kelas:</span><span id="sum-class" class="font-extrabold text-slate-900">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Total Pelanggaran:</span><span id="sum-violations" class="font-extrabold text-red-600">0 / 10</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Total Waktu Keluar:</span><span id="sum-away" class="font-extrabold text-slate-900">0 detik</span></div>
+            </div>
+            <button id="back-home-btn" type="button"
+                class="w-full py-3.5 px-5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm transition cursor-pointer">
+                Kembali ke Halaman Awal
+            </button>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- 5. MODAL KONFIRMASI SELESAI UJIAN                                   -->
+    <!-- =================================================================== -->
+    <div id="confirm-finish-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 flex items-center justify-center p-4">
+        <div class="max-w-sm w-full bg-white rounded-3xl p-6 shadow-2xl text-center space-y-4">
             <h3 class="text-lg font-black text-slate-900">Akhiri Sesi Ujian?</h3>
             <p class="text-xs text-slate-600 leading-relaxed">
-                Pastikan Anda sudah menekan tombol <strong>Kirim / Submit</strong> di dalam lembar soal Google Form sebelum mengakhiri sesi ini.
+                Pastikan Anda sudah menekan tombol <strong>Kirim / Submit</strong> pada lembar soal Google Form sebelum mengakhiri ujian.
             </p>
-            <div class="grid grid-cols-2 gap-2.5 pt-2">
+            <div class="flex gap-2.5 pt-2">
                 <button id="cancel-finish-btn" type="button"
-                    class="py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl cursor-pointer">
+                    class="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs transition cursor-pointer">
                     Batal
                 </button>
                 <button id="confirm-finish-btn" type="button"
-                    class="py-3 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-2xl cursor-pointer">
+                    class="flex-1 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs transition cursor-pointer">
                     Ya, Selesai
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="summary-screen" class="hidden fixed inset-0 z-40 bg-slate-100 flex items-center justify-center p-4 overflow-y-auto">
-        <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 p-6 sm:p-8 text-center space-y-5">
-            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
-                <svg class="w-9 h-9" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                </svg>
-            </div>
-            <div>
-                <h2 class="text-xl font-black text-slate-900">Sesi Ujian Selesai</h2>
-                <p class="text-xs text-slate-500 mt-1">Terima kasih telah mengikuti ujian dengan tertib.</p>
-            </div>
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left text-xs space-y-2">
-                <div class="flex justify-between"><span class="text-slate-500">Nama Peserta:</span><span id="sum-name" class="font-bold text-slate-800">-</span></div>
-                <div class="flex justify-between"><span class="text-slate-500">Kelas:</span><span id="sum-class" class="font-bold text-slate-800">-</span></div>
-                <div class="flex justify-between"><span class="text-slate-500">Mata Pelajaran:</span><span id="sum-subject" class="font-bold text-slate-800">-</span></div>
-                <div class="flex justify-between"><span class="text-slate-500">Total Pelanggaran:</span><span id="sum-violations" class="font-bold text-red-600">0 / 10</span></div>
-                <div class="flex justify-between"><span class="text-slate-500">Total Waktu Keluar:</span><span id="sum-away-time" class="font-bold text-slate-800">0 detik</span></div>
-            </div>
-            <button id="back-to-home-btn" type="button"
-                class="w-full py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-2xl transition cursor-pointer">
-                Kembali ke Halaman Utama
-            </button>
-        </div>
-    </div>
-
-    <!-- =====================================================================
-         5. MODAL PIN & DASHBOARD ADMIN / PENGAWAS REAL-TIME
-    ====================================================================== -->
-    <div id="admin-pin-modal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="w-full max-w-xs bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+    <!-- =================================================================== -->
+    <!-- 6. MODAL PIN ADMIN / PENGAWAS (PIN: 9090)                           -->
+    <!-- =================================================================== -->
+    <div id="admin-pin-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="max-w-xs w-full bg-white rounded-3xl p-6 shadow-2xl text-center space-y-4">
             <h3 class="text-lg font-black text-slate-900">Akses Pengawas / Admin</h3>
-            <p class="text-xs text-slate-500">Masukkan PIN Pengawas untuk membuka Live Monitoring.</p>
+            <p class="text-xs text-slate-500">Masukkan PIN Admin untuk membuka Dashboard Monitoring Ujian.</p>
             <input id="admin-pin-input" type="password" inputmode="numeric" maxlength="8" placeholder="••••"
-                class="w-full text-center tracking-[0.5em] text-xl font-black py-3 px-4 bg-slate-100 border-2 border-slate-200 focus:border-blue-600 rounded-2xl outline-none">
-            <p id="admin-pin-error" class="hidden text-xs font-bold text-red-600">PIN salah! Silakan coba lagi.</p>
-            <div class="grid grid-cols-2 gap-2.5 pt-1">
-                <button id="cancel-pin-btn" type="button"
-                    class="py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl cursor-pointer">
+                class="w-full px-4 py-3 rounded-2xl bg-slate-100 border border-slate-300 text-center text-lg font-black tracking-[0.4em] outline-none focus:border-blue-600">
+            <p id="admin-pin-error" class="hidden text-xs font-bold text-red-600">PIN Admin salah!</p>
+            <div class="flex gap-2">
+                <button id="close-admin-pin-btn" type="button"
+                    class="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs cursor-pointer">
                     Batal
                 </button>
-                <button id="submit-pin-btn" type="button"
-                    class="py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl cursor-pointer">
+                <button id="submit-admin-pin-btn" type="button"
+                    class="flex-1 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs cursor-pointer">
                     Masuk
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Dashboard Admin Fullscreen -->
+    <!-- =================================================================== -->
+    <!-- 7. DASHBOARD ADMIN LIVE MONITORING & KONTROL RESET                  -->
+    <!-- =================================================================== -->
     <div id="admin-dashboard" class="hidden fixed inset-0 z-50 bg-slate-100 flex flex-col overflow-hidden">
         <!-- Topbar Admin -->
-        <div class="bg-slate-900 text-white px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shrink-0">
+        <header class="bg-slate-900 text-white px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shrink-0 shadow">
             <div class="flex items-center gap-3">
                 <img src="https://raw.githubusercontent.com/dilan-math/smp15-HasilUlangan/282e19d087819a7a0ee87a2ea514b509cad6b85c/Logo%20SMP15BJB%20(1).png"
                      alt="Logo"
@@ -393,79 +385,81 @@
                      class="w-9 h-9 object-contain rounded-xl bg-white/10 p-1">
                 <div>
                     <h2 class="text-sm sm:text-base font-black tracking-tight">DASHBOARD LIVE MONITORING CBT SMPN 15</h2>
-                    <div class="flex items-center gap-2 mt-0.5">
-                        <span id="server-sync-badge" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                            Terhubung Google Sheet Live Server
-                        </span>
-                    </div>
+                    <p class="text-[11px] text-emerald-400 font-bold flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
+                        Terhubung Google Sheet Live Server
+                    </p>
                 </div>
             </div>
             <button id="close-admin-btn" type="button"
-                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold rounded-xl transition cursor-pointer">
+                class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black transition cursor-pointer">
                 Tutup Admin
             </button>
-        </div>
+        </header>
 
         <!-- Tab Navigasi Admin -->
-        <div class="bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center gap-2 overflow-x-auto shrink-0">
-            <button id="tab-btn-monitoring" type="button"
-                class="py-3.5 px-4 text-xs font-extrabold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap cursor-pointer">
+        <div class="bg-white border-b border-slate-200 px-4 sm:px-6 flex gap-6 shrink-0">
+            <button id="tab-monitoring-btn" type="button"
+                class="py-3 text-xs font-black border-b-2 border-blue-600 text-blue-600 cursor-pointer">
                 Monitoring Ujian Realtime
             </button>
-            <button id="tab-btn-script" type="button"
-                class="py-3.5 px-4 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap cursor-pointer">
+            <button id="tab-appsscript-btn" type="button"
+                class="py-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 cursor-pointer">
                 Pengaturan Server Sync (Apps Script)
             </button>
         </div>
 
-        <!-- Konten Tab 1: Monitoring Ujian Realtime -->
-        <div id="admin-tab-monitoring" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
-            <!-- Kartu Statistik -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                    <p class="text-[11px] font-bold text-slate-500 uppercase">Total Sesi Ujian</p>
-                    <p id="stat-total" class="text-2xl font-black text-slate-900 mt-1">0</p>
+        <!-- Konten Utama Admin -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+            <!-- Panel 1: Monitoring Tabel -->
+            <div id="admin-panel-monitoring" class="max-w-7xl mx-auto space-y-5">
+                <!-- Kartu Statistik -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Sesi Ujian</p>
+                        <p id="stat-total" class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">0</p>
+                    </div>
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Sedang Mengerjakan</p>
+                        <p id="stat-active" class="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">0</p>
+                    </div>
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Ada Pelanggaran</p>
+                        <p id="stat-warned" class="text-2xl sm:text-3xl font-black text-amber-500 mt-1">0</p>
+                    </div>
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Terkunci (10x)</p>
+                        <p id="stat-locked" class="text-2xl sm:text-3xl font-black text-red-600 mt-1">0</p>
+                    </div>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                    <p class="text-[11px] font-bold text-emerald-600 uppercase">Sedang Mengerjakan</p>
-                    <p id="stat-active" class="text-2xl font-black text-emerald-600 mt-1">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                    <p class="text-[11px] font-bold text-amber-600 uppercase">Ada Pelanggaran</p>
-                    <p id="stat-warned" class="text-2xl font-black text-amber-600 mt-1">0</p>
-                </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                    <p class="text-[11px] font-bold text-red-600 uppercase">Terkunci (10x)</p>
-                    <p id="stat-locked" class="text-2xl font-black text-red-600 mt-1">0</p>
-                </div>
-            </div>
 
-            <!-- Filter & Aksi Cepat -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
-                    <input id="admin-search-input" type="text" placeholder="Cari nama siswa atau mata pelajaran..."
-                        class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 flex-1">
-                    <select id="admin-class-filter"
-                        class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-blue-600">
-                        <option value="ALL">Semua Kelas</option>
-                    </select>
+                <!-- Filter & Aksi Cepat -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
+                        <input id="admin-search-input" type="text" placeholder="Cari nama siswa atau mata pelajaran..."
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-blue-600 flex-1">
+                        <select id="admin-subject-filter"
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-blue-600">
+                            <option value="ALL">Semua Mata Pelajaran</option>
+                        </select>
+                        <select id="admin-class-filter"
+                            class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-blue-600">
+                            <option value="ALL">Semua Kelas</option>
+                        </select>
+                    </div>
+                    <button id="admin-refresh-btn" type="button"
+                        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl transition cursor-pointer">
+                        Refresh Data Sekarang
+                    </button>
                 </div>
-                <button id="admin-refresh-btn" type="button"
-                    class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl transition cursor-pointer">
-                    Refresh Data Sekarang
-                </button>
-            </div>
 
-            <!-- Banner Info Sinkronisasi -->
-            <div id="admin-sync-alert" class="hidden bg-amber-50 border border-amber-300 text-amber-900 px-4 py-3 rounded-2xl text-xs font-semibold"></div>
+                <div id="admin-sync-alert" class="hidden p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800"></div>
 
-            <!-- Tabel Monitoring -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                <!-- Tabel Monitoring -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[820px]">
                         <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                            <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-500">
                                 <th class="py-3.5 px-4">Peserta &amp; Kelas</th>
                                 <th class="py-3.5 px-4">Mata Pelajaran</th>
                                 <th class="py-3.5 px-4">Status</th>
@@ -477,47 +471,42 @@
                         </thead>
                         <tbody id="admin-monitoring-tbody" class="divide-y divide-slate-100 text-xs">
                             <tr>
-                                <td colspan="7" class="py-8 text-center text-slate-400 font-medium">Memuat data monitoring...</td>
+                                <td colspan="7" class="py-8 text-center text-slate-400 font-bold">Memuat data monitoring...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
 
-        <!-- Konten Tab 2: Kode Google Apps Script -->
-        <div id="admin-tab-script" class="hidden flex-1 overflow-y-auto p-4 sm:p-6">
-            <div class="max-w-3xl mx-auto bg-white rounded-3xl border border-slate-200 p-6 space-y-4">
-                <div class="flex items-center justify-between gap-3">
-                    <div>
-                        <h3 class="text-base font-black text-slate-900">Kode Google Apps Script (Kapasitas 466+ Siswa)</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">
-                            Salin kode ini ke <strong>Ekstensi &rarr; Apps Script</strong> di Google Spreadsheet Anda, lalu klik <strong>Terapkan &rarr; Kelola deployment &rarr; Edit &rarr; Versi baru</strong>.
-                        </p>
+            <!-- Panel 2: Pengaturan Google Apps Script -->
+            <div id="admin-panel-appsscript" class="hidden max-w-4xl mx-auto space-y-4">
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-base font-black text-slate-900">Kode Google Apps Script (Sinkronisasi Lintas Perangkat)</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Pasang kode ini di <strong>Ekstensi &rarr; Apps Script</strong> pada Google Spreadsheet Anda lalu Deploy sebagai Web App (Akses: <strong>Siapa saja / Anyone</strong>).</p>
+                        </div>
+                        <button id="copy-apps-script-btn" type="button"
+                            class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold transition cursor-pointer self-start">
+                            Salin Kode Apps Script
+                        </button>
                     </div>
-                    <button id="copy-apps-script-btn" type="button"
-                        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl shrink-0 cursor-pointer">
-                        Salin Kode Script
-                    </button>
+                    <textarea id="apps-script-code-box" readonly rows="18"
+                        class="w-full p-4 rounded-2xl bg-slate-900 text-emerald-300 font-mono text-[11px] leading-relaxed border border-slate-700 outline-none"></textarea>
                 </div>
-                <textarea id="apps-script-code-box" readonly rows="18"
-                    class="w-full p-4 bg-slate-900 text-emerald-300 font-mono text-[11px] rounded-2xl outline-none"></textarea>
             </div>
         </div>
     </div>
 
-    <!-- =====================================================================
-         JAVASCRIPT UTAMA APLIKASI CBT SMP NEGERI 15
-    ====================================================================== -->
     <script>
         (function () {
             'use strict';
 
             // =================================================================
-            // KONFIGURASI UTAMA
+            // KONFIGURASI UTAMA DATABASE & KEAMANAN
             // =================================================================
             const SPREADSHEET_ID = '1nOtxwtqh9aFqj6JxDpfhrpnx43h53gm90PQxG51G2TU';
-            const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxbWiHQS_gx2yNFa6EoyRwjV4mlc2Up08Uq6d2lOzc9MIgMc2NdlXG5NI0OfhCeJ0MUXg/exec';
+            const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz-nY_nQ6763n-x_uV3H4V7O3W3z_6tX5Z2Q1W9E8R7T6Y5U4I3O2P1/exec';
             const ADMIN_PIN = '9090';
             const MAX_VIOLATIONS = 10;
             const DEFAULT_EXAM_DURATION_MINUTES = 90;
@@ -528,117 +517,100 @@
                 ACTIVE_LOCK: 'cbt_smp15_locked_session_v2',
                 AWAY_TRACKER: 'cbt_smp15_away_tracker_v2',
                 LOCAL_SESSIONS: 'cbt_smp15_local_sessions_v2',
-                EXAM_END_TIME: 'cbt_smp15_exam_end_time_v2'
+                EXAM_END_TIME: 'cbt_smp15_exam_end_time_v2',
+                ATTEMPTED_EXAMS: 'cbt_smp15_attempted_exams_v1'
             };
 
             const APPS_SCRIPT_TEMPLATE = [
-                '// GOOGLE APPS SCRIPT LIVE MONITORING CBT SMPN 15 (OPTIMASI 466+ SISWA)',
                 'function doGet(e) {',
-                '  var lock = LockService.getScriptLock();',
-                '  try {',
-                '    lock.waitLock(15000);',
-                '    var ss = SpreadsheetApp.getActiveSpreadsheet();',
-                '    var sheet = ss.getSheetByName("MONITORING");',
-                '    if (!sheet) {',
-                '      sheet = ss.insertSheet("MONITORING");',
-                '      sheet.appendRow(["sessionId","studentClass","studentName","subjectTitle","status","violations","maxViolations","lastViolationReason","lastUpdated","baseKey","unlockedByAdmin","awaySeconds"]);',
-                '    }',
-                '    var p = (e && e.parameter) ? e.parameter : {};',
-                '    var action = p.action || "sync";',
-                '    var data = sheet.getDataRange().getValues();',
-                '    if (action === "get") {',
-                '      var sessions = [];',
-                '      for (var i = 1; i < data.length; i++) {',
-                '        sessions.push({',
-                '          sessionId: String(data[i][0] || ""),',
-                '          studentClass: String(data[i][1] || ""),',
-                '          studentName: String(data[i][2] || ""),',
-                '          subjectTitle: String(data[i][3] || ""),',
-                '          status: String(data[i][4] || "ACTIVE"),',
-                '          violations: Number(data[i][5] || 0),',
-                '          maxViolations: 10,',
-                '          lastViolationReason: String(data[i][7] || "-"),',
-                '          lastUpdated: String(data[i][8] || ""),',
-                '          unlockedByAdmin: String(data[i][10] || "") === "TRUE",',
-                '          awaySeconds: Number(data[i][11] || 0)',
-                '        });',
-                '      }',
-                '      return ContentService.createTextOutput(JSON.stringify({ status: "ok", sessions: sessions })).setMimeType(ContentService.MimeType.JSON);',
-                '    }',
-                '    if (action === "unlock") {',
-                '      var targetSid = String(p.sessionId || "").trim();',
-                '      var targetName = String(p.studentName || "").trim().toLowerCase();',
-                '      var targetClass = String(p.studentClass || "").trim().toLowerCase();',
-                '      for (var r = 1; r < data.length; r++) {',
-                '        var rowSid = String(data[r][0] || "").trim();',
-                '        var rowClass = String(data[r][1] || "").trim().toLowerCase();',
-                '        var rowName = String(data[r][2] || "").trim().toLowerCase();',
-                '        if ((targetSid && rowSid === targetSid) || (targetName && rowName === targetName && (!targetClass || rowClass === targetClass))) {',
-                '          sheet.getRange(r + 1, 5).setValue("DIBUKA ADMIN");',
-                '          sheet.getRange(r + 1, 6).setValue(0);',
-                '          sheet.getRange(r + 1, 7).setValue(10);',
-                '          sheet.getRange(r + 1, 8).setValue("Kunci dibuka & direset oleh Pengawas");',
-                '          sheet.getRange(r + 1, 9).setValue(new Date().toISOString());',
-                '          sheet.getRange(r + 1, 11).setValue("TRUE");',
-                '        }',
-                '      }',
-                '      return ContentService.createTextOutput(JSON.stringify({ status: "unlocked" })).setMimeType(ContentService.MimeType.JSON);',
-                '    }',
-                '    if (action === "checkLock") {',
-                '      var chkSid = String(p.sessionId || "").trim();',
-                '      var chkName = String(p.studentName || "").trim().toLowerCase();',
-                '      var chkClass = String(p.studentClass || "").trim().toLowerCase();',
-                '      var locked = false;',
-                '      var unlocked = false;',
-                '      for (var k = data.length - 1; k >= 1; k--) {',
-                '        var kSid = String(data[k][0] || "").trim();',
-                '        var kClass = String(data[k][1] || "").trim().toLowerCase();',
-                '        var kName = String(data[k][2] || "").trim().toLowerCase();',
-                '        if ((chkSid && kSid === chkSid) || (chkName && kName === chkName && (!chkClass || kClass === chkClass))) {',
-                '          var st = String(data[k][4] || "");',
-                '          var unl = String(data[k][10] || "") === "TRUE";',
-                '          if (unl || st === "DIBUKA ADMIN") { unlocked = true; locked = false; }',
-                '          else if (st === "LOCKED" || Number(data[k][5] || 0) >= 10) { locked = true; }',
-                '          break;',
-                '        }',
-                '      }',
-                '      return ContentService.createTextOutput(JSON.stringify({ status: "ok", locked: locked, unlocked: unlocked })).setMimeType(ContentService.MimeType.JSON);',
-                '    }',
+                '  var ss = SpreadsheetApp.openById("' + SPREADSHEET_ID + '");',
+                '  var sheet = ss.getSheetByName("MONITORING");',
+                '  if (!sheet) {',
+                '    sheet = ss.insertSheet("MONITORING");',
+                '    sheet.appendRow(["sessionId", "studentClass", "studentName", "subjectTitle", "status", "violations", "maxViolations", "lastViolationReason", "lastUpdated", "baseKey", "unlockedByAdmin", "awaySeconds"]);',
+                '  }',
+                '  var p = (e && e.parameter) ? e.parameter : {};',
+                '  var action = String(p.action || "get");',
+                '  var data = sheet.getDataRange().getValues();',
+                '',
+                '  if (action === "sync") {',
                 '    var sid = String(p.sessionId || "").trim();',
-                '    if (sid) {',
-                '      var foundRow = -1;',
-                '      for (var j = 1; j < data.length; j++) {',
-                '        if (String(data[j][0] || "").trim() === sid) { foundRow = j + 1; break; }',
+                '    var sClass = String(p.studentClass || "").trim();',
+                '    var sName = String(p.studentName || "").trim();',
+                '    var sSub = String(p.subjectTitle || "").trim();',
+                '    var status = String(p.status || "ACTIVE").trim();',
+                '    var viol = Number(p.violations || 0);',
+                '    var maxV = Number(p.maxViolations || 10);',
+                '    var reason = String(p.lastViolationReason || "-");',
+                '    var baseKey = String(p.baseKey || (sClass + "_" + sName));',
+                '    var awaySec = Number(p.awaySeconds || 0);',
+                '    var nowIso = new Date().toISOString();',
+                '    var foundRow = -1;',
+                '    for (var i = 1; i < data.length; i++) {',
+                '      if (String(data[i][0]).trim() === sid) { foundRow = i + 1; break; }',
+                '    }',
+                '    if (foundRow > 0) {',
+                '      var curStatus = String(data[foundRow - 1][4] || "");',
+                '      var unlockedFlag = String(data[foundRow - 1][10] || "");',
+                '      if (curStatus === "DIBUKA ADMIN" && unlockedFlag === "TRUE" && status === "LOCKED") {',
+                '        return ContentService.createTextOutput(JSON.stringify({ status: "unlocked" })).setMimeType(ContentService.MimeType.JSON);',
                 '      }',
-                '      var rowValues = [',
-                '        sid,',
-                '        String(p.studentClass || ""),',
-                '        String(p.studentName || ""),',
-                '        String(p.subjectTitle || "-"),',
-                '        String(p.status || "ACTIVE"),',
-                '        Number(p.violations || 0),',
-                '        10,',
-                '        String(p.lastViolationReason || "-"),',
-                '        new Date().toISOString(),',
-                '        String(p.baseKey || ""),',
-                '        "FALSE",',
-                '        Number(p.awaySeconds || 0)',
-                '      ];',
-                '      if (foundRow > 0) {',
-                '        sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);',
-                '      } else {',
-                '        sheet.appendRow(rowValues);',
-                '      }',
+                '      sheet.getRange(foundRow, 2, 1, 11).setValues([[sClass, sName, sSub, status, viol, maxV, reason, nowIso, baseKey, "FALSE", awaySec]]);',
+                '    } else {',
+                '      sheet.appendRow([sid, sClass, sName, sSub, status, viol, maxV, reason, nowIso, baseKey, "FALSE", awaySec]);',
                 '    }',
                 '    return ContentService.createTextOutput(JSON.stringify({ status: "ok" })).setMimeType(ContentService.MimeType.JSON);',
-                '  } catch (err) {',
-                '    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: String(err) })).setMimeType(ContentService.MimeType.JSON);',
-                '  } finally {',
-                '    try { lock.releaseLock(); } catch (e2) {}',
                 '  }',
+                '',
+                '  if (action === "unlock") {',
+                '    var targetSid = String(p.sessionId || "").trim();',
+                '    var targetName = String(p.studentName || "").trim().toLowerCase();',
+                '    var targetClass = String(p.studentClass || "").trim().toLowerCase();',
+                '    var targetSub = String(p.subjectTitle || "").trim().toLowerCase();',
+                '    for (var r = 1; r < data.length; r++) {',
+                '      var rowSid = String(data[r][0] || "").trim();',
+                '      var rowClass = String(data[r][1] || "").trim().toLowerCase();',
+                '      var rowName = String(data[r][2] || "").trim().toLowerCase();',
+                '      var rowSub = String(data[r][3] || "").trim().toLowerCase();',
+                '      var matchStudent = (targetName && rowName === targetName && (!targetClass || rowClass === targetClass));',
+                '      var matchSub = (!targetSub || rowSub === targetSub);',
+                '      if ((targetSid && rowSid === targetSid) || (matchStudent && matchSub)) {',
+                '        sheet.getRange(r + 1, 5).setValue("DIBUKA ADMIN");',
+                '        sheet.getRange(r + 1, 6).setValue(0);',
+                '        sheet.getRange(r + 1, 7).setValue(10);',
+                '        sheet.getRange(r + 1, 8).setValue("Kunci dibuka & direset oleh Pengawas");',
+                '        sheet.getRange(r + 1, 9).setValue(new Date().toISOString());',
+                '        sheet.getRange(r + 1, 11).setValue("TRUE");',
+                '      }',
+                '    }',
+                '    return ContentService.createTextOutput(JSON.stringify({ status: "unlocked" })).setMimeType(ContentService.MimeType.JSON);',
+                '  }',
+                '',
+                '  var sessions = [];',
+                '  for (var k = 1; k < data.length; k++) {',
+                '    if (!data[k][0]) continue;',
+                '    sessions.push({',
+                '      sessionId: String(data[k][0]),',
+                '      studentClass: String(data[k][1] || ""),',
+                '      studentName: String(data[k][2] || ""),',
+                '      subjectTitle: String(data[k][3] || ""),',
+                '      status: String(data[k][4] || "ACTIVE"),',
+                '      violations: Number(data[k][5] || 0),',
+                '      maxViolations: Number(data[k][6] || 10),',
+                '      lastViolationReason: String(data[k][7] || "-"),',
+                '      lastUpdated: String(data[k][8] || ""),',
+                '      baseKey: String(data[k][9] || ""),',
+                '      unlockedByAdmin: String(data[k][10] || "") === "TRUE",',
+                '      awaySeconds: Number(data[k][11] || 0)',
+                '    });',
+                '  }',
+                '  return ContentService.createTextOutput(JSON.stringify({ sessions: sessions })).setMimeType(ContentService.MimeType.JSON);',
                 '}'
             ].join('\n');
 
+            // =================================================================
+            // STATE APLIKASI
+            // =================================================================
             const state = {
                 studentsByClass: {},
                 subjects: [],
@@ -650,21 +622,19 @@
                 isLocked: false,
                 violations: 0,
                 lastViolationReason: '-',
-                awayStartTime: null,
                 totalAwaySeconds: 0,
-                examStartTime: null,
-                examEndTime: null,
-                examDurationMinutes: DEFAULT_EXAM_DURATION_MINUTES,
+                awayStartTime: null,
+                lastBlurTime: 0,
+                pendingBlurTimer: null,
+                lastViolationTimestamp: 0,
                 timerInterval: null,
-                heartbeatTimeout: null,
-                lockPollInterval: null,
+                examEndTime: null,
+                heartbeatTimer: null,
+                unlockPollInterval: null,
                 adminRefreshInterval: null,
-                iosTouchTimer: null,
-                iosTouchMoved: false,
-                lastViewportWidth: window.innerWidth,
-                lastViewportHeight: window.innerHeight,
-                isPointerInsideIframe: false,
-                adminSessions: []
+                adminSessions: [],
+                touchStartTime: 0,
+                isPointerInsideIframe: false
             };
 
             // =================================================================
@@ -672,11 +642,9 @@
             // =================================================================
             const el = {
                 startScreen: document.getElementById('start-screen'),
-                openAdminBtn: document.getElementById('open-admin-btn'),
-                studentDbStatus: document.getElementById('student-db-status'),
+                studentClassSelect: document.getElementById('student-class-select'),
+                studentNameSelect: document.getElementById('student-name-select'),
                 reloadStudentsBtn: document.getElementById('reload-students-btn'),
-                studentClassSelect: document.getElementById('student-class'),
-                studentNameSelect: document.getElementById('student-name'),
                 startErrorMsg: document.getElementById('start-error-msg'),
                 startExamBtn: document.getElementById('start-exam-btn'),
 
@@ -685,56 +653,55 @@
                 headerStudentClass: document.getElementById('header-student-class'),
                 headerSubjectTitle: document.getElementById('header-subject-title'),
                 violationBadge: document.getElementById('violation-badge'),
-                violationCounter: document.getElementById('violation-counter'),
+                violationCountText: document.getElementById('violation-count-text'),
                 examTimerBadge: document.getElementById('exam-timer-badge'),
                 examTimer: document.getElementById('exam-timer'),
                 backToPortalBtn: document.getElementById('back-to-portal-btn'),
                 finishExamBtn: document.getElementById('finish-exam-btn'),
 
                 subjectPortalView: document.getElementById('subject-portal-view'),
-                subjectsGrid: document.getElementById('subjects-grid'),
                 refreshSubjectsBtn: document.getElementById('refresh-subjects-btn'),
+                subjectsGrid: document.getElementById('subjects-grid'),
+
                 iframeExamView: document.getElementById('iframe-exam-view'),
                 iframeLoader: document.getElementById('iframe-loader'),
                 examWatermarkLayer: document.getElementById('exam-watermark-layer'),
                 examIframe: document.getElementById('exam-iframe'),
 
                 violationOverlay: document.getElementById('violation-overlay'),
-                overlayStatusBadge: document.getElementById('overlay-status-badge'),
-                overlayTitle: document.getElementById('overlay-title'),
-                overlayReason: document.getElementById('overlay-reason'),
-                overlayCount: document.getElementById('overlay-count'),
-                overlayAwayTime: document.getElementById('overlay-away-time'),
-                overlayInstruction: document.getElementById('overlay-instruction'),
+                violationModalTitle: document.getElementById('violation-modal-title'),
+                violationModalDesc: document.getElementById('violation-modal-desc'),
+                modalViolationCounter: document.getElementById('modal-violation-counter'),
+                modalAwayDuration: document.getElementById('modal-away-duration'),
                 resumeExamBtn: document.getElementById('resume-exam-btn'),
-                lockedPanel: document.getElementById('locked-panel'),
-                checkUnlockBtn: document.getElementById('check-unlock-btn'),
-                unlockCheckStatus: document.getElementById('unlock-check-status'),
+                lockedAccountNotice: document.getElementById('locked-account-notice'),
+                checkUnlockNowBtn: document.getElementById('check-unlock-now-btn'),
+
+                summaryScreen: document.getElementById('summary-screen'),
+                summarySubtitle: document.getElementById('summary-subtitle'),
+                sumName: document.getElementById('sum-name'),
+                sumClass: document.getElementById('sum-class'),
+                sumViolations: document.getElementById('sum-violations'),
+                sumAway: document.getElementById('sum-away'),
+                backHomeBtn: document.getElementById('back-home-btn'),
 
                 confirmFinishModal: document.getElementById('confirm-finish-modal'),
                 cancelFinishBtn: document.getElementById('cancel-finish-btn'),
                 confirmFinishBtn: document.getElementById('confirm-finish-btn'),
 
-                summaryScreen: document.getElementById('summary-screen'),
-                sumName: document.getElementById('sum-name'),
-                sumClass: document.getElementById('sum-class'),
-                sumSubject: document.getElementById('sum-subject'),
-                sumViolations: document.getElementById('sum-violations'),
-                sumAwayTime: document.getElementById('sum-away-time'),
-                backToHomeBtn: document.getElementById('back-to-home-btn'),
-
+                openAdminPinBtn: document.getElementById('open-admin-pin-btn'),
                 adminPinModal: document.getElementById('admin-pin-modal'),
                 adminPinInput: document.getElementById('admin-pin-input'),
                 adminPinError: document.getElementById('admin-pin-error'),
-                cancelPinBtn: document.getElementById('cancel-pin-btn'),
-                submitPinBtn: document.getElementById('submit-pin-btn'),
+                closeAdminPinBtn: document.getElementById('close-admin-pin-btn'),
+                submitAdminPinBtn: document.getElementById('submit-admin-pin-btn'),
 
                 adminDashboard: document.getElementById('admin-dashboard'),
                 closeAdminBtn: document.getElementById('close-admin-btn'),
-                tabBtnMonitoring: document.getElementById('tab-btn-monitoring'),
-                tabBtnScript: document.getElementById('tab-btn-script'),
-                adminTabMonitoring: document.getElementById('admin-tab-monitoring'),
-                adminTabScript: document.getElementById('admin-tab-script'),
+                tabMonitoringBtn: document.getElementById('tab-monitoring-btn'),
+                tabAppsScriptBtn: document.getElementById('tab-appsscript-btn'),
+                adminPanelMonitoring: document.getElementById('admin-panel-monitoring'),
+                adminPanelAppsScript: document.getElementById('admin-panel-appsscript'),
 
                 statTotal: document.getElementById('stat-total'),
                 statActive: document.getElementById('stat-active'),
@@ -742,6 +709,7 @@
                 statLocked: document.getElementById('stat-locked'),
 
                 adminSearchInput: document.getElementById('admin-search-input'),
+                adminSubjectFilter: document.getElementById('admin-subject-filter'),
                 adminClassFilter: document.getElementById('admin-class-filter'),
                 adminRefreshBtn: document.getElementById('admin-refresh-btn'),
                 adminSyncAlert: document.getElementById('admin-sync-alert'),
@@ -752,10 +720,10 @@
             };
 
             // =================================================================
-            // FUNGSI UTILITAS
+            // UTILITAS UMUM
             // =================================================================
             function escapeHTML(str) {
-                return String(str == null ? '' : str)
+                return String(str || '')
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;')
@@ -763,249 +731,387 @@
                     .replace(/'/g, '&#39;');
             }
 
-            function formatTime(ms) {
-                const totalSec = Math.max(0, Math.floor(ms / 1000));
-                const hrs = String(Math.floor(totalSec / 3600)).padStart(2, '0');
-                const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
-                const secs = String(totalSec % 60).padStart(2, '0');
-                return `${hrs}:${mins}:${secs}`;
-            }
-
-            function formatDurationHuman(seconds) {
-                const sec = Math.max(0, Math.round(Number(seconds) || 0));
+            function formatDurationHuman(totalSeconds) {
+                const sec = Math.max(0, Math.floor(Number(totalSeconds) || 0));
                 if (sec < 60) return `${sec} detik`;
                 const mins = Math.floor(sec / 60);
                 const remSec = sec % 60;
                 return remSec > 0 ? `${mins} menit ${remSec} detik` : `${mins} menit`;
             }
 
-            function extractAwaySecondsFromLogText(reasonText) {
-                const str = String(reasonText || '');
-                const tagMatch = str.match(/\[TotalKeluar:(\d+)\]/i);
-                if (tagMatch) return Number(tagMatch[1]) || 0;
-                const minSecMatch = str.match(/\(keluar\s+(\d+)\s*menit(?:\s+(\d+)\s*detik)?\)/i);
-                if (minSecMatch) {
-                    return (Number(minSecMatch[1] || 0) * 60) + Number(minSecMatch[2] || 0);
-                }
-                const secOnlyMatch = str.match(/\(keluar\s+(\d+)\s*detik\)/i);
-                if (secOnlyMatch) return Number(secOnlyMatch[1] || 0);
+            function formatHMS(totalSeconds) {
+                const sec = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+                const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+                const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+                const s = String(sec % 60).padStart(2, '0');
+                return `${h}:${m}:${s}`;
+            }
+
+            function extractAwaySecondsFromLogText(logText) {
+                const txt = String(logText || '');
+                const mTag = txt.match(/\[TotalKeluar:(\d+)\]/i);
+                if (mTag) return Number(mTag[1]) || 0;
+                const mText = txt.match(/keluar\s+(\d+)\s*detik/i);
+                if (mText) return Number(mText[1]) || 0;
                 return 0;
             }
 
             function parseGvizJson(rawText) {
-                const startIdx = rawText.indexOf('{');
-                const endIdx = rawText.lastIndexOf('}');
-                if (startIdx === -1 || endIdx === -1) throw new Error('Format JSON Spreadsheet tidak valid');
-                return JSON.parse(rawText.slice(startIdx, endIdx + 1));
+                const start = rawText.indexOf('{');
+                const end = rawText.lastIndexOf('}');
+                if (start === -1 || end === -1) throw new Error('Format gviz tidak valid');
+                return JSON.parse(rawText.slice(start, end + 1));
             }
 
             function normalizeExamUrl(rawUrl) {
-                return String(rawUrl || '').trim();
-            }
-
-            function isCurrentlyFullscreen() {
-                return Boolean(
-                    document.fullscreenElement ||
-                    document.webkitFullscreenElement ||
-                    document.mozFullScreenElement ||
-                    document.msFullscreenElement
-                );
+                const url = String(rawUrl || '').trim();
+                if (!url) return 'about:blank';
+                if (/^https?:\/\//i.test(url)) return url;
+                return 'https://' + url;
             }
 
             function enterFullscreenSafe() {
                 try {
-                    const elem = document.documentElement;
-                    if (!isCurrentlyFullscreen()) {
-                        if (elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
-                        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+                    const docEl = document.documentElement;
+                    if (!document.fullscreenElement && docEl.requestFullscreen) {
+                        docEl.requestFullscreen().catch(() => {});
                     }
                 } catch (e) {}
             }
 
             // =================================================================
-            // MEMUAT DATA SISWA & JADWAL MATA PELAJARAN DARI GOOGLE SHEET
+            // PELACAKAN PERCOBAAN 1X PER MATA PELAJARAN (WAJIB RESET ADMIN)
             // =================================================================
-            const FALLBACK_STUDENTS = {
-                'VII A': ['Ahmad Fauzi', 'Aisyah Putri', 'Budi Santoso'],
-                'VIII B': ['Sasa', 'Kevin Pratama', 'Nabila Zahra'],
-                'IX A': ['Rizky Ramadhan', 'Siti Aminah', 'Dina Lestari']
-            };
-
-            const FALLBACK_SUBJECTS = [
-                {
-                    title: 'Matematika (Simulasi CBT)',
-                    url: 'https://docs.google.com/forms/d/e/1FAIpQLSfD_sample_cbt_link/viewform',
-                    status: 'AKTIF',
-                    durationMinutes: 90
-                }
-            ];
-
-            function populateClassDropdown() {
-                const classes = Object.keys(state.studentsByClass).sort((a, b) => a.localeCompare(b, 'id'));
-                el.studentClassSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>' +
-                    classes.map((cls) => `<option value="${escapeHTML(cls)}">${escapeHTML(cls)}</option>`).join('');
-                el.studentNameSelect.innerHTML = '<option value="">-- Pilih Kelas Terlebih Dahulu --</option>';
-                el.studentNameSelect.disabled = true;
+            function getAttemptKey(studentClass, studentName, subjectTitle) {
+                return `${String(studentClass || '').trim().toLowerCase()}||${String(studentName || '').trim().toLowerCase()}||${String(subjectTitle || '').trim().toLowerCase()}`;
             }
 
-            function populateStudentNamesForClass(selectedClass) {
-                const names = state.studentsByClass[selectedClass] || [];
-                if (!selectedClass || names.length === 0) {
-                    el.studentNameSelect.innerHTML = '<option value="">-- Pilih Kelas Terlebih Dahulu --</option>';
-                    el.studentNameSelect.disabled = true;
-                    return;
+            function getAttemptedExamsMap() {
+                try {
+                    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ATTEMPTED_EXAMS) || '{}');
+                } catch (e) {
+                    return {};
                 }
-                el.studentNameSelect.innerHTML = '<option value="">-- Pilih Nama Anda --</option>' +
-                    names.map((nm) => `<option value="${escapeHTML(nm)}">${escapeHTML(nm)}</option>`).join('');
-                el.studentNameSelect.disabled = false;
             }
 
+            function markExamAttemptedLocal(studentClass, studentName, subjectTitle, sessionId) {
+                if (!studentClass || !studentName || !subjectTitle) return;
+                try {
+                    const map = getAttemptedExamsMap();
+                    const key = getAttemptKey(studentClass, studentName, subjectTitle);
+                    map[key] = {
+                        sessionId: sessionId || '',
+                        attemptedAt: new Date().toISOString()
+                    };
+                    localStorage.setItem(STORAGE_KEYS.ATTEMPTED_EXAMS, JSON.stringify(map));
+                } catch (e) {}
+            }
+
+            function clearExamAttemptedLocal(studentClass, studentName, subjectTitle) {
+                try {
+                    const map = getAttemptedExamsMap();
+                    const key = getAttemptKey(studentClass, studentName, subjectTitle);
+                    if (map[key]) {
+                        delete map[key];
+                        localStorage.setItem(STORAGE_KEYS.ATTEMPTED_EXAMS, JSON.stringify(map));
+                    }
+                } catch (e) {}
+            }
+
+            function isExamAttemptedLocal(studentClass, studentName, subjectTitle) {
+                const map = getAttemptedExamsMap();
+                const key = getAttemptKey(studentClass, studentName, subjectTitle);
+                return Boolean(map[key]);
+            }
+
+            async function syncAttemptedStatusWithServer() {
+                if (!state.studentClass || !state.studentName) return;
+                const targetClass = state.studentClass.trim().toLowerCase();
+                const targetName = state.studentName.trim().toLowerCase();
+                const serverLatestBySubject = new Map();
+
+                const applyRows = (rowsList) => {
+                    rowsList.forEach((s) => {
+                        if (!s) return;
+                        const sClass = String(s.studentClass || '').trim().toLowerCase();
+                        const sName = String(s.studentName || '').trim().toLowerCase();
+                        const sSub = String(s.subjectTitle || '').trim();
+                        if (!sSub || sSub.toLowerCase() === 'portal jadwal') return;
+                        if (sClass === targetClass && sName === targetName) {
+                            serverLatestBySubject.set(sSub.toLowerCase(), s);
+                        }
+                    });
+                };
+
+                if (APPS_SCRIPT_WEB_APP_URL) {
+                    try {
+                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`, { cache: 'no-store' });
+                        const data = await res.json();
+                        if (data && Array.isArray(data.sessions)) {
+                            applyRows(data.sessions);
+                        }
+                    } catch (e) {}
+                }
+
+                try {
+                    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&t=${Date.now()}`;
+                    const resSheet = await fetch(sheetUrl, { cache: 'no-store' });
+                    const txtSheet = await resSheet.text();
+                    const jsonSheet = parseGvizJson(txtSheet);
+                    const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
+                    const parsedRows = rows.map((row, idx) => {
+                        const c = row.c || [];
+                        const sid = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+                        if (!sid || (idx === 0 && sid.toLowerCase() === 'sessionid')) return null;
+                        return {
+                            sessionId: sid,
+                            studentClass: c[1] && c[1].v != null ? String(c[1].v).trim() : '',
+                            studentName: c[2] && c[2].v != null ? String(c[2].v).trim() : '',
+                            subjectTitle: c[3] && c[3].v != null ? String(c[3].v).trim() : '',
+                            status: c[4] && c[4].v != null ? String(c[4].v).trim() : '',
+                            unlockedByAdmin: (c[10] && String(c[10].v).trim() === 'TRUE')
+                        };
+                    }).filter(Boolean);
+                    applyRows(parsedRows);
+                } catch (e2) {}
+
+                serverLatestBySubject.forEach((rec) => {
+                    if (rec.status === 'DIBUKA ADMIN' || rec.unlockedByAdmin === true) {
+                        clearExamAttemptedLocal(state.studentClass, state.studentName, rec.subjectTitle);
+                    } else if (rec.status === 'ACTIVE' || rec.status === 'FINISHED' || rec.status === 'LOCKED') {
+                        markExamAttemptedLocal(state.studentClass, state.studentName, rec.subjectTitle, rec.sessionId);
+                    }
+                });
+
+                renderSubjectsPortal();
+            }
+
+            // =================================================================
+            // MEMUAT DATA SISWA (SHEET "SISWA") & MATA PELAJARAN (SHEET "Sheet1")
+            // =================================================================
             async function loadStudentsFromSheet() {
-                el.studentDbStatus.textContent = 'Memuat daftar kelas & nama siswa dari database...';
+                el.studentClassSelect.innerHTML = '<option value="">Memuat daftar kelas...</option>';
                 try {
                     const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=SISWA&t=${Date.now()}`;
-                    const res = await fetch(url);
+                    const res = await fetch(url, { cache: 'no-store' });
                     const text = await res.text();
                     const json = parseGvizJson(text);
                     const rows = (json.table && json.table.rows) || [];
+
                     const grouped = {};
-
-                    rows.forEach((row, idx) => {
-                        const cells = row.c || [];
-                        const col0 = cells[0] && cells[0].v != null ? String(cells[0].v).trim() : '';
-                        const col1 = cells[1] && cells[1].v != null ? String(cells[1].v).trim() : '';
-                        const col2 = cells[2] && cells[2].v != null ? String(cells[2].v).trim() : '';
-
-                        let sClass = '';
-                        let sName = '';
-                        if (col2) {
-                            sClass = col1;
-                            sName = col2;
-                        } else {
-                            sClass = col0;
-                            sName = col1;
-                        }
-
-                        if (!sClass || !sName) return;
-                        if (idx === 0 && (sClass.toLowerCase().includes('kelas') || sName.toLowerCase().includes('nama'))) return;
-
-                        if (!grouped[sClass]) grouped[sClass] = [];
-                        if (!grouped[sClass].includes(sName)) grouped[sClass].push(sName);
+                    rows.forEach((r, idx) => {
+                        const c = r.c || [];
+                        const colA = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+                        const colB = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
+                        if (!colA || !colB) return;
+                        if (idx === 0 && (colA.toLowerCase() === 'kelas' || colB.toLowerCase() === 'nama')) return;
+                        if (!grouped[colA]) grouped[colA] = [];
+                        if (!grouped[colA].includes(colB)) grouped[colA].push(colB);
                     });
 
+                    Object.keys(grouped).forEach((cls) => grouped[cls].sort());
                     if (Object.keys(grouped).length > 0) {
-                        Object.keys(grouped).forEach((k) => grouped[k].sort((a, b) => a.localeCompare(b, 'id')));
                         state.studentsByClass = grouped;
-                        try { localStorage.setItem(STORAGE_KEYS.STUDENTS_CACHE, JSON.stringify(grouped)); } catch (e) {}
-                        el.studentDbStatus.textContent = `Database siap (${Object.keys(grouped).length} kelas terdaftar).`;
-                    } else {
-                        throw new Error('Data siswa kosong');
+                        try {
+                            localStorage.setItem(STORAGE_KEYS.STUDENTS_CACHE, JSON.stringify(grouped));
+                        } catch (e) {}
                     }
                 } catch (err) {
-                    let cached = null;
-                    try { cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDENTS_CACHE) || 'null'); } catch (e) {}
-                    state.studentsByClass = (cached && Object.keys(cached).length > 0) ? cached : FALLBACK_STUDENTS;
-                    el.studentDbStatus.textContent = cached ? 'Menggunakan cache daftar siswa tersimpan.' : 'Mode offline: menggunakan daftar siswa cadangan.';
+                    try {
+                        const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.STUDENTS_CACHE) || '{}');
+                        if (Object.keys(cached).length > 0) state.studentsByClass = cached;
+                    } catch (e) {}
                 }
-                populateClassDropdown();
+
+                const classes = Object.keys(state.studentsByClass).sort();
+                if (classes.length === 0) {
+                    el.studentClassSelect.innerHTML = '<option value="">Gagal memuat kelas (Periksa koneksi)</option>';
+                    return;
+                }
+
+                el.studentClassSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>' +
+                    classes.map((c) => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
+            }
+
+            async function loadSubjectsFromSheet() {
+                try {
+                    // Sheet1: Kolom A = Nama Ujian, Kolom B = Link Ujian, Kolom C = Durasi Ujian (menit)
+                    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1&t=${Date.now()}`;
+                    const res = await fetch(url, { cache: 'no-store' });
+                    const text = await res.text();
+                    const json = parseGvizJson(text);
+                    const rows = (json.table && json.table.rows) || [];
+
+                    const list = [];
+                    rows.forEach((r, idx) => {
+                        const c = r.c || [];
+                        const title = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+                        const link = c[1] && c[1].v != null ? String(c[1].v).trim() : '';
+                        const durRaw = c[2] && c[2].v != null ? Number(c[2].v) : DEFAULT_EXAM_DURATION_MINUTES;
+                        const statusRaw = c[3] && c[3].v != null ? String(c[3].v).trim() : 'AKTIF';
+
+                        if (!title || !link) return;
+                        if (idx === 0 && (title.toLowerCase().includes('nama ujian') || link.toLowerCase().includes('link'))) return;
+
+                        list.push({
+                            title: title,
+                            url: link,
+                            durationMinutes: durRaw > 0 ? durRaw : DEFAULT_EXAM_DURATION_MINUTES,
+                            status: statusRaw || 'AKTIF'
+                        });
+                    });
+
+                    if (list.length > 0) {
+                        state.subjects = list;
+                        try {
+                            localStorage.setItem(STORAGE_KEYS.SUBJECTS_CACHE, JSON.stringify(list));
+                        } catch (e) {}
+                    }
+                } catch (err) {
+                    try {
+                        const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBJECTS_CACHE) || '[]');
+                        if (cached.length > 0) state.subjects = cached;
+                    } catch (e) {}
+                }
+
+                renderSubjectsPortal();
+                populateAdminFilters();
             }
 
             function renderSubjectsPortal() {
                 if (!el.subjectsGrid) return;
                 if (!state.subjects || state.subjects.length === 0) {
-                    el.subjectsGrid.innerHTML = '<div class="col-span-full bg-white p-8 rounded-3xl text-center text-sm font-bold text-slate-400 border border-slate-200">Belum ada jadwal mata pelajaran aktif.</div>';
+                    el.subjectsGrid.innerHTML = '<div class="col-span-full bg-white p-8 rounded-3xl text-center text-sm font-bold text-slate-400 border border-slate-200">Belum ada jadwal mata pelajaran aktif di Sheet1.</div>';
                     return;
                 }
 
                 el.subjectsGrid.innerHTML = state.subjects.map((sub, idx) => {
                     const isClosed = String(sub.status || '').toUpperCase().includes('TUTUP') || String(sub.status || '').toUpperCase().includes('NONAKTIF');
+                    const alreadyAttempted = isExamAttemptedLocal(state.studentClass, state.studentName, sub.title);
+                    const isDisabled = isClosed || alreadyAttempted;
+
+                    let badgeClass = 'bg-emerald-100 text-emerald-700';
+                    let badgeText = `AKTIF • ${sub.durationMinutes || 90} MENIT`;
+                    let btnClass = 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer';
+                    let btnText = 'Kerjakan Soal Sekarang (1x Kesempatan)';
+
+                    if (isClosed) {
+                        badgeClass = 'bg-slate-100 text-slate-500';
+                        badgeText = 'DITUTUP';
+                        btnClass = 'bg-slate-200 text-slate-400 cursor-not-allowed';
+                        btnText = 'Ujian Belum Dibuka';
+                    } else if (alreadyAttempted) {
+                        badgeClass = 'bg-amber-100 text-amber-800';
+                        badgeText = 'SUDAH PERNAH DICOBA (1/1)';
+                        btnClass = 'bg-slate-200 text-slate-500 cursor-not-allowed';
+                        btnText = 'Terkunci • Minta Reset ke Admin';
+                    }
+
                     return `
-                        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between gap-4">
+                        <div class="bg-white rounded-3xl p-5 border ${alreadyAttempted ? 'border-amber-200 bg-amber-50/30' : 'border-slate-200'} shadow-sm flex flex-col justify-between gap-4">
                             <div>
                                 <div class="flex items-center justify-between gap-2 mb-2">
-                                    <span class="px-2.5 py-1 ${isClosed ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700'} text-[10px] font-black uppercase rounded-lg">
-                                        ${isClosed ? 'DITUTUP' : 'AKTIF • ' + (sub.durationMinutes || 90) + ' MENIT'}
+                                    <span class="px-2.5 py-1 ${badgeClass} text-[10px] font-black uppercase rounded-lg">
+                                        ${badgeText}
                                     </span>
                                 </div>
                                 <h3 class="text-base font-extrabold text-slate-900">${escapeHTML(sub.title)}</h3>
+                                ${alreadyAttempted ? '<p class="text-[11px] font-semibold text-amber-700 mt-1.5">Anda sudah menggunakan 1 kali kesempatan ujian untuk mapel ini. Hubungi Pengawas/Admin jika perlu mengulang dari awal.</p>' : ''}
                             </div>
-                            <button type="button" data-sub-index="${idx}" ${isClosed ? 'disabled' : ''}
-                                class="open-subject-btn w-full py-3 px-4 ${isClosed ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'} font-extrabold text-xs rounded-2xl transition">
-                                ${isClosed ? 'Ujian Belum Dibuka' : 'Kerjakan Soal Sekarang'}
+                            <button type="button" data-sub-index="${idx}" ${isDisabled ? 'disabled' : ''}
+                                class="open-subject-btn w-full py-3 px-4 ${btnClass} font-extrabold text-xs rounded-2xl transition">
+                                ${btnText}
                             </button>
                         </div>
                     `;
                 }).join('');
             }
 
-            async function loadSubjectsFromSheet() {
-                try {
-                    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1&t=${Date.now()}`;
-                    const res = await fetch(url);
-                    const text = await res.text();
-                    const json = parseGvizJson(text);
-                    const rows = (json.table && json.table.rows) || [];
-                    const list = [];
+            // =================================================================
+            // WATERMARK & ANTI-CAPTURE SHIELD
+            // =================================================================
+            function renderExamWatermark() {
+                if (!el.examWatermarkLayer) return;
+                const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                const label = `${state.studentName || 'PESERTA'} • ${state.studentClass || 'SMPN 15'} • ${nowStr}`;
+                const items = Array.from({ length: 18 }, () => `<div class="watermark-item">${escapeHTML(label)}</div>`).join('');
+                el.examWatermarkLayer.innerHTML = items;
+            }
 
-                    rows.forEach((row, idx) => {
-                        const cells = row.c || [];
-                        // Kolom A: Nama Ujian, Kolom B: Link Ujian, Kolom C: Durasi Ujian (menit)
-                        const title = cells[0] && cells[0].v != null ? String(cells[0].v).trim() : '';
-                        const link = cells[1] && cells[1].v != null ? String(cells[1].v).trim() : '';
-                        const rawDurCell = cells[2] && cells[2].v != null ? String(cells[2].v).trim() : '';
-                        const numericDur = parseInt(rawDurCell.replace(/[^\d]/g, ''), 10);
-                        const durationMinutes = (!Number.isNaN(numericDur) && numericDur > 0) ? numericDur : DEFAULT_EXAM_DURATION_MINUTES;
-
-                        if (!title || !link) return;
-                        if (idx === 0 && (title.toLowerCase().includes('nama ujian') || title.toLowerCase().includes('mata pelajaran') || title.toLowerCase().includes('mapel'))) return;
-                        list.push({ title, url: link, status: 'AKTIF', durationMinutes });
-                    });
-
-                    if (list.length > 0) {
-                        state.subjects = list;
-                        try { localStorage.setItem(STORAGE_KEYS.SUBJECTS_CACHE, JSON.stringify(list)); } catch (e) {}
-                    } else {
-                        throw new Error('Jadwal Sheet1 kosong');
-                    }
-                } catch (err) {
-                    let cached = null;
-                    try { cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBJECTS_CACHE) || 'null'); } catch (e) {}
-                    state.subjects = (cached && cached.length > 0) ? cached : FALLBACK_SUBJECTS;
-                }
-                renderSubjectsPortal();
+            function triggerAntiCaptureShield(durationMs = 1800) {
+                if (!el.examContainer) return;
+                el.examContainer.classList.add('anti-capture-blur');
+                setTimeout(() => {
+                    if (el.examContainer) el.examContainer.classList.remove('anti-capture-blur');
+                }, durationMs);
             }
 
             // =================================================================
-            // PELACAKAN WAKTU KELUAR & SINKRONISASI SERVER REAL-TIME
+            // TIMER HITUNG MUNDUR (BERJALAN SETELAH MEMILIH UJIAN)
             // =================================================================
-            let screenLockGraceTimer = null;
-            let lastBlurTimestamp = 0;
-            let isLikelyScreenOff = false;
+            function startExamTimer(durationMinutes) {
+                if (state.timerInterval) clearInterval(state.timerInterval);
+                const mins = Number(durationMinutes) > 0 ? Number(durationMinutes) : DEFAULT_EXAM_DURATION_MINUTES;
+                state.examEndTime = Date.now() + mins * 60 * 1000;
 
-            function cancelPendingScreenOffCheck() {
-                if (screenLockGraceTimer) {
-                    clearTimeout(screenLockGraceTimer);
-                    screenLockGraceTimer = null;
+                const tick = () => {
+                    if (!state.examEndTime) return;
+                    const remainingSec = Math.max(0, Math.ceil((state.examEndTime - Date.now()) / 1000));
+                    if (el.examTimer) el.examTimer.textContent = formatHMS(remainingSec);
+
+                    if (el.examTimerBadge) {
+                        if (remainingSec <= 300) {
+                            el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-red-600/20 border border-red-500 rounded-xl text-[11px] sm:text-xs font-mono font-black text-red-300 items-center gap-1.5 animate-pulse';
+                        } else if (remainingSec <= 900) {
+                            el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-amber-500/20 border border-amber-500 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-amber-300 items-center gap-1.5';
+                        } else {
+                            el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-slate-200 items-center gap-1.5';
+                        }
+                    }
+
+                    if (remainingSec <= 0) {
+                        clearInterval(state.timerInterval);
+                        endExam('Waktu pengerjaan ujian telah habis.');
+                    }
+                };
+
+                tick();
+                state.timerInterval = setInterval(tick, 1000);
+            }
+
+            // =================================================================
+            // PELACAKAN WAKTU KELUAR & PENANGANAN PELANGGARAN
+            // =================================================================
+            function updateViolationUI() {
+                const countText = `${state.violations}/${MAX_VIOLATIONS}`;
+                if (el.violationCountText) el.violationCountText.textContent = countText;
+                if (el.modalViolationCounter) el.modalViolationCounter.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
+                if (el.modalAwayDuration) el.modalAwayDuration.textContent = `Total Waktu Keluar: ${formatDurationHuman(state.totalAwaySeconds)}`;
+
+                if (el.violationBadge) {
+                    if (state.violations >= MAX_VIOLATIONS) {
+                        el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-red-600/30 border border-red-500 text-red-200 text-[11px] font-black';
+                    } else if (state.violations > 0) {
+                        el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-amber-500/25 border border-amber-500/50 text-amber-300 text-[11px] font-extrabold';
+                    } else {
+                        el.violationBadge.className = 'px-2.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] font-extrabold';
+                    }
                 }
             }
 
             function persistAwayTracker() {
                 try {
-                    localStorage.setItem(STORAGE_KEYS.AWAY_TRACKER, JSON.stringify({
+                    const data = {
                         sessionId: state.sessionId,
+                        studentClass: state.studentClass,
+                        studentName: state.studentName,
+                        subjectTitle: state.currentSubject ? state.currentSubject.title : '',
                         awayStartTime: state.awayStartTime,
-                        totalAwaySeconds: state.totalAwaySeconds
-                    }));
-                } catch (e) {}
-            }
-
-            function restoreAwayTracker() {
-                try {
-                    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.AWAY_TRACKER) || 'null');
-                    if (saved && saved.sessionId === state.sessionId) {
-                        state.awayStartTime = saved.awayStartTime || null;
-                        state.totalAwaySeconds = Number(saved.totalAwaySeconds || 0);
-                    }
+                        totalAwaySeconds: state.totalAwaySeconds,
+                        violations: state.violations,
+                        lastViolationReason: state.lastViolationReason
+                    };
+                    localStorage.setItem(STORAGE_KEYS.AWAY_TRACKER, JSON.stringify(data));
                 } catch (e) {}
             }
 
@@ -1015,39 +1121,89 @@
                     state.totalAwaySeconds += elapsedSec;
                     state.awayStartTime = null;
                     persistAwayTracker();
-                    if (el.overlayAwayTime) {
-                        el.overlayAwayTime.textContent = formatDurationHuman(state.totalAwaySeconds);
-                    }
-                    if (shouldSync && state.isExamActive) {
-                        syncSessionToServer();
-                    }
+                    updateViolationUI();
+                    if (shouldSync) syncSessionToServer();
                 }
             }
 
+            function saveLocalLockState() {
+                try {
+                    localStorage.setItem(STORAGE_KEYS.ACTIVE_LOCK, JSON.stringify({
+                        sessionId: state.sessionId,
+                        studentClass: state.studentClass,
+                        studentName: state.studentName,
+                        subjectTitle: state.currentSubject ? state.currentSubject.title : '',
+                        violations: state.violations,
+                        totalAwaySeconds: state.totalAwaySeconds,
+                        lastViolationReason: state.lastViolationReason
+                    }));
+                } catch (e) {}
+            }
+
+            function clearLocalLockState() {
+                try {
+                    localStorage.removeItem(STORAGE_KEYS.ACTIVE_LOCK);
+                } catch (e) {}
+            }
+
+            function recordViolation(reasonText, startAwayClock = false) {
+                if (!state.isExamActive || state.isLocked) return;
+
+                const now = Date.now();
+                if (now - state.lastViolationTimestamp < 1200) return;
+                state.lastViolationTimestamp = now;
+
+                if (startAwayClock && !state.awayStartTime) {
+                    state.awayStartTime = now;
+                }
+
+                state.violations = Math.min(MAX_VIOLATIONS, state.violations + 1);
+                state.lastViolationReason = reasonText;
+                persistAwayTracker();
+                updateViolationUI();
+                triggerAntiCaptureShield(2200);
+
+                if (el.violationModalDesc) el.violationModalDesc.textContent = reasonText;
+                if (el.violationOverlay) el.violationOverlay.classList.remove('hidden');
+
+                if (state.violations >= MAX_VIOLATIONS) {
+                    finalizeReturnFromAway(false);
+                    state.isLocked = true;
+                    saveLocalLockState();
+                    if (el.violationModalTitle) el.violationModalTitle.textContent = 'AKUN UJIAN TERKUNCI PERMANEN!';
+                    if (el.resumeExamBtn) el.resumeExamBtn.classList.add('hidden');
+                    if (el.lockedAccountNotice) el.lockedAccountNotice.classList.remove('hidden');
+                    startUnlockPolling();
+                    syncSessionToServer('LOCKED');
+                } else {
+                    if (el.violationModalTitle) el.violationModalTitle.textContent = 'Peringatan Pelanggaran Terdeteksi!';
+                    if (el.resumeExamBtn) el.resumeExamBtn.classList.remove('hidden');
+                    if (el.lockedAccountNotice) el.lockedAccountNotice.classList.add('hidden');
+                    syncSessionToServer('ACTIVE');
+                }
+            }
+
+            // =================================================================
+            // SINKRONISASI SERVER (FETCH + IMAGE BEACON) & CEK BUKA KUNCI ADMIN
+            // =================================================================
             function saveLocalSessionMirror(payload) {
                 try {
                     const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
                     const idx = list.findIndex((item) => item.sessionId === payload.sessionId);
                     const record = {
-                        sessionId: payload.sessionId,
-                        studentClass: payload.studentClass,
-                        studentName: payload.studentName,
-                        subjectTitle: payload.subjectTitle,
-                        status: payload.status,
-                        violations: Number(payload.violations || 0),
-                        maxViolations: MAX_VIOLATIONS,
-                        lastViolationReason: payload.lastViolationReason || '-',
-                        lastUpdated: new Date().toISOString(),
-                        awaySeconds: Number(payload.awaySeconds || 0)
+                        ...payload,
+                        lastUpdated: new Date().toISOString()
                     };
-                    if (idx >= 0) list[idx] = { ...list[idx], ...record };
-                    else list.push(record);
-                    localStorage.setItem(STORAGE_KEYS.LOCAL_SESSIONS, JSON.stringify(list.slice(-150)));
+                    if (idx >= 0) list[idx] = record;
+                    else list.unshift(record);
+                    localStorage.setItem(STORAGE_KEYS.LOCAL_SESSIONS, JSON.stringify(list.slice(0, 120)));
                 } catch (e) {}
             }
 
             async function syncSessionToServer(forcedStatus = null) {
                 if (!state.studentName || !state.sessionId) return;
+                if (!state.currentSubject || !state.currentSubject.title) return;
+
                 const currentStatus = forcedStatus || (state.isLocked ? 'LOCKED' : 'ACTIVE');
                 const baseKey = `${state.studentClass}_${state.studentName}`;
                 const taggedReason = state.totalAwaySeconds > 0
@@ -1059,7 +1215,7 @@
                     sessionId: state.sessionId,
                     studentClass: state.studentClass,
                     studentName: state.studentName,
-                    subjectTitle: state.currentSubject ? state.currentSubject.title : 'Portal Jadwal',
+                    subjectTitle: state.currentSubject.title,
                     status: currentStatus,
                     violations: state.violations,
                     maxViolations: MAX_VIOLATIONS,
@@ -1071,468 +1227,156 @@
                 saveLocalSessionMirror(payload);
 
                 if (!APPS_SCRIPT_WEB_APP_URL) return;
+
+                const params = new URLSearchParams({
+                    action: 'sync',
+                    sessionId: payload.sessionId,
+                    studentClass: payload.studentClass,
+                    studentName: payload.studentName,
+                    subjectTitle: payload.subjectTitle,
+                    status: payload.status,
+                    violations: String(payload.violations),
+                    maxViolations: String(payload.maxViolations),
+                    lastViolationReason: payload.lastViolationReason,
+                    baseKey: payload.baseKey,
+                    awaySeconds: String(payload.awaySeconds),
+                    t: String(Date.now())
+                });
+
+                const fullUrl = `${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`;
+
                 try {
-                    const params = new URLSearchParams();
-                    Object.keys(payload).forEach((k) => params.append(k, String(payload[k])));
-                    await fetch(`${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`, {
+                    const beacon = new Image();
+                    beacon.src = fullUrl;
+                } catch (e) {}
+
+                try {
+                    await fetch(fullUrl, {
                         method: 'GET',
                         mode: 'no-cors',
+                        cache: 'no-store',
                         keepalive: true
                     });
-                } catch (err) {
-                    console.warn('Sync server tertunda:', err);
-                }
+                } catch (e) {}
             }
 
             function scheduleSmartHeartbeat() {
-                if (state.heartbeatTimeout) clearTimeout(state.heartbeatTimeout);
-                if (!state.isExamActive) return;
-                // Jeda acak 18-28 detik agar 466+ siswa tetap real-time di Admin tanpa membebani server
+                if (state.heartbeatTimer) clearTimeout(state.heartbeatTimer);
                 const jitterMs = 18000 + Math.floor(Math.random() * 10000);
-                state.heartbeatTimeout = setTimeout(() => {
-                    if (state.isExamActive) {
-                        syncSessionToServer();
-                        scheduleSmartHeartbeat();
+                state.heartbeatTimer = setTimeout(() => {
+                    if (state.isExamActive && state.currentSubject && !state.isLocked) {
+                        renderExamWatermark();
+                        syncSessionToServer('ACTIVE');
                     }
+                    if (state.isExamActive) scheduleSmartHeartbeat();
                 }, jitterMs);
             }
 
-            // =================================================================
-            // ALUR MASUK, PILIH MAPEL, PELANGGARAN & KUNCI PERMANEN (10X)
-            // =================================================================
-            function updateViolationUI() {
-                if (el.violationCounter) {
-                    el.violationCounter.textContent = `${state.violations}/${MAX_VIOLATIONS}`;
-                }
-                if (el.violationBadge) {
-                    if (state.violations >= 7) {
-                        el.violationBadge.className = 'px-2.5 py-1.5 bg-red-500/25 border border-red-400/50 text-red-200 rounded-xl text-xs font-extrabold flex items-center gap-1.5';
-                    } else if (state.violations > 0) {
-                        el.violationBadge.className = 'px-2.5 py-1.5 bg-amber-500/25 border border-amber-400/40 text-amber-200 rounded-xl text-xs font-extrabold flex items-center gap-1.5';
-                    } else {
-                        el.violationBadge.className = 'px-2.5 py-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 rounded-xl text-xs font-extrabold flex items-center gap-1.5';
-                    }
-                }
-            }
+            async function checkIfUnlockedByAdmin() {
+                if (!state.studentName) return false;
+                const targetSid = state.sessionId;
+                const targetName = state.studentName.trim().toLowerCase();
+                const targetClass = state.studentClass.trim().toLowerCase();
+                const targetSub = state.currentSubject ? state.currentSubject.title.trim().toLowerCase() : '';
 
-            function savePermanentLockState() {
-                try {
-                    localStorage.setItem(STORAGE_KEYS.ACTIVE_LOCK, JSON.stringify({
-                        sessionId: state.sessionId,
-                        studentClass: state.studentClass,
-                        studentName: state.studentName,
-                        subjectTitle: state.currentSubject ? state.currentSubject.title : 'Ujian',
-                        violations: state.violations,
-                        lastViolationReason: state.lastViolationReason,
-                        totalAwaySeconds: state.totalAwaySeconds
-                    }));
-                } catch (e) {}
-            }
-
-            function clearPermanentLockState() {
-                try { localStorage.removeItem(STORAGE_KEYS.ACTIVE_LOCK); } catch (e) {}
-                if (state.lockPollInterval) {
-                    clearInterval(state.lockPollInterval);
-                    state.lockPollInterval = null;
-                }
-            }
-
-            function showPermanentLockModal() {
-                state.isLocked = true;
-                savePermanentLockState();
-
-                el.overlayStatusBadge.textContent = 'AKSES UJIAN DIKUNCI (10/10)';
-                el.overlayTitle.textContent = 'Ujian Dikunci Permanen!';
-                el.overlayReason.textContent = state.lastViolationReason || 'Mencapai batas maksimal 10 kali pelanggaran';
-                el.overlayCount.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
-                el.overlayAwayTime.textContent = formatDurationHuman(state.totalAwaySeconds);
-                el.overlayInstruction.textContent = 'Anda telah mencapai batas maksimal 10 kali pelanggaran. Soal tidak dapat dilanjutkan sampai Pengawas / Admin membuka kunci Anda.';
-
-                el.resumeExamBtn.classList.add('hidden');
-                el.lockedPanel.classList.remove('hidden');
-                el.violationOverlay.classList.remove('hidden');
-
-                if (state.lockPollInterval) clearInterval(state.lockPollInterval);
-                state.lockPollInterval = setInterval(() => checkUnlockStatusFromServer(true), 4000);
-            }
-
-            let lastViolationTimestamp = 0;
-            function recordViolation(reason) {
-                if (!state.isExamActive || state.isLocked) return;
-                const now = Date.now();
-                if (now - lastViolationTimestamp < 1200) return;
-                lastViolationTimestamp = now;
-
-                if (!state.awayStartTime) {
-                    state.awayStartTime = now;
-                    persistAwayTracker();
-                }
-
-                state.violations += 1;
-                state.lastViolationReason = reason;
-                updateViolationUI();
-
-                if (state.violations >= MAX_VIOLATIONS) {
-                    finalizeReturnFromAway(false);
-                    syncSessionToServer('LOCKED');
-                    showPermanentLockModal();
-                    return;
-                }
-
-                el.overlayStatusBadge.textContent = `PERINGATAN PELANGGARAN KE-${state.violations}`;
-                el.overlayTitle.textContent = 'Terdeteksi Aktivitas Terlarang!';
-                el.overlayReason.textContent = reason;
-                el.overlayCount.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
-                el.overlayAwayTime.textContent = formatDurationHuman(state.totalAwaySeconds);
-                el.overlayInstruction.innerHTML = `Sisa kesempatan Anda: <strong>${MAX_VIOLATIONS - state.violations} kali</strong> lagi sebelum ujian dikunci permanen.`;
-
-                el.resumeExamBtn.classList.remove('hidden');
-                el.lockedPanel.classList.add('hidden');
-                el.violationOverlay.classList.remove('hidden');
-
-                syncSessionToServer('ACTIVE');
-            }
-
-            async function checkUnlockStatusFromServer(silent = false) {
-                if (!silent && el.unlockCheckStatus) {
-                    el.unlockCheckStatus.textContent = 'Memeriksa status kunci ke server Pengawas...';
-                }
+                const evaluateSessions = (sessionsList) => {
+                    return sessionsList.some((s) => {
+                        const matchSid = targetSid && String(s.sessionId || '').trim() === targetSid;
+                        const matchStudent = String(s.studentName || '').trim().toLowerCase() === targetName &&
+                            (!targetClass || String(s.studentClass || '').trim().toLowerCase() === targetClass);
+                        const matchSub = !targetSub || String(s.subjectTitle || '').trim().toLowerCase() === targetSub;
+                        if (matchSid || (matchStudent && matchSub)) {
+                            return s.status === 'DIBUKA ADMIN' || s.unlockedByAdmin === true || (Number(s.violations) === 0 && s.status === 'ACTIVE');
+                        }
+                        return false;
+                    });
+                };
 
                 let unlocked = false;
 
-                // 1. Cek via endpoint checkLock
-                try {
-                    const params = new URLSearchParams({
-                        action: 'checkLock',
-                        sessionId: state.sessionId || '',
-                        studentClass: state.studentClass || '',
-                        studentName: state.studentName || '',
-                        t: String(Date.now())
-                    });
-                    const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`);
-                    const data = await res.json();
-                    if (data && data.unlocked === true) {
-                        unlocked = true;
-                    }
-                } catch (e) {}
-
-                // 2. Cadangan: cek langsung daftar sesi penuh (action=get)
-                if (!unlocked) {
+                if (APPS_SCRIPT_WEB_APP_URL) {
                     try {
-                        const resAll = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`);
-                        const dataAll = await resAll.json();
-                        if (dataAll && Array.isArray(dataAll.sessions)) {
-                            const targetName = String(state.studentName || '').trim().toLowerCase();
-                            const targetClass = String(state.studentClass || '').trim().toLowerCase();
-                            const match = [...dataAll.sessions].reverse().find((s) => {
-                                const sameSid = state.sessionId && String(s.sessionId || '').trim() === state.sessionId;
-                                const sameStudent = targetName && String(s.studentName || '').trim().toLowerCase() === targetName &&
-                                    (!targetClass || String(s.studentClass || '').trim().toLowerCase() === targetClass);
-                                return sameSid || sameStudent;
-                            });
-                            if (match && (match.status === 'DIBUKA ADMIN' || match.unlockedByAdmin === true || Number(match.violations || 0) === 0)) {
-                                unlocked = true;
-                            }
+                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`, { cache: 'no-store' });
+                        const data = await res.json();
+                        if (data && Array.isArray(data.sessions)) {
+                            unlocked = evaluateSessions(data.sessions);
                         }
-                    } catch (e2) {}
+                    } catch (e) {}
                 }
 
-                // 3. Cadangan lokal (bila admin membuka kunci dari perangkat yang sama)
                 if (!unlocked) {
                     try {
-                        const localList = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
-                        const localMatch = localList.find((s) => s.sessionId === state.sessionId);
-                        if (localMatch && localMatch.status === 'DIBUKA ADMIN') {
-                            unlocked = true;
-                        }
-                    } catch (e3) {}
+                        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&t=${Date.now()}`;
+                        const resSheet = await fetch(sheetUrl, { cache: 'no-store' });
+                        const txtSheet = await resSheet.text();
+                        const jsonSheet = parseGvizJson(txtSheet);
+                        const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
+                        const parsed = rows.map((r) => {
+                            const c = r.c || [];
+                            return {
+                                sessionId: c[0] && c[0].v != null ? String(c[0].v).trim() : '',
+                                studentClass: c[1] && c[1].v != null ? String(c[1].v).trim() : '',
+                                studentName: c[2] && c[2].v != null ? String(c[2].v).trim() : '',
+                                subjectTitle: c[3] && c[3].v != null ? String(c[3].v).trim() : '',
+                                status: c[4] && c[4].v != null ? String(c[4].v).trim() : '',
+                                violations: c[5] && c[5].v != null ? Number(c[5].v) : 0,
+                                unlockedByAdmin: (c[10] && String(c[10].v).trim() === 'TRUE')
+                            };
+                        });
+                        unlocked = evaluateSessions(parsed);
+                    } catch (e2) {}
                 }
 
                 if (unlocked) {
                     state.isLocked = false;
                     state.violations = 0;
-                    state.lastViolationReason = '-';
-                    clearPermanentLockState();
+                    state.totalAwaySeconds = 0;
+                    state.awayStartTime = null;
+                    clearLocalLockState();
+                    if (targetSub) clearExamAttemptedLocal(state.studentClass, state.studentName, targetSub);
+                    if (state.unlockPollInterval) clearInterval(state.unlockPollInterval);
+                    if (el.violationOverlay) el.violationOverlay.classList.add('hidden');
                     updateViolationUI();
-                    el.violationOverlay.classList.add('hidden');
-                    if (state.isExamActive) {
-                        enterFullscreenSafe();
-                        syncSessionToServer('ACTIVE');
-                    } else {
-                        el.startScreen.classList.remove('hidden');
-                    }
-                } else if (!silent && el.unlockCheckStatus) {
-                    el.unlockCheckStatus.textContent = 'Masih terkunci. Silakan minta Pengawas menekan tombol "Buka Kunci / Reset" di Dashboard Admin.';
+                    returnToSubjectPortal();
+                    return true;
                 }
+                return false;
             }
 
-            function renderExamWatermark() {
-                if (!el.examWatermarkLayer) return;
-                const label = `${state.studentName || 'PESERTA'} • ${state.studentClass || 'SMPN 15'}`;
-                const items = Array.from({ length: 18 }, () =>
-                    `<span class="text-sm font-black tracking-widest uppercase -rotate-12 whitespace-nowrap">${escapeHTML(label)}</span>`
-                ).join('');
-                el.examWatermarkLayer.innerHTML = items;
+            function startUnlockPolling() {
+                if (state.unlockPollInterval) clearInterval(state.unlockPollInterval);
+                state.unlockPollInterval = setInterval(checkIfUnlockedByAdmin, 4000);
             }
 
-            function triggerAntiCaptureShield(durationMs = 2200) {
-                if (!el.examContainer) return;
-                el.examContainer.classList.add('anti-capture-blur');
-                setTimeout(() => {
-                    if (el.examContainer) {
-                        el.examContainer.classList.remove('anti-capture-blur');
-                    }
-                }, durationMs);
-            }
-
-            function clearAnyTextSelection() {
+            function restoreLockStateOnLoad() {
                 try {
-                    const sel = window.getSelection ? window.getSelection() : null;
-                    if (sel && sel.rangeCount > 0) {
-                        sel.removeAllRanges();
+                    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVE_LOCK) || 'null');
+                    if (saved && saved.studentName) {
+                        state.studentClass = saved.studentClass || '';
+                        state.studentName = saved.studentName || '';
+                        state.sessionId = saved.sessionId || '';
+                        state.currentSubject = saved.subjectTitle ? { title: saved.subjectTitle } : null;
+                        state.violations = MAX_VIOLATIONS;
+                        state.totalAwaySeconds = Number(saved.totalAwaySeconds || 0);
+                        state.isLocked = true;
+                        state.isExamActive = true;
+
+                        updateViolationUI();
+                        if (el.violationModalTitle) el.violationModalTitle.textContent = 'AKUN UJIAN TERKUNCI PERMANEN!';
+                        if (el.violationModalDesc) el.violationModalDesc.textContent = saved.lastViolationReason || 'Batas maksimal 10 kali pelanggaran tercapai.';
+                        if (el.resumeExamBtn) el.resumeExamBtn.classList.add('hidden');
+                        if (el.lockedAccountNotice) el.lockedAccountNotice.classList.remove('hidden');
+                        if (el.violationOverlay) el.violationOverlay.classList.remove('hidden');
+
+                        startUnlockPolling();
+                        checkIfUnlockedByAdmin();
                     }
                 } catch (e) {}
             }
 
             // =================================================================
-            // LISTENER ANTI-CURANG, ANTI-SCREENSHOT & ANTI-BLOK TEKS (iOS / ANDROID / DESKTOP)
+            // NAVIGASI UJIAN (MASUK PORTAL, BUKA MAPEL, KEMBALI, SELESAI)
             // =================================================================
-            if (el.examIframe) {
-                el.examIframe.addEventListener('load', () => {
-                    if (el.iframeLoader) el.iframeLoader.classList.add('hidden');
-                });
-                el.examIframe.addEventListener('pointerenter', () => {
-                    state.isPointerInsideIframe = true;
-                });
-                el.examIframe.addEventListener('pointerleave', () => {
-                    state.isPointerInsideIframe = false;
-                });
-            }
-
-            // 1. Pemantauan seleksi teks real-time (khusus iOS Safari & Android Chrome)
-            document.addEventListener('selectionchange', () => {
-                if (!state.isExamActive || state.isLocked) return;
-                const activeTag = document.activeElement && document.activeElement.tagName ? document.activeElement.tagName.toUpperCase() : '';
-                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
-
-                const sel = window.getSelection ? window.getSelection() : null;
-                const selectedStr = sel ? String(sel.toString() || '').trim() : '';
-                if (selectedStr.length > 0) {
-                    clearAnyTextSelection();
-                    triggerAntiCaptureShield(1800);
-                    recordViolation('Mencoba memblokir / menyalin / menerjemahkan teks (iOS/Android)');
-                }
-            });
-
-            // 2. Deteksi tahan layar (Long-Press) pada iOS & Android untuk mencegah popup Copy/Translate
-            document.addEventListener('touchstart', (e) => {
-                if (!state.isExamActive || state.isLocked) return;
-                const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
-                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-
-                state.iosTouchMoved = false;
-                if (state.iosTouchTimer) clearTimeout(state.iosTouchTimer);
-                state.iosTouchTimer = setTimeout(() => {
-                    if (!state.iosTouchMoved && state.isExamActive && !state.isLocked) {
-                        clearAnyTextSelection();
-                        triggerAntiCaptureShield(1600);
-                        recordViolation('Menahan teks layar (upaya Copy / Terjemahan di iOS/Android)');
-                    }
-                }, 480);
-            }, { passive: true });
-
-            document.addEventListener('touchmove', () => {
-                state.iosTouchMoved = true;
-                if (state.iosTouchTimer) {
-                    clearTimeout(state.iosTouchTimer);
-                    state.iosTouchTimer = null;
-                }
-            }, { passive: true });
-
-            document.addEventListener('touchend', () => {
-                if (state.iosTouchTimer) {
-                    clearTimeout(state.iosTouchTimer);
-                    state.iosTouchTimer = null;
-                }
-                clearAnyTextSelection();
-            }, { passive: true });
-
-            document.addEventListener('selectstart', (e) => {
-                const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
-                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-                e.preventDefault();
-                clearAnyTextSelection();
-            });
-
-            document.addEventListener('contextmenu', (e) => {
-                const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
-                if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-                e.preventDefault();
-                clearAnyTextSelection();
-                if (state.isExamActive && !state.isLocked) {
-                    recordViolation('Membuka menu konteks (Copy / Terjemah)');
-                }
-            });
-
-            ['copy', 'cut', 'dragstart'].forEach((evtName) => {
-                document.addEventListener(evtName, (e) => {
-                    const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
-                    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-                    e.preventDefault();
-                    clearAnyTextSelection();
-                    if (state.isExamActive && !state.isLocked) {
-                        recordViolation('Mencoba menyalin / memblokir teks ujian');
-                    }
-                });
-            });
-
-            document.addEventListener('keydown', (e) => {
-                if (!state.isExamActive || state.isLocked) return;
-                const key = String(e.key || '').toLowerCase();
-
-                if (key === 'printscreen' || key === 'snapshot' || (e.metaKey && e.shiftKey && ['3', '4', '5', 's'].includes(key))) {
-                    e.preventDefault();
-                    triggerAntiCaptureShield(2500);
-                    recordViolation('Mencoba mengambil Screenshot layar ujian');
-                    return;
-                }
-
-                if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'a', 'u', 's', 'p'].includes(key)) {
-                    const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
-                    if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
-                        e.preventDefault();
-                        recordViolation(`Menekan pintasan terlarang (${e.ctrlKey ? 'Ctrl' : 'Cmd'}+${key.toUpperCase()})`);
-                    }
-                }
-            });
-
-            // 3. Deteksi Split Screen / Floating Window / Screenshot UI di iOS & Android
-            window.addEventListener('resize', () => {
-                if (!state.isExamActive || state.isLocked) return;
-                const wDiff = Math.abs(window.innerWidth - state.lastViewportWidth);
-                const hDiff = Math.abs(window.innerHeight - state.lastViewportHeight);
-                state.lastViewportWidth = window.innerWidth;
-                state.lastViewportHeight = window.innerHeight;
-
-                // Abaikan perubahan tinggi kecil akibat keyboard virtual muncul, tangkap split-screen
-                if (wDiff > 110 || (hDiff > 260 && window.innerHeight < screen.height * 0.62)) {
-                    triggerAntiCaptureShield(2200);
-                    recordViolation('Perubahan ukuran layar / Split Screen / Floating Window terdeteksi');
-                }
-            });
-
-            document.addEventListener('visibilitychange', () => {
-                if (!state.isExamActive || state.isLocked) return;
-                if (document.visibilityState === 'hidden') {
-                    triggerAntiCaptureShield(2200);
-                    cancelPendingScreenOffCheck();
-
-                    const now = Date.now();
-                    const deltaFromBlur = now - lastBlurTimestamp;
-                    isLikelyScreenOff = (deltaFromBlur >= 0 && deltaFromBlur < 200);
-
-                    screenLockGraceTimer = setTimeout(() => {
-                        if (!state.isExamActive || state.isLocked) return;
-                        if (document.visibilityState === 'hidden' && !isLikelyScreenOff) {
-                            recordViolation('Meninggalkan tab ujian / membuka aplikasi lain');
-                        }
-                    }, 1500);
-                } else if (document.visibilityState === 'visible') {
-                    cancelPendingScreenOffCheck();
-                    isLikelyScreenOff = false;
-                    finalizeReturnFromAway(true);
-                }
-            });
-
-            window.addEventListener('pagehide', (e) => {
-                if (!state.isExamActive || state.isLocked) return;
-                if (e && e.persisted) return;
-                cancelPendingScreenOffCheck();
-                triggerAntiCaptureShield(2200);
-                recordViolation('Menutup atau meninggalkan halaman ujian');
-            });
-
-            window.addEventListener('blur', () => {
-                if (!state.isExamActive || state.isLocked) return;
-                lastBlurTimestamp = Date.now();
-                // Buramkan layar seketika saat iOS/Android memicu overlay sistem / screenshot preview
-                triggerAntiCaptureShield(1600);
-                setTimeout(() => {
-                    if (!state.isExamActive || state.isLocked) return;
-                    if (document.visibilityState === 'hidden') {
-                        return;
-                    }
-                    const activeEl = document.activeElement;
-                    const isIframeFocused = activeEl === el.examIframe || (activeEl && activeEl.tagName === 'IFRAME');
-                    if (isIframeFocused || state.isPointerInsideIframe) {
-                        return;
-                    }
-                    triggerAntiCaptureShield(2200);
-                    recordViolation('Screenshot iOS/Android / membuka aplikasi lain / keluar fokus layar');
-                }, 220);
-            });
-
-            window.addEventListener('focus', () => {
-                if (!state.isExamActive || state.isLocked) return;
-                cancelPendingScreenOffCheck();
-                isLikelyScreenOff = false;
-                if (document.visibilityState === 'visible') {
-                    finalizeReturnFromAway(true);
-                }
-            });
-
-            document.addEventListener('fullscreenchange', () => {
-                if (!state.isExamActive || state.isLocked) return;
-                if (!isCurrentlyFullscreen() && document.visibilityState === 'visible') {
-                    // Hanya arahkan kembali tanpa menghukum jika layar baru menyala
-                }
-            });
-
-            // =================================================================
-            // NAVIGASI UJIAN SISWA (TIMER HITUNG MUNDUR 90 MENIT)
-            // =================================================================
-            function updateCountdownDisplay() {
-                if (!el.examTimer || !state.examEndTime) return;
-                const remainingMs = Math.max(0, state.examEndTime - Date.now());
-                el.examTimer.textContent = formatTime(remainingMs);
-
-                if (el.examTimerBadge) {
-                    if (remainingMs <= 5 * 60 * 1000) {
-                        el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-red-950 border border-red-500 rounded-xl text-[11px] sm:text-xs font-mono font-black text-red-300 items-center gap-1.5 animate-pulse';
-                    } else if (remainingMs <= 15 * 60 * 1000) {
-                        el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-amber-950 border border-amber-500 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-amber-300 items-center gap-1.5';
-                    } else {
-                        el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-slate-200 items-center gap-1.5';
-                    }
-                }
-
-                if (remainingMs <= 0 && state.isExamActive) {
-                    clearInterval(state.timerInterval);
-                    finishExamSession();
-                }
-            }
-
-            function startExamTimer(durationMinutes = DEFAULT_EXAM_DURATION_MINUTES, customEndTime = null) {
-                if (state.timerInterval) clearInterval(state.timerInterval);
-                const mins = (!Number.isNaN(Number(durationMinutes)) && Number(durationMinutes) > 0)
-                    ? Number(durationMinutes)
-                    : DEFAULT_EXAM_DURATION_MINUTES;
-
-                state.examDurationMinutes = mins;
-                state.examStartTime = Date.now();
-                state.examEndTime = customEndTime || (state.examStartTime + mins * 60 * 1000);
-
-                try {
-                    localStorage.setItem(STORAGE_KEYS.EXAM_END_TIME, JSON.stringify({
-                        sessionId: state.sessionId,
-                        examEndTime: state.examEndTime
-                    }));
-                } catch (e) {}
-
-                updateCountdownDisplay();
-                state.timerInterval = setInterval(updateCountdownDisplay, 1000);
-            }
-
             function enterExamPortal() {
                 const selectedClass = el.studentClassSelect.value.trim();
                 const selectedName = el.studentNameSelect.value.trim();
@@ -1547,7 +1391,7 @@
                 state.studentClass = selectedClass;
                 state.studentName = selectedName;
                 state.currentSubject = null;
-                state.sessionId = `${selectedClass}_${selectedName}_PORTAL_${Date.now()}`;
+                state.sessionId = '';
                 state.isExamActive = true;
                 state.isLocked = false;
                 state.violations = 0;
@@ -1569,7 +1413,6 @@
                 el.iframeExamView.classList.add('hidden');
                 el.backToPortalBtn.classList.add('hidden');
 
-                // Timer belum berjalan sebelum siswa memilih ujian
                 if (state.timerInterval) clearInterval(state.timerInterval);
                 state.examEndTime = null;
                 if (el.examTimer) el.examTimer.textContent = '--:--:--';
@@ -1578,15 +1421,19 @@
                 }
 
                 enterFullscreenSafe();
-                loadSubjectsFromSheet();
-                syncSessionToServer('ACTIVE');
+                loadSubjectsFromSheet().then(() => syncAttemptedStatusWithServer());
                 scheduleSmartHeartbeat();
             }
 
             function openSubjectExam(subjectObj) {
                 if (!subjectObj || !subjectObj.url) return;
+
+                if (isExamAttemptedLocal(state.studentClass, state.studentName, subjectObj.title)) {
+                    renderSubjectsPortal();
+                    return;
+                }
+
                 state.currentSubject = subjectObj;
-                // Buat sessionId unik per mata pelajaran agar riwayat setiap ujian tidak tertimpa
                 state.sessionId = `${state.studentClass}_${state.studentName}_${subjectObj.title}_${Date.now()}`;
                 state.violations = 0;
                 state.lastViolationReason = '-';
@@ -1594,7 +1441,8 @@
                 state.awayStartTime = null;
                 updateViolationUI();
 
-                // Durasi mulai berjalan setelah siswa memilih ujian
+                markExamAttemptedLocal(state.studentClass, state.studentName, subjectObj.title, state.sessionId);
+
                 const durMins = subjectObj.durationMinutes || DEFAULT_EXAM_DURATION_MINUTES;
                 startExamTimer(durMins);
 
@@ -1604,14 +1452,21 @@
                 el.backToPortalBtn.classList.remove('hidden');
                 if (el.iframeLoader) el.iframeLoader.classList.remove('hidden');
 
+                renderExamWatermark();
                 el.examIframe.src = normalizeExamUrl(subjectObj.url);
                 enterFullscreenSafe();
                 syncSessionToServer('ACTIVE');
             }
 
             function returnToSubjectPortal() {
+                if (state.currentSubject) {
+                    finalizeReturnFromAway(false);
+                    syncSessionToServer('FINISHED');
+                }
                 if (state.timerInterval) clearInterval(state.timerInterval);
                 state.examEndTime = null;
+                state.currentSubject = null;
+                state.sessionId = '';
                 if (el.examTimer) el.examTimer.textContent = '--:--:--';
                 if (el.examTimerBadge) {
                     el.examTimerBadge.className = 'flex px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-mono font-bold text-slate-200 items-center gap-1.5';
@@ -1622,46 +1477,145 @@
                 el.subjectPortalView.classList.remove('hidden');
                 el.backToPortalBtn.classList.add('hidden');
                 el.headerSubjectTitle.textContent = 'Pilih Mata Pelajaran Ujian';
+                renderSubjectsPortal();
+                syncAttemptedStatusWithServer();
             }
 
-            function finishExamSession() {
+            function endExam(subtitleText = 'Terima kasih telah mengikuti ujian dengan tertib.') {
                 finalizeReturnFromAway(false);
-                syncSessionToServer('FINISHED');
-
+                if (state.currentSubject) {
+                    syncSessionToServer('FINISHED');
+                }
                 state.isExamActive = false;
                 if (state.timerInterval) clearInterval(state.timerInterval);
-                if (state.heartbeatTimeout) clearTimeout(state.heartbeatTimeout);
-                clearPermanentLockState();
-                try { localStorage.removeItem(STORAGE_KEYS.EXAM_END_TIME); } catch (e) {}
+                if (state.heartbeatTimer) clearTimeout(state.heartbeatTimer);
 
                 el.examIframe.src = 'about:blank';
-                el.confirmFinishModal.classList.add('hidden');
                 el.examContainer.classList.add('hidden');
+                el.confirmFinishModal.classList.add('hidden');
                 el.violationOverlay.classList.add('hidden');
 
-                el.sumName.textContent = state.studentName || '-';
-                el.sumClass.textContent = state.studentClass || '-';
-                el.sumSubject.textContent = state.currentSubject ? state.currentSubject.title : 'Portal Ujian';
-                el.sumViolations.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
-                el.sumAwayTime.textContent = formatDurationHuman(state.totalAwaySeconds);
-
-                el.summaryScreen.classList.remove('hidden');
+                if (el.summarySubtitle) el.summarySubtitle.textContent = subtitleText;
+                if (el.sumName) el.sumName.textContent = state.studentName || '-';
+                if (el.sumClass) el.sumClass.textContent = state.studentClass || '-';
+                if (el.sumViolations) el.sumViolations.textContent = `${state.violations} / ${MAX_VIOLATIONS}`;
+                if (el.sumAway) el.sumAway.textContent = formatDurationHuman(state.totalAwaySeconds);
+                if (el.summaryScreen) el.summaryScreen.classList.remove('hidden');
             }
 
-            function restoreLockStateOnLoad() {
-                try {
-                    const savedLock = JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVE_LOCK) || 'null');
-                    if (savedLock && savedLock.studentName) {
-                        state.sessionId = savedLock.sessionId || '';
-                        state.studentClass = savedLock.studentClass || '';
-                        state.studentName = savedLock.studentName || '';
-                        state.violations = Number(savedLock.violations || MAX_VIOLATIONS);
-                        state.lastViolationReason = savedLock.lastViolationReason || 'Terkunci permanen';
-                        state.totalAwaySeconds = Number(savedLock.totalAwaySeconds || 0);
-                        showPermanentLockModal();
+            // =================================================================
+            // LISTENER ANTI-CURANG, LAYAR HP MATI, SCREENSHOT & BLOK TEKS
+            // =================================================================
+            if (el.examIframe) {
+                el.examIframe.addEventListener('load', () => {
+                    if (el.iframeLoader) el.iframeLoader.classList.add('hidden');
+                });
+                el.examIframe.addEventListener('pointerenter', () => { state.isPointerInsideIframe = true; });
+                el.examIframe.addEventListener('pointerleave', () => { state.isPointerInsideIframe = false; });
+            }
+
+            // 1. Blokir seleksi teks, copy-paste, klik kanan / long-press terjemah
+            document.addEventListener('selectstart', (e) => {
+                const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                e.preventDefault();
+            });
+
+            document.addEventListener('contextmenu', (e) => {
+                const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                e.preventDefault();
+                if (state.isExamActive && state.currentSubject) {
+                    recordViolation('Mencoba membuka menu konteks / salin / terjemahkan teks.');
+                }
+            });
+
+            document.addEventListener('copy', (e) => {
+                if (state.isExamActive) {
+                    e.preventDefault();
+                    recordViolation('Mencoba menyalin (Copy) teks saat ujian.');
+                }
+            });
+
+            document.addEventListener('selectionchange', () => {
+                if (!state.isExamActive) return;
+                const activeTag = document.activeElement && document.activeElement.tagName ? document.activeElement.tagName.toUpperCase() : '';
+                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+                const sel = window.getSelection ? window.getSelection() : null;
+                if (sel && sel.toString().trim().length > 0) {
+                    try { sel.removeAllRanges(); } catch (e) {}
+                    recordViolation('Mencoba memblok teks untuk salin atau terjemahan.');
+                }
+            });
+
+            document.addEventListener('touchstart', () => {
+                state.touchStartTime = Date.now();
+            }, { passive: true });
+
+            document.addEventListener('touchend', () => {
+                if (!state.isExamActive || !state.currentSubject) return;
+                const heldMs = Date.now() - state.touchStartTime;
+                if (heldMs > 520 && !state.isPointerInsideIframe) {
+                    triggerAntiCaptureShield(1600);
+                    recordViolation('Menahan layar (Long-Press) yang memicu menu salin/terjemah.');
+                }
+            }, { passive: true });
+
+            // 2. Deteksi tombol keyboard screenshot / shortcut
+            document.addEventListener('keydown', (e) => {
+                if (!state.isExamActive) return;
+                const key = String(e.key || '').toLowerCase();
+                if (key === 'printscreen' || ((e.ctrlKey || e.metaKey) && ['c', 'x', 'a', 'p', 's', 'u'].includes(key))) {
+                    e.preventDefault();
+                    triggerAntiCaptureShield(2200);
+                    recordViolation('Menekan tombol Screenshot atau pintasan terlarang.');
+                }
+            });
+
+            // 3. Toleransi layar HP mati (Screen Sleep) vs Pindah Tab / Aplikasi Lain
+            document.addEventListener('visibilitychange', () => {
+                if (!state.isExamActive || !state.currentSubject) return;
+
+                if (document.hidden) {
+                    const sinceBlur = Date.now() - state.lastBlurTime;
+                    if (state.pendingBlurTimer) {
+                        clearTimeout(state.pendingBlurTimer);
+                        state.pendingBlurTimer = null;
                     }
-                } catch (e) {}
-            }
+                    // Jika blur dan hidden terjadi hampir bersamaan (< 280ms), besar kemungkinan layar HP mati / lock screen
+                    if (sinceBlur >= 0 && sinceBlur < 280) {
+                        return;
+                    }
+                    recordViolation('Meninggalkan layar ujian / berpindah tab atau aplikasi lain.', true);
+                } else {
+                    finalizeReturnFromAway(true);
+                    renderExamWatermark();
+                }
+            });
+
+            window.addEventListener('blur', () => {
+                if (!state.isExamActive || !state.currentSubject) return;
+                if (document.activeElement === el.examIframe) return;
+                state.lastBlurTime = Date.now();
+                triggerAntiCaptureShield(1500);
+
+                if (state.pendingBlurTimer) clearTimeout(state.pendingBlurTimer);
+                state.pendingBlurTimer = setTimeout(() => {
+                    if (!document.hidden && document.activeElement !== el.examIframe && state.isExamActive && state.currentSubject) {
+                        recordViolation('Fokus layar keluar dari aplikasi ujian (Split Screen / Notifikasi / Screenshot).', true);
+                    }
+                }, 1400);
+            });
+
+            window.addEventListener('focus', () => {
+                if (state.pendingBlurTimer) {
+                    clearTimeout(state.pendingBlurTimer);
+                    state.pendingBlurTimer = null;
+                }
+                if (state.isExamActive && state.currentSubject) {
+                    finalizeReturnFromAway(true);
+                }
+            });
 
             // =================================================================
             // DASHBOARD ADMIN / PENGAWAS (PIN: 9090)
@@ -1671,7 +1625,7 @@
                 if (el.appsScriptCodeBox) {
                     el.appsScriptCodeBox.value = APPS_SCRIPT_TEMPLATE;
                 }
-                fetchAdminMonitoringData();
+                loadSubjectsFromSheet().then(() => fetchAdminMonitoringData());
                 if (state.adminRefreshInterval) clearInterval(state.adminRefreshInterval);
                 state.adminRefreshInterval = setInterval(fetchAdminMonitoringData, 4000);
             }
@@ -1687,97 +1641,113 @@
             async function fetchAdminMonitoringData() {
                 const mergedMap = new Map();
 
-                // 1. Muat dari cache lokal terlebih dahulu agar responsif
+                const upsertSession = (item) => {
+                    if (!item || !item.studentName) return;
+                    const key = item.sessionId || `${item.studentClass}_${item.studentName}_${item.subjectTitle}`;
+                    const existing = mergedMap.get(key);
+                    if (!existing) {
+                        mergedMap.set(key, item);
+                    } else {
+                        const existingTime = existing.lastUpdated ? Date.parse(existing.lastUpdated) || 0 : 0;
+                        const itemTime = item.lastUpdated ? Date.parse(item.lastUpdated) || 0 : 0;
+                        if (itemTime >= existingTime) {
+                            mergedMap.set(key, {
+                                ...existing,
+                                ...item,
+                                awaySeconds: Math.max(Number(existing.awaySeconds || 0), Number(item.awaySeconds || 0))
+                            });
+                        }
+                    }
+                };
+
+                // 1. Baca dari sesi lokal browser ini
                 try {
                     const localList = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
-                    localList.forEach((s) => {
-                        if (s && s.sessionId) {
-                            mergedMap.set(s.sessionId, { ...s, maxViolations: MAX_VIOLATIONS });
-                        }
-                    });
+                    localList.forEach(upsertSession);
                 } catch (e) {}
 
-                // 2. Muat dari Google Apps Script (action=get)
-                let fetchedFromScript = false;
+                // 2. Baca dari Google Apps Script
                 if (APPS_SCRIPT_WEB_APP_URL) {
                     try {
-                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`);
+                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`, { cache: 'no-store' });
                         const data = await res.json();
                         if (data && Array.isArray(data.sessions)) {
-                            data.sessions.forEach((s) => {
-                                if (!s || !s.sessionId) return;
-                                const existing = mergedMap.get(s.sessionId) || {};
-                                mergedMap.set(s.sessionId, {
-                                    ...existing,
-                                    ...s,
-                                    violations: Math.max(Number(existing.violations || 0), Number(s.violations || 0)),
-                                    awaySeconds: Math.max(Number(existing.awaySeconds || 0), Number(s.awaySeconds || 0)),
-                                    maxViolations: MAX_VIOLATIONS
-                                });
-                            });
-                            fetchedFromScript = true;
+                            data.sessions.forEach(upsertSession);
                         }
                     } catch (e) {}
                 }
 
-                // 3. Cadangan: Baca langsung dari sheet MONITORING Google Spreadsheet
-                if (!fetchedFromScript) {
-                    try {
-                        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&t=${Date.now()}`;
-                        const resSheet = await fetch(sheetUrl);
-                        const txtSheet = await resSheet.text();
-                        const jsonSheet = parseGvizJson(txtSheet);
-                        const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
-
-                        rows.forEach((row, idx) => {
-                            const c = row.c || [];
-                            const sid = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
-                            if (!sid || (idx === 0 && sid.toLowerCase() === 'sessionid')) return;
-
-                            const parsedItem = {
-                                sessionId: sid,
-                                studentClass: c[1] && c[1].v != null ? String(c[1].v).trim() : '',
-                                studentName: c[2] && c[2].v != null ? String(c[2].v).trim() : '',
-                                subjectTitle: c[3] && c[3].v != null ? String(c[3].v).trim() : '-',
-                                status: c[4] && c[4].v != null ? String(c[4].v).trim() : 'ACTIVE',
-                                violations: c[5] && c[5].v != null ? Number(c[5].v) : 0,
-                                maxViolations: MAX_VIOLATIONS,
-                                lastViolationReason: c[7] && c[7].v != null ? String(c[7].v).trim() : '-',
-                                lastUpdated: c[8] && c[8].v != null ? String(c[8].v).trim() : '',
-                                unlockedByAdmin: (c[10] && String(c[10].v).trim() === 'TRUE'),
-                                awaySeconds: c[11] && c[11].v != null ? Number(c[11].v) : 0
-                            };
-
-                            const existing = mergedMap.get(sid) || {};
-                            mergedMap.set(sid, {
-                                ...existing,
-                                ...parsedItem,
-                                violations: parsedItem.status === 'DIBUKA ADMIN'
-                                    ? 0
-                                    : Math.max(Number(existing.violations || 0), Number(parsedItem.violations || 0)),
-                                awaySeconds: Math.max(Number(existing.awaySeconds || 0), Number(parsedItem.awaySeconds || 0))
-                            });
+                // 3. Baca langsung dari sheet MONITORING di Google Spreadsheet
+                try {
+                    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&t=${Date.now()}`;
+                    const resSheet = await fetch(sheetUrl, { cache: 'no-store' });
+                    const txtSheet = await resSheet.text();
+                    const jsonSheet = parseGvizJson(txtSheet);
+                    const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
+                    rows.forEach((row, idx) => {
+                        const c = row.c || [];
+                        const sid = c[0] && c[0].v != null ? String(c[0].v).trim() : '';
+                        if (!sid || (idx === 0 && sid.toLowerCase() === 'sessionid')) return;
+                        upsertSession({
+                            sessionId: sid,
+                            studentClass: c[1] && c[1].v != null ? String(c[1].v).trim() : '',
+                            studentName: c[2] && c[2].v != null ? String(c[2].v).trim() : '',
+                            subjectTitle: c[3] && c[3].v != null ? String(c[3].v).trim() : '',
+                            status: c[4] && c[4].v != null ? String(c[4].v).trim() : 'ACTIVE',
+                            violations: c[5] && c[5].v != null ? Number(c[5].v) : 0,
+                            maxViolations: c[6] && c[6].v != null ? Number(c[6].v) : MAX_VIOLATIONS,
+                            lastViolationReason: c[7] && c[7].v != null ? String(c[7].v).trim() : '-',
+                            lastUpdated: c[8] && c[8].v != null ? String(c[8].v).trim() : '',
+                            baseKey: c[9] && c[9].v != null ? String(c[9].v).trim() : '',
+                            unlockedByAdmin: (c[10] && String(c[10].v).trim() === 'TRUE'),
+                            awaySeconds: c[11] && c[11].v != null ? Number(c[11].v) : 0
                         });
-                    } catch (e2) {}
-                }
+                    });
+                } catch (e) {}
 
-                // Urutkan agar sesi terbaru tampil di paling atas
-                state.adminSessions = Array.from(mergedMap.values()).reverse();
-                populateAdminClassFilter();
+                state.adminSessions = Array.from(mergedMap.values())
+                    .filter((s) => s.subjectTitle && s.subjectTitle.trim().toLowerCase() !== 'portal jadwal' && s.subjectTitle.trim() !== '-')
+                    .map((s) => {
+                        const rawSub = String(s.subjectTitle || '').trim();
+                        const matchedReal = state.subjects.find((sub) => sub.title.trim().toLowerCase() === rawSub.toLowerCase());
+                        return {
+                            ...s,
+                            subjectTitle: matchedReal ? matchedReal.title : rawSub
+                        };
+                    })
+                    .sort((a, b) => {
+                        const ta = a.lastUpdated ? Date.parse(a.lastUpdated) || 0 : 0;
+                        const tb = b.lastUpdated ? Date.parse(b.lastUpdated) || 0 : 0;
+                        return tb - ta;
+                    });
+
+                populateAdminFilters();
                 renderAdminMonitoringTable();
             }
 
-            function populateAdminClassFilter() {
-                if (!el.adminClassFilter) return;
-                const currentVal = el.adminClassFilter.value || 'ALL';
-                const classes = Array.from(new Set(state.adminSessions.map((s) => s.studentClass).filter(Boolean))).sort();
-                el.adminClassFilter.innerHTML = '<option value="ALL">Semua Kelas</option>' +
-                    classes.map((c) => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
-                if (classes.includes(currentVal)) el.adminClassFilter.value = currentVal;
+            function populateAdminFilters() {
+                if (el.adminClassFilter) {
+                    const currentClass = el.adminClassFilter.value || 'ALL';
+                    const classes = Array.from(new Set(state.adminSessions.map((s) => s.studentClass).filter(Boolean))).sort();
+                    el.adminClassFilter.innerHTML = '<option value="ALL">Semua Kelas</option>' +
+                        classes.map((c) => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
+                    if (classes.includes(currentClass)) el.adminClassFilter.value = currentClass;
+                }
+
+                if (el.adminSubjectFilter) {
+                    const currentSub = el.adminSubjectFilter.value || 'ALL';
+                    const realSubjectTitles = state.subjects.map((sub) => sub.title).filter(Boolean);
+                    const sessionSubjectTitles = state.adminSessions.map((s) => s.subjectTitle).filter(Boolean);
+                    const allSubjects = Array.from(new Set([...realSubjectTitles, ...sessionSubjectTitles]));
+                    el.adminSubjectFilter.innerHTML = '<option value="ALL">Semua Mata Pelajaran</option>' +
+                        allSubjects.map((sub) => `<option value="${escapeHTML(sub)}">${escapeHTML(sub)}</option>`).join('');
+                    if (allSubjects.includes(currentSub)) el.adminSubjectFilter.value = currentSub;
+                }
             }
 
             function renderAdminMonitoringTable() {
                 const keyword = (el.adminSearchInput ? el.adminSearchInput.value : '').trim().toLowerCase();
+                const subjectFilter = el.adminSubjectFilter ? el.adminSubjectFilter.value : 'ALL';
                 const classFilter = el.adminClassFilter ? el.adminClassFilter.value : 'ALL';
 
                 let total = state.adminSessions.length;
@@ -1799,6 +1769,7 @@
                 if (el.statLocked) el.statLocked.textContent = String(locked);
 
                 const filtered = state.adminSessions.filter((s) => {
+                    if (subjectFilter !== 'ALL' && String(s.subjectTitle || '').toLowerCase() !== subjectFilter.toLowerCase()) return false;
                     if (classFilter !== 'ALL' && s.studentClass !== classFilter) return false;
                     if (keyword) {
                         const hay = `${s.studentName} ${s.studentClass} ${s.subjectTitle}`.toLowerCase();
@@ -1807,54 +1778,55 @@
                     return true;
                 });
 
+                if (!el.adminMonitoringTbody) return;
                 if (filtered.length === 0) {
-                    el.adminMonitoringTbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400 font-medium">Tidak ada data sesi ujian yang sesuai filter.</td></tr>';
+                    el.adminMonitoringTbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400 font-bold">Belum ada data peserta ujian yang sesuai filter.</td></tr>';
                     return;
                 }
 
                 el.adminMonitoringTbody.innerHTML = filtered.map((s) => {
                     const v = Number(s.violations || 0);
-                    const isLockedRow = s.status === 'LOCKED' || v >= MAX_VIOLATIONS;
-                    const isUnlockedRow = s.status === 'DIBUKA ADMIN';
+                    const isLck = s.status === 'LOCKED' || v >= MAX_VIOLATIONS;
                     const parsedLogAway = extractAwaySecondsFromLogText(s.lastViolationReason);
                     const awaySec = Math.max(Number(s.awaySeconds || 0), parsedLogAway);
-                    const cleanDisplayReason = String(s.lastViolationReason || '-').replace(/\s*\[TotalKeluar:\d+\]/gi, '').trim();
+                    const cleanReason = String(s.lastViolationReason || '-').replace(/\s*\[TotalKeluar:\d+\]/gi, '').trim();
 
-                    let statusBadge = '<span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 font-extrabold rounded-lg text-[10px]">MENGERJAKAN</span>';
-                    if (isLockedRow) {
-                        statusBadge = '<span class="px-2.5 py-1 bg-red-100 text-red-700 font-black rounded-lg text-[10px]">TERKUNCI (10X)</span>';
-                    } else if (isUnlockedRow) {
-                        statusBadge = '<span class="px-2.5 py-1 bg-blue-100 text-blue-700 font-extrabold rounded-lg text-[10px]">DIBUKA ADMIN</span>';
+                    let statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 font-black text-[10px]">MENGERJAKAN</span>';
+                    if (isLck) {
+                        statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-red-100 text-red-700 font-black text-[10px]">TERKUNCI (10X)</span>';
                     } else if (s.status === 'FINISHED') {
-                        statusBadge = '<span class="px-2.5 py-1 bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px]">SELESAI</span>';
+                        statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-black text-[10px]">SELESAI</span>';
+                    } else if (s.status === 'DIBUKA ADMIN') {
+                        statusBadge = '<span class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-700 font-black text-[10px]">DIRESET ADMIN</span>';
                     }
 
                     return `
-                        <tr class="hover:bg-slate-50 transition">
+                        <tr class="hover:bg-slate-50/80 transition">
                             <td class="py-3.5 px-4">
-                                <div class="font-extrabold text-slate-900">${escapeHTML(s.studentName)}</div>
-                                <div class="text-[11px] font-bold text-blue-600">${escapeHTML(s.studentClass)}</div>
+                                <p class="font-extrabold text-slate-900">${escapeHTML(s.studentName)}</p>
+                                <p class="text-[11px] font-bold text-blue-600">${escapeHTML(s.studentClass)}</p>
                             </td>
-                            <td class="py-3.5 px-4 font-semibold text-slate-700">${escapeHTML(s.subjectTitle || '-')}</td>
+                            <td class="py-3.5 px-4 font-bold text-slate-800">${escapeHTML(s.subjectTitle)}</td>
                             <td class="py-3.5 px-4">${statusBadge}</td>
                             <td class="py-3.5 px-4">
-                                <span class="px-2.5 py-1 ${v >= MAX_VIOLATIONS ? 'bg-red-100 text-red-700' : (v > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700')} font-black rounded-lg">
+                                <span class="px-2.5 py-1 rounded-lg ${v > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'} font-black text-[11px]">
                                     ${v} / ${MAX_VIOLATIONS}
                                 </span>
                             </td>
                             <td class="py-3.5 px-4">
-                                <span class="px-2.5 py-1 bg-slate-100 text-slate-800 font-bold rounded-lg">
-                                    ${escapeHTML(formatDurationHuman(awaySec))}
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-[11px]">
+                                    ${formatDurationHuman(awaySec)}
                                 </span>
                             </td>
-                            <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="${escapeHTML(cleanDisplayReason)}">
-                                ${escapeHTML(cleanDisplayReason || '-')}
+                            <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="${escapeHTML(cleanReason)}">
+                                ${escapeHTML(cleanReason)}
                             </td>
                             <td class="py-3.5 px-4 text-right">
                                 <button type="button"
                                     data-sid="${escapeHTML(s.sessionId || '')}"
                                     data-sname="${escapeHTML(s.studentName || '')}"
                                     data-sclass="${escapeHTML(s.studentClass || '')}"
+                                    data-ssub="${escapeHTML(s.subjectTitle || '')}"
                                     class="unlock-session-btn px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[11px] rounded-xl shadow-sm transition cursor-pointer">
                                     Buka Kunci / Reset
                                 </button>
@@ -1868,15 +1840,19 @@
                 const sid = btnEl.getAttribute('data-sid') || '';
                 const sname = btnEl.getAttribute('data-sname') || '';
                 const sclass = btnEl.getAttribute('data-sclass') || '';
+                const ssub = btnEl.getAttribute('data-ssub') || '';
 
                 const originalText = btnEl.textContent;
                 btnEl.disabled = true;
                 btnEl.textContent = 'Memproses...';
 
                 try {
-                    // Perbarui tampilan lokal & state secara instan
+                    clearExamAttemptedLocal(sclass, sname, ssub);
+
                     state.adminSessions.forEach((s) => {
-                        if ((sid && s.sessionId === sid) || (sname && s.studentName === sname && s.studentClass === sclass)) {
+                        const matchRow = (sid && s.sessionId === sid) ||
+                            (sname && s.studentName === sname && s.studentClass === sclass && (!ssub || s.subjectTitle === ssub));
+                        if (matchRow) {
                             s.status = 'DIBUKA ADMIN';
                             s.violations = 0;
                             s.maxViolations = MAX_VIOLATIONS;
@@ -1889,7 +1865,9 @@
                     try {
                         const localList = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_SESSIONS) || '[]');
                         localList.forEach((s) => {
-                            if ((sid && s.sessionId === sid) || (sname && s.studentName === sname && s.studentClass === sclass)) {
+                            const matchRow = (sid && s.sessionId === sid) ||
+                                (sname && s.studentName === sname && s.studentClass === sclass && (!ssub || s.subjectTitle === ssub));
+                            if (matchRow) {
                                 s.status = 'DIBUKA ADMIN';
                                 s.violations = 0;
                                 s.lastViolationReason = 'Kunci dibuka & direset oleh Pengawas';
@@ -1904,21 +1882,18 @@
                             sessionId: sid,
                             studentName: sname,
                             studentClass: sclass,
+                            subjectTitle: ssub,
                             t: String(Date.now())
                         });
-                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`);
-                        const json = await res.json().catch(() => null);
-                        if (!json || json.status !== 'unlocked') {
-                            if (el.adminSyncAlert) {
-                                el.adminSyncAlert.textContent = 'Perintah buka kunci terkirim. Jika HP siswa belum terbuka otomatis, pastikan kode Apps Script di tab sebelah sudah di-deploy ulang sebagai Versi Baru.';
-                                el.adminSyncAlert.classList.remove('hidden');
-                            }
-                        } else if (el.adminSyncAlert) {
-                            el.adminSyncAlert.classList.add('hidden');
-                        }
+                        await fetch(`${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors', cache: 'no-store' });
+                    }
+
+                    if (el.adminSyncAlert) {
+                        el.adminSyncAlert.textContent = `Akses ujian ${sname} (${sclass}) pada mapel "${ssub}" berhasil dibuka & direset.`;
+                        el.adminSyncAlert.classList.remove('hidden');
+                        setTimeout(() => el.adminSyncAlert.classList.add('hidden'), 5000);
                     }
                 } catch (err) {
-                    console.warn('Error unlock session:', err);
                 } finally {
                     btnEl.disabled = false;
                     btnEl.textContent = originalText;
@@ -1926,82 +1901,115 @@
             }
 
             // =================================================================
-            // EVENT LISTENER TOMBOL & INISIALISASI HALAMAN
+            // EVENT LISTENERS UI
             // =================================================================
+            if (el.studentClassSelect) {
+                el.studentClassSelect.addEventListener('change', () => {
+                    const cls = el.studentClassSelect.value;
+                    const names = state.studentsByClass[cls] || [];
+                    if (!cls || names.length === 0) {
+                        el.studentNameSelect.disabled = true;
+                        el.studentNameSelect.innerHTML = '<option value="">-- Pilih Kelas Terlebih Dahulu --</option>';
+                        return;
+                    }
+                    el.studentNameSelect.disabled = false;
+                    el.studentNameSelect.innerHTML = '<option value="">-- Pilih Nama Anda --</option>' +
+                        names.map((n) => `<option value="${escapeHTML(n)}">${escapeHTML(n)}</option>`).join('');
+                });
+            }
+
             if (el.reloadStudentsBtn) {
                 el.reloadStudentsBtn.addEventListener('click', loadStudentsFromSheet);
             }
-            if (el.studentClassSelect) {
-                el.studentClassSelect.addEventListener('change', (e) => {
-                    populateStudentNamesForClass(e.target.value);
-                });
-            }
+
             if (el.startExamBtn) {
                 el.startExamBtn.addEventListener('click', enterExamPortal);
             }
+
             if (el.refreshSubjectsBtn) {
-                el.refreshSubjectsBtn.addEventListener('click', loadSubjectsFromSheet);
+                el.refreshSubjectsBtn.addEventListener('click', () => {
+                    loadSubjectsFromSheet().then(() => syncAttemptedStatusWithServer());
+                });
             }
+
             if (el.subjectsGrid) {
                 el.subjectsGrid.addEventListener('click', (e) => {
                     const btn = e.target.closest('.open-subject-btn');
-                    if (!btn) return;
+                    if (!btn || btn.disabled) return;
                     const idx = Number(btn.getAttribute('data-sub-index'));
                     if (!Number.isNaN(idx) && state.subjects[idx]) {
                         openSubjectExam(state.subjects[idx]);
                     }
                 });
             }
+
             if (el.backToPortalBtn) {
                 el.backToPortalBtn.addEventListener('click', returnToSubjectPortal);
             }
+
             if (el.finishExamBtn) {
                 el.finishExamBtn.addEventListener('click', () => {
                     el.confirmFinishModal.classList.remove('hidden');
                 });
             }
+
             if (el.cancelFinishBtn) {
                 el.cancelFinishBtn.addEventListener('click', () => {
                     el.confirmFinishModal.classList.add('hidden');
                 });
             }
+
             if (el.confirmFinishBtn) {
-                el.confirmFinishBtn.addEventListener('click', finishExamSession);
-            }
-            if (el.backToHomeBtn) {
-                el.backToHomeBtn.addEventListener('click', () => {
-                    el.summaryScreen.classList.add('hidden');
-                    el.startScreen.classList.remove('hidden');
+                el.confirmFinishBtn.addEventListener('click', () => {
+                    endExam('Ujian telah diselesaikan oleh peserta.');
                 });
             }
+
             if (el.resumeExamBtn) {
                 el.resumeExamBtn.addEventListener('click', () => {
+                    if (state.isLocked) return;
                     finalizeReturnFromAway(true);
                     el.violationOverlay.classList.add('hidden');
                     enterFullscreenSafe();
                 });
             }
-            if (el.checkUnlockBtn) {
-                el.checkUnlockBtn.addEventListener('click', () => checkUnlockStatusFromServer(false));
+
+            if (el.checkUnlockNowBtn) {
+                el.checkUnlockNowBtn.addEventListener('click', async () => {
+                    el.checkUnlockNowBtn.textContent = 'Memeriksa server...';
+                    const ok = await checkIfUnlockedByAdmin();
+                    if (!ok) {
+                        el.checkUnlockNowBtn.textContent = 'Belum dibuka Pengawas — Coba Lagi';
+                    }
+                });
+            }
+
+            if (el.backHomeBtn) {
+                el.backHomeBtn.addEventListener('click', () => {
+                    el.summaryScreen.classList.add('hidden');
+                    el.startScreen.classList.remove('hidden');
+                });
             }
 
             // Admin PIN & Dashboard Events
-            if (el.openAdminBtn) {
-                el.openAdminBtn.addEventListener('click', () => {
+            if (el.openAdminPinBtn) {
+                el.openAdminPinBtn.addEventListener('click', () => {
                     el.adminPinInput.value = '';
                     el.adminPinError.classList.add('hidden');
                     el.adminPinModal.classList.remove('hidden');
-                    setTimeout(() => el.adminPinInput.focus(), 100);
+                    setTimeout(() => el.adminPinInput.focus(), 80);
                 });
             }
-            if (el.cancelPinBtn) {
-                el.cancelPinBtn.addEventListener('click', () => {
+
+            if (el.closeAdminPinBtn) {
+                el.closeAdminPinBtn.addEventListener('click', () => {
                     el.adminPinModal.classList.add('hidden');
                 });
             }
-            if (el.submitPinBtn) {
-                el.submitPinBtn.addEventListener('click', () => {
-                    if (String(el.adminPinInput.value || '').trim() === ADMIN_PIN) {
+
+            if (el.submitAdminPinBtn) {
+                el.submitAdminPinBtn.addEventListener('click', () => {
+                    if (el.adminPinInput.value.trim() === ADMIN_PIN) {
                         el.adminPinModal.classList.add('hidden');
                         openAdminDashboard();
                     } else {
@@ -2009,30 +2017,40 @@
                     }
                 });
             }
+
             if (el.adminPinInput) {
                 el.adminPinInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') el.submitPinBtn.click();
+                    if (e.key === 'Enter') el.submitAdminPinBtn.click();
                 });
             }
+
             if (el.closeAdminBtn) {
                 el.closeAdminBtn.addEventListener('click', closeAdminDashboard);
             }
-            if (el.tabBtnMonitoring && el.tabBtnScript) {
-                el.tabBtnMonitoring.addEventListener('click', () => {
-                    el.adminTabMonitoring.classList.remove('hidden');
-                    el.adminTabScript.classList.add('hidden');
-                    el.tabBtnMonitoring.className = 'py-3.5 px-4 text-xs font-extrabold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap cursor-pointer';
-                    el.tabBtnScript.className = 'py-3.5 px-4 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap cursor-pointer';
-                });
-                el.tabBtnScript.addEventListener('click', () => {
-                    el.adminTabScript.classList.remove('hidden');
-                    el.adminTabMonitoring.classList.add('hidden');
-                    el.tabBtnScript.className = 'py-3.5 px-4 text-xs font-extrabold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap cursor-pointer';
-                    el.tabBtnMonitoring.className = 'py-3.5 px-4 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap cursor-pointer';
+
+            if (el.tabMonitoringBtn) {
+                el.tabMonitoringBtn.addEventListener('click', () => {
+                    el.tabMonitoringBtn.className = 'py-3 text-xs font-black border-b-2 border-blue-600 text-blue-600 cursor-pointer';
+                    el.tabAppsScriptBtn.className = 'py-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 cursor-pointer';
+                    el.adminPanelMonitoring.classList.remove('hidden');
+                    el.adminPanelAppsScript.classList.add('hidden');
                 });
             }
+
+            if (el.tabAppsScriptBtn) {
+                el.tabAppsScriptBtn.addEventListener('click', () => {
+                    el.tabAppsScriptBtn.className = 'py-3 text-xs font-black border-b-2 border-blue-600 text-blue-600 cursor-pointer';
+                    el.tabMonitoringBtn.className = 'py-3 text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-800 cursor-pointer';
+                    el.adminPanelAppsScript.classList.remove('hidden');
+                    el.adminPanelMonitoring.classList.add('hidden');
+                });
+            }
+
             if (el.adminSearchInput) {
                 el.adminSearchInput.addEventListener('input', renderAdminMonitoringTable);
+            }
+            if (el.adminSubjectFilter) {
+                el.adminSubjectFilter.addEventListener('change', renderAdminMonitoringTable);
             }
             if (el.adminClassFilter) {
                 el.adminClassFilter.addEventListener('change', renderAdminMonitoringTable);
@@ -2040,26 +2058,33 @@
             if (el.adminRefreshBtn) {
                 el.adminRefreshBtn.addEventListener('click', fetchAdminMonitoringData);
             }
+
             if (el.adminMonitoringTbody) {
                 el.adminMonitoringTbody.addEventListener('click', (e) => {
                     const btn = e.target.closest('.unlock-session-btn');
                     if (btn) handleUnlockStudentSession(btn);
                 });
             }
+
             if (el.copyAppsScriptBtn) {
                 el.copyAppsScriptBtn.addEventListener('click', () => {
                     el.appsScriptCodeBox.select();
                     document.execCommand('copy');
-                    const orig = el.copyAppsScriptBtn.textContent;
-                    el.copyAppsScriptBtn.textContent = 'Tersalin!';
-                    setTimeout(() => { el.copyAppsScriptBtn.textContent = orig; }, 2000);
+                    el.copyAppsScriptBtn.textContent = 'Kode Berhasil Disalin!';
+                    setTimeout(() => {
+                        el.copyAppsScriptBtn.textContent = 'Salin Kode Apps Script';
+                    }, 2500);
                 });
             }
 
-            // Inisialisasi Awal
-            restoreAwayTracker();
-            restoreLockStateOnLoad();
-            loadStudentsFromSheet();
+            // =================================================================
+            // INISIALISASI AWAL SAAT HALAMAN DIMUAT
+            // =================================================================
+            window.addEventListener('load', () => {
+                restoreLockStateOnLoad();
+                loadStudentsFromSheet();
+                loadSubjectsFromSheet();
+            });
         })();
     </script>
 </body>
