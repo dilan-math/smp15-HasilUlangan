@@ -600,7 +600,9 @@
                 awayStartTime: null,
                 lastBlurTime: 0,
                 pendingBlurTimer: null,
+                pendingVisibilityTimer: null,
                 screenOffSuspected: false,
+                isUnloading: false,
                 lastViolationTimestamp: 0,
                 lastViewportWidth: window.innerWidth,
                 lastViewportHeight: window.innerHeight,
@@ -1322,7 +1324,7 @@
 
             function recordViolation(reasonText, startAwayTimer = false) {
                 if (!state.isExamActive || !state.currentSubject) return;
-                if (state.isLocked) return;
+                if (state.isLocked || state.isUnloading) return;
 
                 const nowMs = Date.now();
                 if (nowMs - state.lastViolationTimestamp < 1200) {
@@ -1381,23 +1383,33 @@
             el.examIframe.addEventListener('mouseleave', () => { state.isPointerInsideIframe = false; });
             el.examIframe.addEventListener('touchstart', () => { state.isPointerInsideIframe = true; }, { passive: true });
 
-            // 1. Keluar browser / tekan tombol Home HP / pindah tab (toleransi layar HP mati otomatis)
+            // Tandai saat halaman sedang di-refresh / reload (F5 / Ctrl+R / tombol Reload browser) agar tidak dihitung pelanggaran
+            window.addEventListener('beforeunload', () => {
+                state.isUnloading = true;
+                if (state.pendingBlurTimer) {
+                    clearTimeout(state.pendingBlurTimer);
+                    state.pendingBlurTimer = null;
+                }
+                if (state.pendingVisibilityTimer) {
+                    clearTimeout(state.pendingVisibilityTimer);
+                    state.pendingVisibilityTimer = null;
+                }
+                persistActiveExamSession();
+            });
+
+            // 1. Keluar browser / tekan tombol Home HP / pindah tab (toleransi layar HP & PC mati otomatis/manual)
             document.addEventListener('visibilitychange', () => {
-                if (!state.isExamActive || !state.currentSubject) return;
+                if (!state.isExamActive || !state.currentSubject || state.isUnloading) return;
                 if (document.hidden) {
                     if (state.pendingBlurTimer) {
                         clearTimeout(state.pendingBlurTimer);
                         state.pendingBlurTimer = null;
                     }
                     const sinceBlurMs = Date.now() - (state.lastBlurTime || 0);
-                    // Pola layar HP mati/terkunci otomatis (screen off): blur & hidden terjadi hampir bersamaan (<= 150ms)
-                    // atau hidden terjadi tanpa blur terpisah. Tunda 1.2 detik untuk memastikan bukan perpindahan aplikasi.
-                    if (sinceBlurMs <= 150) {
+                    // Pola layar HP/PC mati otomatis atau dikunci manual (screen off / display sleep):
+                    // blur & hidden terjadi serentak (<= 250ms) atau hidden muncul tanpa blur terpisah.
+                    if (sinceBlurMs <= 250) {
                         state.screenOffSuspected = true;
-                        if (state.pendingVisibilityTimer) clearTimeout(state.pendingVisibilityTimer);
-                        state.pendingVisibilityTimer = setTimeout(() => {
-                            state.pendingVisibilityTimer = null;
-                        }, 1200);
                     } else {
                         state.screenOffSuspected = false;
                         recordViolation('Keluar dari browser / menekan tombol Home HP / berpindah tab.', true);
@@ -1413,24 +1425,25 @@
             });
 
             window.addEventListener('pagehide', () => {
-                if (!state.isExamActive || !state.currentSubject) return;
+                if (!state.isExamActive || !state.currentSubject || state.isUnloading) return;
+                // Jika pagehide muncul setelah pola layar mati otomatis/manual (screenOffSuspected), jangan hitung pelanggaran
+                if (state.screenOffSuspected) return;
                 if (state.pendingVisibilityTimer) {
                     clearTimeout(state.pendingVisibilityTimer);
                     state.pendingVisibilityTimer = null;
                 }
-                state.screenOffSuspected = false;
                 recordViolation('Meninggalkan halaman ujian (Home / Recent Apps).', true);
             });
 
             // 2. Kehilangan fokus jendela (Screenshot / Panel Notifikasi / Split Screen)
             window.addEventListener('blur', () => {
-                if (!state.isExamActive || !state.currentSubject) return;
+                if (!state.isExamActive || !state.currentSubject || state.isUnloading) return;
                 state.lastBlurTime = Date.now();
                 if (state.isPointerInsideIframe) return;
 
                 if (state.pendingBlurTimer) clearTimeout(state.pendingBlurTimer);
                 state.pendingBlurTimer = setTimeout(() => {
-                    if (!document.hidden && !state.screenOffSuspected && document.activeElement !== el.examIframe && state.isExamActive && state.currentSubject) {
+                    if (!document.hidden && !state.screenOffSuspected && !state.isUnloading && document.activeElement !== el.examIframe && state.isExamActive && state.currentSubject) {
                         recordViolation('Terdeteksi keluar fokus layar (Screenshot / Panel Notifikasi / Split Screen).', true);
                     }
                 }, 450);
@@ -1519,6 +1532,11 @@
 
             // Tombol keyboard Screenshot / DevTools / Shortcut Copy
             document.addEventListener('keydown', (e) => {
+                if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && String(e.key || '').toLowerCase() === 'r')) {
+                    state.isUnloading = true;
+                    persistActiveExamSession();
+                    return;
+                }
                 if (e.key === 'PrintScreen') {
                     e.preventDefault();
                     recordViolation('Tombol PrintScreen / Screenshot terdeteksi.', false);
