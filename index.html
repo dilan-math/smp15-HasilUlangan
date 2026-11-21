@@ -487,11 +487,18 @@
                             <h3 class="text-base font-black text-slate-900">Kode Google Apps Script (Sinkronisasi Lintas Perangkat)</h3>
                             <p class="text-xs text-slate-500 mt-0.5">Pasang kode ini di <strong>Ekstensi &rarr; Apps Script</strong> pada Google Spreadsheet Anda lalu Deploy sebagai Web App (Akses: <strong>Siapa saja / Anyone</strong>).</p>
                         </div>
-                        <button id="copy-apps-script-btn" type="button"
-                            class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold transition cursor-pointer self-start">
-                            Salin Kode Apps Script
-                        </button>
+                        <div class="flex flex-wrap gap-2 self-start">
+                            <button id="test-apps-script-btn" type="button"
+                                class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition cursor-pointer">
+                                Tes Koneksi Server
+                            </button>
+                            <button id="copy-apps-script-btn" type="button"
+                                class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold transition cursor-pointer">
+                                Salin Kode Apps Script
+                            </button>
+                        </div>
                     </div>
+                    <div id="test-server-result" class="hidden p-3.5 rounded-2xl text-xs font-bold border"></div>
                     <textarea id="apps-script-code-box" readonly rows="18"
                         class="w-full p-4 rounded-2xl bg-slate-900 text-emerald-300 font-mono text-[11px] leading-relaxed border border-slate-700 outline-none"></textarea>
                 </div>
@@ -712,6 +719,8 @@
                 adminRefreshBtn: document.getElementById('admin-refresh-btn'),
                 adminSyncAlert: document.getElementById('admin-sync-alert'),
                 adminMonitoringTbody: document.getElementById('admin-monitoring-tbody'),
+                testAppsScriptBtn: document.getElementById('test-apps-script-btn'),
+                testServerResult: document.getElementById('test-server-result'),
                 copyAppsScriptBtn: document.getElementById('copy-apps-script-btn'),
                 appsScriptCodeBox: document.getElementById('apps-script-code-box')
             };
@@ -850,6 +859,8 @@
 
                 const applyServerRows = (rows) => {
                     let changed = false;
+                    const activeServerSubjects = new Set();
+
                     rows.forEach((s) => {
                         if (String(s.studentName || '').trim().toLowerCase() !== targetName) return;
                         if (targetClass && String(s.studentClass || '').trim().toLowerCase() !== targetClass) return;
@@ -862,18 +873,30 @@
                                 changed = true;
                             }
                         } else if (s.status === 'ACTIVE' || s.status === 'FINISHED' || s.status === 'LOCKED') {
+                            activeServerSubjects.add(subTitle.toLowerCase());
                             if (!isExamAttemptedLocal(state.studentClass, state.studentName, subTitle)) {
                                 markExamAttemptedLocal(state.studentClass, state.studentName, subTitle, s.sessionId);
                                 changed = true;
                             }
                         }
                     });
+
+                    // Jika di browser siswa terkunci lokal, namun di database server/Admin data tersebut tidak ada
+                    // (misal gagal terkirim sebelumnya atau barisnya dihapus Admin), otomatis buka kembali agar sinkron
+                    state.subjects.forEach((sub) => {
+                        if (isExamAttemptedLocal(state.studentClass, state.studentName, sub.title) &&
+                            !activeServerSubjects.has(sub.title.trim().toLowerCase())) {
+                            clearExamAttemptedLocal(state.studentClass, state.studentName, sub.title);
+                            changed = true;
+                        }
+                    });
+
                     if (changed) renderSubjectsPortal();
                 };
 
                 if (APPS_SCRIPT_WEB_APP_URL) {
                     try {
-                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`, { cache: 'no-store' });
+                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&_ts=${Date.now()}`);
                         const data = await res.json();
                         if (data && Array.isArray(data.sessions)) {
                             applyServerRows(data.sessions);
@@ -883,8 +906,8 @@
                 }
 
                 try {
-                    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&t=${Date.now()}`;
-                    const resSheet = await fetch(sheetUrl, { cache: 'no-store' });
+                    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&_ts=${Date.now()}`;
+                    const resSheet = await fetch(sheetUrl);
                     const txtSheet = await resSheet.text();
                     const jsonSheet = parseGvizJson(txtSheet);
                     const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
@@ -1158,8 +1181,13 @@
             // SINKRONISASI SERVER (100% DATABASE SPREADSHEET) & CEK BUKA KUNCI
             // =================================================================
             async function syncSessionToServer(forcedStatus = null) {
-                if (!state.studentName || !state.sessionId) return;
-                if (!state.currentSubject || !state.currentSubject.title) return;
+                if (!state.studentName) return false;
+                const subTitle = (state.currentSubject && state.currentSubject.title) ? state.currentSubject.title : '';
+                if (!subTitle) return false;
+
+                if (!state.sessionId) {
+                    state.sessionId = `${state.studentClass}_${state.studentName}_${subTitle}_${Date.now()}`;
+                }
 
                 const currentStatus = forcedStatus || (state.isLocked ? 'LOCKED' : 'ACTIVE');
                 const baseKey = `${state.studentClass}_${state.studentName}`;
@@ -1169,14 +1197,14 @@
 
                 const startedAtIso = state.examStartedAt || new Date().toISOString();
 
-                if (!APPS_SCRIPT_WEB_APP_URL) return;
+                if (!APPS_SCRIPT_WEB_APP_URL) return false;
 
                 const params = new URLSearchParams({
                     action: 'sync',
                     sessionId: state.sessionId,
                     studentClass: state.studentClass,
                     studentName: state.studentName,
-                    subjectTitle: state.currentSubject.title,
+                    subjectTitle: subTitle,
                     startedAt: startedAtIso,
                     status: currentStatus,
                     violations: String(state.violations),
@@ -1184,7 +1212,7 @@
                     lastViolationReason: taggedReason,
                     baseKey: baseKey,
                     awaySeconds: String(state.totalAwaySeconds),
-                    t: String(Date.now())
+                    _ts: String(Date.now())
                 });
 
                 const fullUrl = `${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`;
@@ -1198,15 +1226,17 @@
                     await fetch(fullUrl, {
                         method: 'GET',
                         mode: 'no-cors',
-                        cache: 'no-store',
                         keepalive: true
                     });
-                } catch (e) {}
+                    return true;
+                } catch (e) {
+                    return false;
+                }
             }
 
             function scheduleSmartHeartbeat() {
                 if (state.heartbeatTimer) clearTimeout(state.heartbeatTimer);
-                const jitterMs = 18000 + Math.floor(Math.random() * 10000);
+                const jitterMs = 15000 + Math.floor(Math.random() * 7000);
                 state.heartbeatTimer = setTimeout(() => {
                     if (state.isExamActive && state.currentSubject && !state.isLocked) {
                         renderExamWatermark();
@@ -1223,6 +1253,8 @@
                 const targetClass = state.studentClass.trim().toLowerCase();
                 const targetSub = state.currentSubject ? state.currentSubject.title.trim().toLowerCase() : '';
 
+                let foundInServer = false;
+
                 const evaluateSessions = (sessionsList) => {
                     return sessionsList.some((s) => {
                         const matchSid = targetSid && String(s.sessionId || '').trim() === targetSid;
@@ -1230,6 +1262,7 @@
                             (!targetClass || String(s.studentClass || '').trim().toLowerCase() === targetClass);
                         const matchSub = !targetSub || String(s.subjectTitle || '').trim().toLowerCase() === targetSub;
                         if (matchSid || (matchStudent && matchSub)) {
+                            foundInServer = true;
                             return s.status === 'DIBUKA ADMIN' || s.unlockedByAdmin === true || (Number(s.violations) === 0 && s.status === 'ACTIVE');
                         }
                         return false;
@@ -1240,7 +1273,7 @@
 
                 if (APPS_SCRIPT_WEB_APP_URL) {
                     try {
-                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`, { cache: 'no-store' });
+                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&_ts=${Date.now()}`);
                         const data = await res.json();
                         if (data && Array.isArray(data.sessions)) {
                             unlocked = evaluateSessions(data.sessions);
@@ -1250,8 +1283,8 @@
 
                 if (!unlocked) {
                     try {
-                        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&t=${Date.now()}`;
-                        const resSheet = await fetch(sheetUrl, { cache: 'no-store' });
+                        const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&_ts=${Date.now()}`;
+                        const resSheet = await fetch(sheetUrl);
                         const txtSheet = await resSheet.text();
                         const jsonSheet = parseGvizJson(txtSheet);
                         const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
@@ -1269,6 +1302,11 @@
                         });
                         unlocked = evaluateSessions(parsed);
                     } catch (e2) {}
+                }
+
+                // Jika akun siswa terkunci tapi datanya belum masuk ke database server, kirim ulang sekarang
+                if (!unlocked && state.isLocked && !foundInServer && state.currentSubject) {
+                    await syncSessionToServer('LOCKED');
                 }
 
                 if (unlocked) {
@@ -1614,7 +1652,7 @@
                 // 1. Baca langsung dari Google Apps Script Web App
                 if (APPS_SCRIPT_WEB_APP_URL) {
                     try {
-                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&t=${Date.now()}`, { cache: 'no-store' });
+                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&_ts=${Date.now()}`);
                         const data = await res.json();
                         if (data && Array.isArray(data.sessions)) {
                             connectedToCloud = true;
@@ -1625,8 +1663,8 @@
 
                 // 2. Baca langsung dari tab MONITORING di Google Spreadsheet (Single Source of Truth)
                 try {
-                    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&t=${Date.now()}`;
-                    const resSheet = await fetch(sheetUrl, { cache: 'no-store' });
+                    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=MONITORING&_ts=${Date.now()}`;
+                    const resSheet = await fetch(sheetUrl);
                     const txtSheet = await resSheet.text();
                     const jsonSheet = parseGvizJson(txtSheet);
                     const rows = (jsonSheet.table && jsonSheet.table.rows) || [];
@@ -1828,9 +1866,9 @@
                             studentName: sname,
                             studentClass: sclass,
                             subjectTitle: ssub,
-                            t: String(Date.now())
+                            _ts: String(Date.now())
                         });
-                        await fetch(`${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors', cache: 'no-store' });
+                        await fetch(`${APPS_SCRIPT_WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
                     }
 
                     if (el.adminSyncAlert) {
@@ -1921,10 +1959,11 @@
 
             if (el.checkUnlockNowBtn) {
                 el.checkUnlockNowBtn.addEventListener('click', async () => {
-                    el.checkUnlockNowBtn.textContent = 'Memeriksa server...';
+                    el.checkUnlockNowBtn.textContent = 'Mengirim & memeriksa server...';
+                    await syncSessionToServer('LOCKED');
                     const ok = await checkIfUnlockedByAdmin();
                     if (!ok) {
-                        el.checkUnlockNowBtn.textContent = 'Belum dibuka Pengawas — Coba Lagi';
+                        el.checkUnlockNowBtn.textContent = 'Data Terkirim • Menunggu Pengawas Buka Kunci';
                     }
                 });
             }
@@ -1994,12 +2033,15 @@
             if (el.adminSearchInput) {
                 el.adminSearchInput.addEventListener('input', renderAdminMonitoringTable);
             }
+
             if (el.adminSubjectFilter) {
                 el.adminSubjectFilter.addEventListener('change', renderAdminMonitoringTable);
             }
+
             if (el.adminClassFilter) {
                 el.adminClassFilter.addEventListener('change', renderAdminMonitoringTable);
             }
+
             if (el.adminRefreshBtn) {
                 el.adminRefreshBtn.addEventListener('click', fetchAdminMonitoringData);
             }
@@ -2007,7 +2049,31 @@
             if (el.adminMonitoringTbody) {
                 el.adminMonitoringTbody.addEventListener('click', (e) => {
                     const btn = e.target.closest('.unlock-session-btn');
-                    if (btn) handleUnlockStudentSession(btn);
+                    if (btn && !btn.disabled) {
+                        handleUnlockStudentSession(btn);
+                    }
+                });
+            }
+
+            if (el.testAppsScriptBtn) {
+                el.testAppsScriptBtn.addEventListener('click', async () => {
+                    if (!el.testServerResult) return;
+                    el.testServerResult.className = 'p-3.5 rounded-2xl text-xs font-bold border bg-slate-50 border-slate-200 text-slate-700';
+                    el.testServerResult.textContent = 'Sedang menguji koneksi ke Google Apps Script Web App...';
+                    el.testServerResult.classList.remove('hidden');
+                    try {
+                        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?action=get&_ts=${Date.now()}`);
+                        const data = await res.json();
+                        if (data && Array.isArray(data.sessions)) {
+                            el.testServerResult.className = 'p-3.5 rounded-2xl text-xs font-bold border bg-emerald-50 border-emerald-200 text-emerald-800';
+                            el.testServerResult.textContent = `BERHASIL TERHUBUNG! Ditemukan ${data.sessions.length} baris data pada tab MONITORING Spreadsheet Anda.`;
+                        } else {
+                            throw new Error('Respons tidak valid');
+                        }
+                    } catch (err) {
+                        el.testServerResult.className = 'p-3.5 rounded-2xl text-xs font-bold border bg-red-50 border-red-200 text-red-700';
+                        el.testServerResult.textContent = 'GAGAL TERHUBUNG: Pastikan kode Apps Script di bawah ini sudah di-deploy di Spreadsheet Anda (1nOtxwtqh9aFqj6JxDpfhrpnx43h53gm90PQxG51G2TU) dengan akses "Siapa saja (Anyone)".';
+                    }
                 });
             }
 
